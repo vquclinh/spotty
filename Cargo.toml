@@ -1,0 +1,27 @@
+[package]
+name = "console_spotify"
+version = "0.1.0"
+edition = "2024"
+authors = ["Vo Quoc Linh"]
+description = "A modern Terminal User Interface for Spotify"
+
+[dependencies]
+ratatui = "0.30.0"
+crossterm = "0.29"
+
+rspotify = { version = "0.14", features = ["client-reqwest", "env-file"] }
+
+tokio = { version = "1.51", features = ["full"] }
+
+serde = { version = "1.0", features = ["derive"] }
+dirs = "6.0.0"
+
+serde_json = "1.0.149"
+
+dotenv = "0.15"
+anyhow = "1.0"
+
+[[bin]]
+path = "src/main.rs"
+name = "scui"
+bench = false
