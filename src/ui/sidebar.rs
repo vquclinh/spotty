@@ -6,7 +6,7 @@ use ratatui::{
     widgets::{Block, Borders, Paragraph},
 };
 
-pub fn draw(f: &mut Frame, app: &App, area: Rect) {
+pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
     let border_color = if app.active_block == ActiveBlock::Sidebar {
         Color::Green
     } else {

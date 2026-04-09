@@ -6,7 +6,7 @@ use ratatui::{
 
 use super::{help_popup, home, lyrics, playbar, queue, search, sidebar};
 
-pub fn draw(f: &mut Frame, app: &App) {
+pub fn draw(f: &mut Frame, app: &mut App) {
     let main_chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([Constraint::Min(0), Constraint::Length(3)])

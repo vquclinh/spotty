@@ -6,7 +6,7 @@ use ratatui::{
     widgets::{Block, Borders, Paragraph},
 };
 
-pub fn draw(f: &mut Frame, _app: &App, area: Rect) {
+pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
     let text = "\n\n♫ ... Lyrics here ... ♫\n\n";
 
     let block = Paragraph::new(text)

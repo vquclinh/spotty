@@ -6,7 +6,7 @@ use ratatui::{
     widgets::{Block, Borders, Clear, Paragraph},
 };
 
-pub fn draw(f: &mut Frame, app: &App) {
+pub fn draw(f: &mut Frame, app: &mut App) {
     let help_text = match app.route {
         Route::Home => " ... ",
         _ => " Keybinds ",
