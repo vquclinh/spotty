@@ -1,5 +1,5 @@
 use crate::app::home::HomeState;
-use crate::app::search::SearchState;
+use crate::app::search_state::SearchState;
 
 #[derive(Clone)]
 pub enum Route {
