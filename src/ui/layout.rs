@@ -4,7 +4,7 @@ use ratatui::{
     layout::{Constraint, Direction, Layout},
 };
 
-use super::{help_popup, home, lyrics, playbar, queue, search, sidebar};
+use super::{home, lyrics, playbar, queue, search, sidebar, playlist};
 
 pub fn draw(f: &mut Frame, app: &mut App) {
     let main_chunks = Layout::default()
@@ -14,25 +14,28 @@ pub fn draw(f: &mut Frame, app: &mut App) {
 
     playbar::draw(f, app, main_chunks[1]);
 
-    if app.route == Route::Lyrics {
-        lyrics::draw(f, app, main_chunks[0]);
+    if matches!(app.route, Route::Lyrics) {
+        let lyrics_chunks = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([Constraint::Percentage(60), Constraint::Percentage(40)])
+            .split(main_chunks[0]);
+
+        lyrics::draw_text(f, app, lyrics_chunks[0]);
+        lyrics::draw_info(f, app, lyrics_chunks[1]);
     } else {
         let content_chunks = Layout::default()
             .direction(Direction::Horizontal)
-            .constraints([Constraint::Percentage(25), Constraint::Percentage(75)])
+            .constraints([Constraint::Percentage(15), Constraint::Percentage(85)])
             .split(main_chunks[0]);
 
         sidebar::draw(f, app, content_chunks[0]);
 
-        match app.route {
-            Route::Home => home::draw(f, app, content_chunks[1]),
-            Route::Search => search::draw(f, app, content_chunks[1]),
+        match &app.route {
+            Route::Home(_) => home::draw(f, app, content_chunks[1]),
+            Route::Search(search_state) => search::draw(f, &search_state, &app.active_block, content_chunks[1]),
             Route::Queue => queue::draw(f, app, content_chunks[1]),
+            Route::PlaylistDetail => playlist::draw(f, app, content_chunks[1]),
             _ => {}
         }
-    }
-
-    if app.show_help {
-        help_popup::draw(f, app);
     }
 }

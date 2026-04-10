@@ -5,7 +5,6 @@ pub mod playbar;
 pub mod queue;
 pub mod search;
 pub mod sidebar;
-
-pub mod help_popup;
+pub mod playlist;
 
 pub use layout::draw;

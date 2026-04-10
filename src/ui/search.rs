@@ -1,3 +1,4 @@
+use crate::app::SearchState;
 use crate::app::{ActiveBlock, App};
 use ratatui::{
     Frame,
@@ -6,18 +7,20 @@ use ratatui::{
     widgets::{Block, Borders, Paragraph},
 };
 
-pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
+pub fn draw(f: &mut Frame, state: &SearchState, active_block: &ActiveBlock, area: Rect) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([Constraint::Length(3), Constraint::Min(0)])
         .split(area);
 
-    let input_color = if app.active_block == ActiveBlock::SearchInput {
-        Color::Green
+    let input_color = if *active_block == ActiveBlock::SearchInput { Color::Green } else { Color::White };
+    let display_text = if *active_block == ActiveBlock::SearchInput { 
+        format!("{}|", state.input)
     } else {
-        Color::White
+        state.input.clone()
     };
-    let input = Paragraph::new(app.search.input.as_str()).block(
+    
+    let input = Paragraph::new(display_text).block(
         Block::default()
             .title(" Searching ")
             .borders(Borders::ALL)
@@ -25,11 +28,7 @@ pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
     );
     f.render_widget(input, chunks[0]);
 
-    let result_color = if app.active_block == ActiveBlock::SearchResults {
-        Color::Green
-    } else {
-        Color::White
-    };
+    let result_color = if *active_block == ActiveBlock::SearchResults { Color::Green } else { Color::White };
     let results = Paragraph::new("Output here...").block(
         Block::default()
             .title(" Songs & Artists ")

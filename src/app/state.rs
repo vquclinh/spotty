@@ -1,83 +1,74 @@
-// Route, it means what is the current state
-#[derive(Clone, PartialEq, Debug)] // Create a clone or do a comparison, print debug
-pub enum Route {
-    Home,
-    Search,
-    Queue,
-    Lyrics,
-}
+use ratatui::widgets::ListState;
 
-// ActiveBlock, it means what block in screen is currently focus on
-#[derive(Clone, PartialEq, Debug)]
-pub enum ActiveBlock {
-    Sidebar,
-    SearchInput,
-    SearchResults,
-    HomeBlock,
-    QueueBlock,
-}
+use crate::app::models::{Track, PlayerState, ActiveBlock};
+use crate::app::route::Route;
+use crate::app::home::HomeState;
 
-pub struct PlayerState {
-    pub is_playing: bool,
-    pub currennt_track: Option<String>,
-    pub queue: Vec<String>,
-}
-
-pub struct SearchState {
-    pub input: String,
-    pub results_artists: Vec<String>,
-    pub results_tracks: Vec<String>,
-}
-
-// Global data
 pub struct App {
     pub route: Route,
     pub active_block: ActiveBlock,
+    pub history: Vec<(Route, ActiveBlock)>,
 
     pub should_quit: bool,
     pub show_help: bool,
 
     pub player: PlayerState,
-    pub search: SearchState,
 
-    pub liked_songs: Vec<String>,
-    pub my_albums: Vec<String>,
+    pub liked_songs: usize,
+    pub playlists: Vec<String>,
+    pub library_state: ListState,
+    pub playlists_state: ListState,
+
+    pub track_list: Vec<Track>,
+    pub track_list_state: ListState,
 }
 
 impl App {
     pub fn new() -> Self {
+        let dummy_track = Track {
+            title: "Making My Way".to_string(),
+            artist: "Son Tung MTP".to_string(),
+            album: "Single".to_string(),
+        };
+
         Self {
-            route: Route::Home,
-            active_block: ActiveBlock::Sidebar,
+            route: Route::Home(HomeState::new()),
+            active_block: ActiveBlock::PlaylistsMenu,
+            history: vec![],
             show_help: false,
             should_quit: false,
 
             player: PlayerState {
-                is_playing: false,
-                currennt_track: None,
+                is_playing: true,
+                current_track: Some(dummy_track.clone()),
                 queue: vec![],
             },
-            search: SearchState {
-                input: String::new(),
-                results_artists: vec![],
-                results_tracks: vec![],
-            },
+            
+            liked_songs: 152,
+            playlists: vec![
+                "Lofi Chill".to_string(), 
+                "Gym".to_string(), 
+                "Top Hits 2024".to_string()
+            ],
 
-            liked_songs: vec![],
-            my_albums: vec![],
+            library_state: ListState::default(),
+            playlists_state: ListState::default(),
+
+            track_list: vec![
+                dummy_track,
+                Track { title: "Making My Way".to_string(), artist: "Son Tung MTP".to_string(), album: "M-TP".to_string() },
+                Track { title: "Chay Ngay Di".to_string(), artist: "Son Tung MTP".to_string(), album: "Single".to_string() },
+                Track { title: "Noi Nay Co Anh".to_string(), artist: "Son Tung MTP".to_string(), album: "Rap Viet".to_string() } ,
+            ],
+            track_list_state: ListState::default(),
         }
     }
 
-    // pub fn change_route(&mut self, new_route: Route) {
-    //     self.route = new_route.clone();
-
-    //     self.active_block = match new_route {
-    //         Route::Home => ActiveBlock::HomeBlock,
-    //         Route::Search => ActiveBlock::SearchInput,
-    //         Route::Playlist => ActiveBlock::TrackTable,
-    //         Route::Lyrics => ActiveBlock::HomeBlock,
-    //     }
-    // }
+    pub fn on_tick(&mut self) {
+        if let Some(next_route) = self.route.update() {
+            self.route = next_route;
+        }
+    }
 }
 
 impl Default for App {
