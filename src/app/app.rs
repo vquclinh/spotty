@@ -1,8 +1,9 @@
 use ratatui::widgets::ListState;
 
-use crate::app::models::{Track, PlayerState, ActiveBlock};
+use crate::app::splash_state::SplashState;
+use crate::app::types::{Track, PlayerState, ActiveBlock};
 use crate::app::route::Route;
-use crate::app::home::HomeState;
+use crate::app::home_state::HomeState;
 
 pub struct App {
     pub route: Route,
@@ -32,7 +33,7 @@ impl App {
         };
 
         Self {
-            route: Route::Home(HomeState::new()),
+            route: Route::Splash(SplashState::new()),
             active_block: ActiveBlock::PlaylistsMenu,
             history: vec![],
             show_help: false,

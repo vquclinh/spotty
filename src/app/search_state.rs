@@ -1,5 +1,5 @@
 use ratatui::widgets::ListState;
-use crate::app::models::Track;
+use crate::app::types::Track;
 
 #[derive(Clone)]
 pub struct SearchState {

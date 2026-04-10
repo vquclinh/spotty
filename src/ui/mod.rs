@@ -6,5 +6,6 @@ pub mod queue;
 pub mod search;
 pub mod sidebar;
 pub mod playlist;
+pub mod splash;
 
 pub use layout::draw;

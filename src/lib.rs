@@ -35,6 +35,8 @@ pub fn run() -> anyhow::Result<()> {
     let tick_rate = Duration::from_millis(50);
 
     while !app.should_quit {
+        app.on_tick();
+        
         terminal.draw(|f| ui::draw(f, &mut app))?;
 
         let evt = event::read(tick_rate)?;

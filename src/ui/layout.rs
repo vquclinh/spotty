@@ -4,9 +4,14 @@ use ratatui::{
     layout::{Constraint, Direction, Layout},
 };
 
-use super::{home, lyrics, playbar, queue, search, sidebar, playlist};
+use super::{splash, home, lyrics, playbar, queue, search, sidebar, playlist};
 
 pub fn draw(f: &mut Frame, app: &mut App) {
+    if let Route::Splash(splash_state) = &app.route {
+        splash::draw(f, splash_state, f.area());
+        return; 
+    }
+
     let main_chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([Constraint::Min(0), Constraint::Length(3)])
