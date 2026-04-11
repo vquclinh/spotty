@@ -19,9 +19,6 @@ pub struct App {
     pub playlists: Vec<String>,
     pub library_state: ListState,
     pub playlists_state: ListState,
-
-    pub track_list: Vec<Track>,
-    pub track_list_state: ListState,
 }
 
 impl App {
@@ -54,14 +51,6 @@ impl App {
 
             library_state: ListState::default(),
             playlists_state: ListState::default(),
-
-            track_list: vec![
-                dummy_track,
-                Track { title: "Making My Way".to_string(), artist: "Son Tung MTP".to_string(), album: "M-TP".to_string() },
-                Track { title: "Chay Ngay Di".to_string(), artist: "Son Tung MTP".to_string(), album: "Single".to_string() },
-                Track { title: "Noi Nay Co Anh".to_string(), artist: "Son Tung MTP".to_string(), album: "Rap Viet".to_string() } ,
-            ],
-            track_list_state: ListState::default(),
         }
     }
 
