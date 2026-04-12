@@ -251,7 +251,7 @@ impl From<CurrentPlaybackContext> for PlaybackState {
                 None => None
             },
             is_playing: ctx.is_playing,
-            progress: ctx.progress.map_or(Duration::ZERO, |d| normalize_duration(d)),
+            progress: ctx.progress.map_or(Duration::ZERO, normalize_duration),
             device_name: ctx.device.name,
             repeat_state: match ctx.repeat_state {
                 RepeatState::Off => RepeatState::Off,
@@ -336,7 +336,7 @@ impl WebApiClient {
 
         Ok(Self {
             client,
-            cache: cache_ttl_sec.map_or(Cache::default(), |s| Cache::new(s))
+            cache: cache_ttl_sec.map_or(Cache::default(), Cache::new)
         })
     }
 
