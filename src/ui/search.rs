@@ -1,5 +1,5 @@
 use crate::app::SearchState;
-use crate::app::{ActiveBlock, App};
+use crate::app::{ActiveBlock};
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},

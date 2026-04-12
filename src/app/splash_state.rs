@@ -14,9 +14,15 @@ impl SplashState {
         self.ticks += 1;
 
         if self.ticks > 40 {
-            return Some(Route::Home(HomeState::new())); 
+            return Some(Route::Home(HomeState::default())); 
         }
         
         None
+    }
+}
+
+impl Default for SplashState {
+    fn default() -> Self {
+        Self::new()
     }
 }

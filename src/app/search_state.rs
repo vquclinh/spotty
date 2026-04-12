@@ -19,3 +19,9 @@ impl SearchState {
         }
     }
 }
+
+impl Default for SearchState {
+    fn default() -> Self {
+        Self::new()
+    }
+}

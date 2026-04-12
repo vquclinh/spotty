@@ -3,7 +3,6 @@ use ratatui::widgets::ListState;
 use crate::app::splash_state::SplashState;
 use crate::app::types::{Track, PlayerState, ActiveBlock};
 use crate::app::route::Route;
-use crate::app::home_state::HomeState;
 
 pub struct App {
     pub route: Route,

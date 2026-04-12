@@ -14,7 +14,7 @@ use crossterm::{
 };
 use ratatui::{
     Terminal,
-    backend::{self, CrosstermBackend},
+    backend::{CrosstermBackend},
 };
 use std::{io, panic, time::Duration};
 

@@ -65,7 +65,7 @@ pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, ar
             let header = Row::new(header_cells).style(header_style);
 
             let rows: Vec<Row> = if state.active_tab == HomeTab::TopTracks {
-                state.top_tracks.iter().map(|t| {
+                state.top_tracks.items.iter().map(|t| {
                     if show_extra_column {
                         Row::new(vec![format!("  {}", t.title), t.artist.clone(), t.extra_info.clone()])
                     } else {
@@ -73,7 +73,7 @@ pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, ar
                     }
                 }).collect()
             } else {
-                state.recent_tracks.iter().map(|t| {
+                state.recent_tracks.items.iter().map(|t| {
                     if show_extra_column {
                         Row::new(vec![format!("  {}", t.title), t.artist.clone(), t.extra_info.clone()])
                     } else {
@@ -84,13 +84,13 @@ pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, ar
 
             let table = Table::new(rows, widths)
                 .header(header)
-                .highlight_style(highlight_style)
+                .row_highlight_style(highlight_style)
                 .highlight_symbol("▶ ");
 
             let state_to_use = if state.active_tab == HomeTab::TopTracks {
-                &mut state.top_tracks_state
+                &mut state.top_tracks.state
             } else {
-                &mut state.recent_state
+                &mut state.recent_tracks.state
             };
 
             f.render_stateful_widget(table, chunks[1], state_to_use);
@@ -100,16 +100,16 @@ pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, ar
             let header = Row::new(vec!["  Artist", "Genres"]).style(header_style);
             let widths = [Constraint::Percentage(40), Constraint::Percentage(60)];
 
-            let rows: Vec<Row> = state.top_artists.iter().map(|a| {
+            let rows: Vec<Row> = state.top_artists.items.iter().map(|a| {
                 Row::new(vec![format!("  {}", a.name), a.genres.clone()])
             }).collect();
 
             let table = Table::new(rows, widths)
                 .header(header)
-                .highlight_style(highlight_style)
+                .row_highlight_style(highlight_style)
                 .highlight_symbol("▶ ");
 
-            f.render_stateful_widget(table, chunks[1], &mut state.top_artists_state);
+            f.render_stateful_widget(table, chunks[1], &mut state.top_artists.state);
         }
     }
 }
