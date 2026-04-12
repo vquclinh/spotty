@@ -4,6 +4,7 @@ use rspotify::{
     model::CurrentPlaybackContext,
     model::PlayableItem,
     model::enums::misc::RepeatState,
+    model::idtypes::PlaylistId
 };
 use super::auth;
 use anyhow::{Result, anyhow, bail};
@@ -395,6 +396,28 @@ impl WebApiClient {
             .filter_map(|item| match item {
                 PlayableItem::Track(t) => Some(Track::from(t)),
                 PlayableItem::Episode(_) | PlayableItem::Unknown(_) => None,
+            })
+            .collect();
+
+        Ok(tracks)
+    }
+
+    pub async fn get_playlist_tracks(&self, id: &str, limit: Option<u32>, offset: Option<u32>) 
+    -> Result<Vec<Track>> {
+        let playlist_id = PlaylistId::from_id_or_uri(id)
+            .map_err(|e| anyhow::anyhow!("Invalid Playlist ID or URI: {}", e))?;
+
+        let page = self.client
+            .playlist_items_manual(playlist_id, None, None, limit, offset)
+            .await?;
+
+        let tracks = page.items
+            .into_iter()
+            .filter_map(|item| {
+                item.item.and_then(|playable| match playable {
+                    PlayableItem::Track(t) => Some(Track::from(t)),
+                    _ => None, // Episodes and Unknown types are ignored
+                })
             })
             .collect();
 

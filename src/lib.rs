@@ -58,7 +58,7 @@ pub async fn test_auth() -> Result<()> {
     let Some(mut client) = app.client else {
         bail!("Client not initialized");
     };
-
+    
     loop {
         println!("\n--- Spotify TUI Test Menu ---");
         println!("1. Get Profile");
@@ -99,6 +99,16 @@ pub async fn test_auth() -> Result<()> {
                 let lists = client.get_user_playlists().await?;
                 for (i, p) in lists.iter().enumerate() {
                     println!("{}. {}", i + 1, p.name);
+                    match client.get_playlist_tracks(&p.id, Some(10), None).await {
+                        Ok(tracks) => {
+                            for t in tracks {
+                                println!("{} - {}", t.name, t.artists[0].name);
+                            }
+                        }
+                        Err(e) => {
+                            eprintln!("{}", e);
+                        }
+                    }
                 }
             }
             "4" => {
