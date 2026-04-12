@@ -370,4 +370,64 @@ impl WebApiClient {
         Ok(PlaybackState::parse(&v).ok())
     }
 
+    pub async fn get_user_playlists(&self) -> Result<Vec<Playlist>> {
+        // Collects first page of playlists
+        let page = self.client.current_user_playlists_manual(None, None).await?;
+        let playlists = page.items
+            .into_iter()
+            .map(|p| Playlist {
+                id: p.id.to_string(),
+                name: p.name,
+                owner: p.owner.display_name.unwrap_or_else(|| "Unknown".to_string()),
+                description: String::new(),
+                tracks: Vec::new(),
+            })
+            .collect();
+        Ok(playlists)
+    }
+
+    pub async fn get_queue(&self) -> Result<Vec<Track>> {
+        let rspotify_queue = self.client.current_user_queue().await?;
+
+        let tracks = rspotify_queue
+            .queue
+            .into_iter()
+            .filter_map(|item| match item {
+                PlayableItem::Track(t) => Some(Track::from(t)),
+                PlayableItem::Episode(_) | PlayableItem::Unknown(_) => None,
+            })
+            .collect();
+
+        Ok(tracks)
+    }
+
+    // pub async fn get_recently_played(&self, limit: u32) -> Result<Vec<Track>> {
+    //     let history = self.client.current_user_recently_played(Some(limit), None).await?;
+    //     let tracks = history.items
+    //         .into_iter()
+    //         .map(|h| Track::from(h.track))
+    //         .collect();
+    //     Ok(tracks)
+    // }
+
+    pub async fn toggle_playback(&mut self, playing: bool) -> Result<()> {
+        if playing {
+            self.client.pause_playback(None).await?
+        } else {
+            self.client.resume_playback(None, None).await?
+        }
+        Ok(())
+    }
+
+    pub async fn next_track(&mut self) -> Result<()> {
+        self.client.next_track(None).await?;
+        Ok(())
+    }
+
+    pub async fn prev_track(&mut self) -> Result<()> {
+        self.client.previous_track(None).await?;
+        Ok(())
+    }
+
+
 }

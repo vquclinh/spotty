@@ -51,44 +51,82 @@ pub async fn run() -> Result<()> {
     Ok(())
 }
 
+use std::io::Write;
+
 pub async fn test_auth() -> Result<()> {
-    let app = App::new().await;
-    let Some(client) = app.client else {
+    let mut app = App::new().await;
+    let Some(mut client) = app.client else {
         bail!("Client not initialized");
     };
 
-    match client.get_user_profile().await {
-        Ok(profile) => {
-            println!("User profile:");
-            println!("Id: {}", profile.id);
-            println!("Name: {}\n", profile.display_name);
-        }
-        Err(e) => {
-            eprintln!("Cannot fetch user profile: {}", e);
-        }
-    }
+    loop {
+        println!("\n--- Spotify TUI Test Menu ---");
+        println!("1. Get Profile");
+        println!("2. Get Current Playback");
+        println!("3. Get Playlists");
+        println!("4. Get Queue");
+        println!("5. Toggle Play/Pause");
+        println!("6. Next Track");
+        println!("7. Previous Track");
+        println!("0. Exit");
+        print!("Select an option: ");
+        io::stdout().flush()?;
 
-    match client.get_playback_state().await {
-        Ok(Some(playback)) => {
-            println!("Current playback:");
-            println!("Device: {}", playback.device_name);
+        let mut input = String::new();
+        io::stdin().read_line(&mut input)?;
+        let choice = input.trim();
 
-            // Handling the Playable enum (Track or Episode)
-            if let Some(item) = playback.item {
-                match item {
-                    Playable::Track(t) => println!("Track: {} by {}", t.name, t.artists[0].name),
-                    Playable::Episode(e) => println!("Episode: {}", e.name),
-                }
-            } else {
-                println!("No playable item recognized");
+        match choice {
+            "1" => {
+                let profile = client.get_user_profile().await?;
+                println!("User: {} (ID: {})", profile.display_name, profile.id);
             }
-            println!("Status: {}", if playback.is_playing { "Playing" } else { "Paused" });
-        }
-        Ok(None) => {
-            println!("Nothing is currently playing.");
-        }
-        Err(e) => {
-            eprintln!("Error fetching playback: {}", e);
+            "2" => {
+                match client.get_playback_state().await? {
+                    Some(pb) => {
+                        println!("Device: {} | Playing: {}", pb.device_name, pb.is_playing);
+                        if let Some(item) = pb.item {
+                            match item {
+                                Playable::Track(t) => println!("Track: {} - {}", t.name, t.artists[0].name),
+                                Playable::Episode(e) => println!("Episode: {} ({})", e.name, e.show_name),
+                            }
+                        }
+                    }
+                    None => println!("No active playback session found."),
+                }
+            }
+            "3" => {
+                let lists = client.get_user_playlists().await?;
+                for (i, p) in lists.iter().enumerate() {
+                    println!("{}. {}", i + 1, p.name);
+                }
+            }
+            "4" => {
+                let tracks = client.get_queue().await?;
+                println!("Upcoming tracks: {}", tracks.len());
+                for t in tracks.iter().take(5) {
+                    println!("  - {}", t.name);
+                }
+            }
+            "5" => {
+                // Fetch state first to determine toggle action
+                if let Some(pb) = client.get_playback_state().await? {
+                    client.toggle_playback(pb.is_playing).await?;
+                    println!("Playback toggled.");
+                } else {
+                    println!("Cannot toggle: No active session.");
+                }
+            }
+            "6" => {
+                client.next_track().await?;
+                println!("Skipped to next.");
+            }
+            "7" => {
+                client.prev_track().await?;
+                println!("Went to previous.");
+            }
+            "0" => break,
+            _ => println!("Invalid option."),
         }
     }
 
