@@ -17,7 +17,7 @@ pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
 }
 
 fn draw_library(f: &mut Frame, app: &mut App, area: Rect) {
-    let border_color = if app.active_block == ActiveBlock::LibraryMenu { Color::Green } else { Color::White };
+    let border_color = if app.active_block == ActiveBlock::LibraryMenu { Color::LightCyan } else { Color::White };
 
     let items = vec![
         ListItem::new(" ♥ Liked Songs"),
@@ -44,11 +44,7 @@ fn draw_library(f: &mut Frame, app: &mut App, area: Rect) {
 }
 
 fn draw_playlists(f: &mut Frame, app: &mut App, area: Rect) {
-    let border_color = if app.active_block == ActiveBlock::PlaylistsMenu {
-        Color::Green
-    } else {
-        Color::White
-    };
+    let border_color = if app.active_block == ActiveBlock::PlaylistsMenu { Color::LightCyan } else { Color::White };
 
     let mut items = vec![];
     for playlist in &app.playlists {

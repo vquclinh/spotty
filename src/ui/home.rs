@@ -9,7 +9,7 @@ use ratatui::{
 
 pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, area: Rect) {
     let is_home_focused = *active_block == ActiveBlock::HomeBlock;
-    let border_color = if is_home_focused { Color::LightMagenta } else { Color::White };
+    let border_color = if is_home_focused { Color::LightCyan } else { Color::White };
 
     let outer_block = Block::default()
         .title(format!(" {} ", state.greeting))
@@ -27,7 +27,7 @@ pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, ar
         ])
         .split(inner_area);
 
-    let tab_titles: Vec<Line> = vec!["[1] 🔥 Top Tracks", "[2] 🎤 Top Artists", "[3] 🕒 Recently Played"]
+    let tab_titles: Vec<Line> = vec!["🔥 Top Tracks [1]", "🎤 Top Artists [2]", "🕒 Recently Played [3]"]
         .into_iter()
         .map(|t| Line::from(t))
         .collect();

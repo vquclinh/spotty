@@ -20,7 +20,7 @@ pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
             Block::default()
                 .title(" Now Playing ")
                 .borders(Borders::ALL)
-                .border_style(Style::default().fg(Color::Cyan)),
+                .border_style(Style::default().fg(Color::White)),
         )
         .alignment(Alignment::Center);
 

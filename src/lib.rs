@@ -11,12 +11,15 @@ use app::App;
 use crossterm::{
     execute,
     terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
+    event::{poll, read, Event}
 };
 use ratatui::{
     Terminal,
-    backend::{CrosstermBackend},
+    backend::CrosstermBackend,
 };
-use std::{io, panic, time::Duration};
+use std::{io, panic, time::{Duration, Instant}};
+
+use handlers::handle_key_events;
 
 pub fn run() -> anyhow::Result<()> {
     panic::set_hook(Box::new(|info| {
@@ -33,15 +36,21 @@ pub fn run() -> anyhow::Result<()> {
 
     let mut app = App::new();
     let tick_rate = Duration::from_millis(50);
+    let mut last_tick = Instant::now();
 
     while !app.should_quit {
-        app.on_tick();
-        
         terminal.draw(|f| ui::draw(f, &mut app))?;
 
-        let evt = event::read(tick_rate)?;
+        let timeout = tick_rate.saturating_sub(last_tick.elapsed());
 
-        handlers::handle(evt, &mut app);
+        if poll(timeout)? && let Event::Key(key) = read()? {
+            handle_key_events(key, &mut app);
+        }
+
+        if last_tick.elapsed() >= tick_rate {
+            app.on_tick();
+            last_tick = Instant::now();
+        }
     }
 
     disable_raw_mode()?;

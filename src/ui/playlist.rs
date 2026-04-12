@@ -7,7 +7,7 @@ use ratatui::{
 };
 
 pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
-    let border_color = if app.active_block == ActiveBlock::PlaylistTracks { Color::Green } else { Color::White };
+    let border_color = if app.active_block == ActiveBlock::PlaylistTracks { Color::LightCyan } else { Color::White };
     let block = Paragraph::new("List of Songs...").block(
         Block::default().title(" Playlist ").borders(Borders::ALL).border_style(Style::default().fg(border_color)),
     );
