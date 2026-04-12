@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use crossterm::event::{self, Event as CrosstermBackend, KeyEvent};
+use crossterm::event::{self, Event as CrosstermEvent, KeyEvent};
 
 pub enum Event {
     Tick,
@@ -9,10 +9,10 @@ pub enum Event {
 
 pub fn read(tick_rate: Duration) -> anyhow::Result<Event> {
     if event::poll(tick_rate)? {
-        if let CrosstermBackend::Key(key) = event::read()? {
+        if let CrosstermEvent::Key(key) = event::read()? {
             return Ok(Event::Key(key));
         }
-    }
+    } else {}
 
     Ok(Event::Tick)
 }
