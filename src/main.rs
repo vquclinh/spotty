@@ -1,7 +1,4 @@
-use anyhow::Result;
-
 #[tokio::main]
-async fn main() -> Result<()> {
-    console_spotify::test_auth().await?;
-    Ok(())
+async fn main() -> anyhow::Result<()> {
+    console_spotify::run().await
 }

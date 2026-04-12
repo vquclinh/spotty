@@ -1,9 +1,7 @@
 pub mod app;
-pub mod config;
 pub mod event;
 pub mod handlers;
 pub mod network;
-pub mod redirect_uri;
 pub mod ui;
 pub mod util;
 
@@ -14,11 +12,10 @@ use crossterm::{
 };
 use ratatui::{
     Terminal,
-    backend::{self, CrosstermBackend},
+    backend::{CrosstermBackend},
 };
 use std::{io, panic, time::Duration};
-use anyhow::{Result, Context, anyhow, bail};
-use crate::network::client::*;
+use anyhow::{Result};
 
 pub async fn run() -> Result<()> {
     panic::set_hook(Box::new(|info| {
@@ -47,98 +44,6 @@ pub async fn run() -> Result<()> {
     disable_raw_mode()?;
     execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
     terminal.show_cursor()?;
-
-    Ok(())
-}
-
-use std::io::Write;
-
-pub async fn test_auth() -> Result<()> {
-    let mut app = App::new().await;
-    let Some(mut client) = app.client else {
-        bail!("Client not initialized");
-    };
-    
-    loop {
-        println!("\n--- Spotify TUI Test Menu ---");
-        println!("1. Get Profile");
-        println!("2. Get Current Playback");
-        println!("3. Get Playlists");
-        println!("4. Get Queue");
-        println!("5. Toggle Play/Pause");
-        println!("6. Next Track");
-        println!("7. Previous Track");
-        println!("0. Exit");
-        print!("Select an option: ");
-        io::stdout().flush()?;
-
-        let mut input = String::new();
-        io::stdin().read_line(&mut input)?;
-        let choice = input.trim();
-
-        match choice {
-            "1" => {
-                let profile = client.get_user_profile().await?;
-                println!("User: {} (ID: {})", profile.display_name, profile.id);
-            }
-            "2" => {
-                match client.get_playback_state().await? {
-                    Some(pb) => {
-                        println!("Device: {} | Playing: {}", pb.device_name, pb.is_playing);
-                        if let Some(item) = pb.item {
-                            match item {
-                                Playable::Track(t) => println!("Track: {} - {}", t.name, t.artists[0].name),
-                                Playable::Episode(e) => println!("Episode: {} ({})", e.name, e.show_name),
-                            }
-                        }
-                    }
-                    None => println!("No active playback session found."),
-                }
-            }
-            "3" => {
-                let lists = client.get_user_playlists().await?;
-                for (i, p) in lists.iter().enumerate() {
-                    println!("{}. {}", i + 1, p.name);
-                    match client.get_playlist_tracks(&p.id, Some(10), None).await {
-                        Ok(tracks) => {
-                            for t in tracks {
-                                println!("{} - {}", t.name, t.artists[0].name);
-                            }
-                        }
-                        Err(e) => {
-                            eprintln!("{}", e);
-                        }
-                    }
-                }
-            }
-            "4" => {
-                let tracks = client.get_queue().await?;
-                println!("Upcoming tracks: {}", tracks.len());
-                for t in tracks.iter().take(5) {
-                    println!("  - {}", t.name);
-                }
-            }
-            "5" => {
-                // Fetch state first to determine toggle action
-                if let Some(pb) = client.get_playback_state().await? {
-                    client.toggle_playback(pb.is_playing).await?;
-                    println!("Playback toggled.");
-                } else {
-                    println!("Cannot toggle: No active session.");
-                }
-            }
-            "6" => {
-                client.next_track().await?;
-                println!("Skipped to next.");
-            }
-            "7" => {
-                client.prev_track().await?;
-                println!("Went to previous.");
-            }
-            "0" => break,
-            _ => println!("Invalid option."),
-        }
-    }
 
     Ok(())
 }
