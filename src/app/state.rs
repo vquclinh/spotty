@@ -1,15 +1,13 @@
+use crate::network::client::WebApiClient;
+
 pub struct App {
     pub should_quit: bool,
+    pub client: Option<WebApiClient>
 }
 
 impl App {
-    pub fn new() -> Self {
-        Self { should_quit: false }
-    }
-}
-
-impl Default for App {
-    fn default() -> Self {
-        Self::new()
+    pub async fn new() -> Self {
+        let client = WebApiClient::new(None).await.ok();
+        Self { should_quit: false, client }
     }
 }
