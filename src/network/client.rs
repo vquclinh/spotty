@@ -4,12 +4,12 @@ use rspotify::{
     model::CurrentPlaybackContext,
     model::PlayableItem,
     model::enums::misc::RepeatState,
-    model::AdditionalType
 };
 use super::auth;
-use anyhow::Result;
+use anyhow::{Result, anyhow, bail};
 use std::collections::HashMap;
 use std::time::{Instant, Duration};
+use serde_json::Value;
 
 fn normalize_duration(duration: chrono::Duration) -> Duration {
     // Make negative duration zero
@@ -39,6 +39,55 @@ pub struct Track {
     pub explicit: bool,
 }
 
+impl Track {
+    fn parse(v: &Value) -> Result<Self> {
+        if v["type"].as_str() != Some("track") {
+            bail!("Item is not a track");
+        }
+
+        let name = v["name"]
+            .as_str()
+            .ok_or_else(|| anyhow::anyhow!("Missing track name"))?
+            .to_string();
+
+        let id = v["id"]
+            .as_str()
+            .unwrap_or_default()
+            .to_string();
+
+        let album_name = v["album"]["name"]
+            .as_str()
+            .unwrap_or("Unknown Album")
+            .to_string();
+
+        let duration_ms = v["duration_ms"]
+            .as_u64()
+            .ok_or_else(|| anyhow::anyhow!("Missing duration"))?;
+
+        let explicit = v["explicit"].as_bool().unwrap_or(false);
+
+        let artists = v["artists"]
+            .as_array()
+            .ok_or_else(|| anyhow::anyhow!("Missing artists array"))?
+            .iter()
+            .map(|a| Artist {
+                id: a["id"].as_str().unwrap_or_default().to_string(),
+                name: a["name"].as_str().unwrap_or("Unknown Artist").to_string(),
+                genres: None,
+            })
+            .collect();
+
+        Ok(Self {
+            id,
+            name,
+            album_name,
+            artists,
+            duration: Duration::from_millis(duration_ms),
+            explicit,
+        })
+    }
+}
+
 impl From<rspotify::model::FullTrack> for Track {
     fn from(t: rspotify::model::FullTrack) -> Self {
         Self {
@@ -66,6 +115,63 @@ pub struct Episode {
     pub resume_point: Duration, // where the user left off
     pub explicit: bool,
     pub is_externally_hosted: bool,
+}
+
+impl Episode {
+    pub fn parse(v: &Value) -> Result<Self> {
+        if v["type"].as_str() != Some("episode") {
+            return Err(anyhow::anyhow!("Item is not an episode"));
+        }
+
+        let id = v["id"]
+            .as_str()
+            .ok_or_else(|| anyhow::anyhow!("Missing episode id"))?
+            .to_string();
+
+        let name = v["name"]
+            .as_str()
+            .ok_or_else(|| anyhow::anyhow!("Missing episode name"))?
+            .to_string();
+
+        let description = v["description"]
+            .as_str()
+            .unwrap_or_default()
+            .to_string();
+
+        let show_name = v["show"]["name"]
+            .as_str()
+            .unwrap_or("Unknown Show")
+            .to_string();
+
+        let release_date = v["release_date"]
+            .as_str()
+            .unwrap_or_default()
+            .to_string();
+
+        let duration_ms = v["duration_ms"]
+            .as_u64()
+            .ok_or_else(|| anyhow::anyhow!("Missing episode duration"))?;
+
+        // Extract resume position if it exists, otherwise default to zero
+        let resume_ms = v["resume_point"]["resume_position_ms"]
+            .as_u64()
+            .unwrap_or(0);
+
+        let explicit = v["explicit"].as_bool().unwrap_or(false);
+        let is_externally_hosted = v["is_externally_hosted"].as_bool().unwrap_or(false);
+
+        Ok(Self {
+            id,
+            name,
+            description,
+            show_name,
+            release_date,
+            duration: Duration::from_millis(duration_ms),
+            resume_point: Duration::from_millis(resume_ms),
+            explicit,
+            is_externally_hosted,
+        })
+    }
 }
 
 impl From<rspotify::model::FullEpisode> for Episode {
@@ -101,6 +207,34 @@ pub struct PlaybackState {
     pub device_name: String,
     pub repeat_state: RepeatState, // Off, Track, Context
     pub shuffle_state: bool,
+}
+
+impl PlaybackState {
+    fn parse(v: &Value) -> Result<Self> {
+        let item_json = &v["item"];
+        let item = if item_json.is_null() {
+            None
+        } else {
+            match item_json["type"].as_str() {
+                Some("track") => Some(Playable::Track(Track::parse(item_json)?)),
+                Some("episode") => Some(Playable::Episode(Episode::parse(item_json)?)),
+                _ => None,
+            }
+        };
+
+        Ok(Self {
+            item,
+            is_playing: v["is_playing"].as_bool().unwrap_or(false),
+            progress: Duration::from_millis(v["progress_ms"].as_u64().unwrap_or(0)),
+            device_name: v["device"]["name"].as_str().unwrap_or("Unknown").to_string(),
+            repeat_state: match v["repeat_state"].as_str().unwrap_or("off") {
+                "track" => RepeatState::Track,
+                "context" => RepeatState::Context,
+                _ => RepeatState::Off,
+            },
+            shuffle_state: v["shuffle_state"].as_bool().unwrap_or(false),
+        })
+    }
 }
 
 impl From<CurrentPlaybackContext> for PlaybackState {
@@ -215,10 +349,25 @@ impl WebApiClient {
 
     }
 
-    pub async fn get_playback_state(&self) -> Result<Option<PlaybackState>> {
-        let ctx = self.client.current_playback(None, None::<Vec<_>>).await?;
+    // pub async fn get_playback_state(&self) -> Result<Option<PlaybackState>> {
+    //     let ctx = self.client.current_playback(None, None::<Vec<_>>).await?;
 
-        Ok(ctx.map(PlaybackState::from))
+    //     Ok(ctx.map(PlaybackState::from))
+    // }
+
+    // Parse manually because rspotify cannot detect track
+    pub async fn get_playback_state(&self) -> Result<Option<PlaybackState>> {
+        let endpoint = "me/player";
+        let params = HashMap::<&str, &str>::new();
+
+        let json = self.client.api_get(endpoint, &params).await?;
+
+        if json.is_empty() {
+            return Ok(None);
+        }
+
+        let v: Value = serde_json::from_str(&json)?;
+        Ok(PlaybackState::parse(&v).ok())
     }
 
 }
