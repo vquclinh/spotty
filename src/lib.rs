@@ -17,8 +17,10 @@ use ratatui::{
     backend::{self, CrosstermBackend},
 };
 use std::{io, panic, time::Duration};
+use anyhow::{Result, Context, anyhow, bail};
+use crate::network::client::*;
 
-pub fn run() -> anyhow::Result<()> {
+pub async fn run() -> Result<()> {
     panic::set_hook(Box::new(|info| {
         let _ = disable_raw_mode();
         let _ = execute!(io::stdout(), LeaveAlternateScreen);
@@ -31,7 +33,7 @@ pub fn run() -> anyhow::Result<()> {
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
-    let mut app = App::new();
+    let mut app = App::new().await;
     let tick_rate = Duration::from_millis(50);
 
     while !app.should_quit {
@@ -45,6 +47,50 @@ pub fn run() -> anyhow::Result<()> {
     disable_raw_mode()?;
     execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
     terminal.show_cursor()?;
+
+    Ok(())
+}
+
+pub async fn test_auth() -> Result<()> {
+    let app = App::new().await;
+    let Some(client) = app.client else {
+        bail!("Client not initialized");
+    };
+
+    match client.get_user_profile().await {
+        Ok(profile) => {
+            println!("User profile:");
+            println!("Id: {}", profile.id);
+            println!("Name: {}\n", profile.display_name);
+        }
+        Err(e) => {
+            eprintln!("Cannot fetch user profile: {}", e);
+        }
+    }
+
+    match client.get_playback_state().await {
+        Ok(Some(playback)) => {
+            println!("Current playback:");
+            println!("Device: {}", playback.device_name);
+
+            // Handling the Playable enum (Track or Episode)
+            if let Some(item) = playback.item {
+                match item {
+                    Playable::Track(t) => println!("Track: {} by {}", t.name, t.artists[0].name),
+                    Playable::Episode(e) => println!("Episode: {}", e.name),
+                }
+            } else {
+                println!("No playable item recognized");
+            }
+            println!("Status: {}", if playback.is_playing { "Playing" } else { "Paused" });
+        }
+        Ok(None) => {
+            println!("Nothing is currently playing.");
+        }
+        Err(e) => {
+            eprintln!("Error fetching playback: {}", e);
+        }
+    }
 
     Ok(())
 }

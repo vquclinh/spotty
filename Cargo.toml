@@ -9,7 +9,7 @@ description = "A modern Terminal User Interface for Spotify"
 ratatui = "0.30.0"
 crossterm = "0.29"
 
-rspotify = { version = "0.14", features = ["client-reqwest", "env-file"] }
+rspotify = { version = "0.16", features = ["client-reqwest", "env-file", "cli"] }
 
 tokio = { version = "1.51", features = ["full"] }
 
@@ -20,6 +20,7 @@ serde_json = "1.0.149"
 
 dotenv = "0.15"
 anyhow = "1.0"
+chrono = "0.4.44"
 
 [[bin]]
 path = "src/main.rs"
