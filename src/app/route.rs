@@ -1,6 +1,7 @@
 use crate::app::home_state::HomeState;
 use crate::app::search_state::SearchState;
 use crate::app::splash_state::SplashState;
+
 #[derive(Clone)]
 pub enum Route {
     Splash(SplashState),

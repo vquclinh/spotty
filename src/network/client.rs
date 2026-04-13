@@ -149,14 +149,14 @@ impl WebApiClient {
         Ok(tracks)
     }
 
-    // pub async fn get_recently_played(&self, limit: u32) -> Result<Vec<Track>> {
-    //     let history = self.client.current_user_recently_played(Some(limit), None).await?;
-    //     let tracks = history.items
-    //         .into_iter()
-    //         .map(|h| Track::from(h.track))
-    //         .collect();
-    //     Ok(tracks)
-    // }
+    pub async fn get_recently_played(&self, limit: u32) -> Result<Vec<Track>> {
+        let history = self.client.current_user_recently_played(Some(limit), None).await?;
+        let tracks = history.items
+            .into_iter()
+            .map(|h| Track::from(h.track))
+            .collect();
+        Ok(tracks)
+    }
 
     pub async fn toggle_playback(&mut self, playing: bool) -> Result<()> {
         if playing {

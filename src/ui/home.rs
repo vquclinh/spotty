@@ -64,23 +64,28 @@ pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, ar
 
             let header = Row::new(header_cells).style(header_style);
 
-            let rows: Vec<Row> = if state.active_tab == HomeTab::TopTracks {
-                state.top_tracks.items.iter().map(|t| {
-                    if show_extra_column {
-                        Row::new(vec![format!("  {}", t.title), t.artist.clone(), t.extra_info.clone()])
-                    } else {
-                        Row::new(vec![format!("  {}", t.title), t.artist.clone()])
-                    }
-                }).collect()
+            let target_table = if state.active_tab == HomeTab::TopTracks {
+                &state.top_tracks
             } else {
-                state.recent_tracks.items.iter().map(|t| {
-                    if show_extra_column {
-                        Row::new(vec![format!("  {}", t.title), t.artist.clone(), t.extra_info.clone()])
-                    } else {
-                        Row::new(vec![format!("  {}", t.title), t.artist.clone()])
-                    }
-                }).collect()
+                &state.recent_tracks
             };
+
+            let rows: Vec<Row> = target_table.items.iter().map(|t| {
+                let title = t.name.clone();
+                
+                let artist = t.artists.first()
+                    .map(|a| a.name.clone())
+                    .unwrap_or_else(|| "Unknown".to_string());
+                
+                let duration_secs = t.duration.as_secs();
+                let duration_str = format!("{}:{:02}", duration_secs / 60, duration_secs % 60);
+
+                if show_extra_column {
+                    Row::new(vec![format!("  {}", title), artist, duration_str])
+                } else {
+                    Row::new(vec![format!("  {}", title), artist])
+                }
+            }).collect();
 
             let table = Table::new(rows, widths)
                 .header(header)
@@ -101,7 +106,11 @@ pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, ar
             let widths = [Constraint::Percentage(40), Constraint::Percentage(60)];
 
             let rows: Vec<Row> = state.top_artists.items.iter().map(|a| {
-                Row::new(vec![format!("  {}", a.name), a.genres.clone()])
+                let genres_str = a.genres.as_ref()
+                    .map(|g| g.join(", "))
+                    .unwrap_or_else(|| "N/A".to_string());
+
+                Row::new(vec![format!("  {}", a.name), genres_str])
             }).collect();
 
             let table = Table::new(rows, widths)

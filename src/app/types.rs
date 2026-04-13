@@ -14,25 +14,19 @@ pub enum ActiveBlock {
 }
 
 #[derive(Clone)]
-pub struct SimplifiedTrack {
-    pub title: String,
-    pub artist: String,
-    pub extra_info: String,
-}
-
-#[derive(Clone)]
-pub struct SimplifiedArtist {
-    pub name: String,
-    pub genres: String,
-}
-
-#[derive(Clone)]
 pub struct StatefulTable<T> {
     pub items: Vec<T>,
     pub state: TableState,
 }
 
 impl<T> StatefulTable<T> {
+    pub fn new() -> Self {
+        Self {
+            items: Vec::new(),
+            state: TableState::default(),
+        }
+    }
+
     pub fn with_items(items: Vec<T>) -> Self {
         let mut state = TableState::default();
         if !items.is_empty() {

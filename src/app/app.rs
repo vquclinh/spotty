@@ -2,7 +2,7 @@ use ratatui::widgets::ListState;
 use tokio::sync::mpsc;
 
 use crate::app::splash_state::SplashState;
-use crate::app::types::{ActiveBlock};
+use crate::app::types::ActiveBlock;
 use crate::app::route::Route;
 
 use crate::network::models::{Playlist, PlaybackState};
@@ -13,9 +13,6 @@ pub struct App {
     pub active_block: ActiveBlock,
     pub history: Vec<(Route, ActiveBlock)>,
 
-    pub should_quit: bool,
-    pub show_help: bool,
-
     pub network_tx: mpsc::UnboundedSender<ClientRequest>,
 
     pub playback: Option<PlaybackState>,
@@ -24,6 +21,9 @@ pub struct App {
 
     pub library_state: ListState,
     pub playlists_state: ListState,
+
+    pub should_quit: bool,
+    pub show_help: bool,
 }
 
 impl App {

@@ -1,6 +1,9 @@
 pub mod app;
-pub mod types;
 pub mod route;
+
+pub mod types;
+pub mod state;
+
 pub mod search_state;
 pub mod home_state;
 pub mod splash_state;
