@@ -1,6 +1,6 @@
 use super::route::Route;
 use super::home_state::HomeState;
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct SplashState {
     pub ticks: u32,
 }
@@ -18,11 +18,5 @@ impl SplashState {
         }
         
         None
-    }
-}
-
-impl Default for SplashState {
-    fn default() -> Self {
-        Self::new()
     }
 }

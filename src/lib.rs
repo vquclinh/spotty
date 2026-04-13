@@ -20,12 +20,33 @@ use std::{io, panic, time::{Duration, Instant}};
 use handlers::handle_key_events;
 use anyhow::{Result};
 
+use std::sync::{Arc, Mutex};
+
+use tokio::sync::mpsc;
+use crate::network::client::WebApiClient;
+use crate::network::request::ClientRequest;
+use crate::network::handler::start_network_worker;
+
+use crate::app::state::IoSharedState;
+
 pub async fn run() -> Result<()> {
+    // when app crash, call disable_raw_mode()
     panic::set_hook(Box::new(|info| {
         let _ = disable_raw_mode();
         let _ = execute!(io::stdout(), LeaveAlternateScreen);
         eprintln!("App crashed: {}", info);
     }));
+
+    let (network_tx, mut network_rx) = mpsc::unbounded_channel::<ClientRequest>();
+
+    let mut spotify_client = WebApiClient::new(Some(1800)).await?;
+    
+    let shared_state = Arc::new(Mutex::new(IoSharedState::default()));
+    let network_shared_state = Arc::clone(&shared_state);
+    
+    tokio::spawn(async move {
+        start_network_worker(spotify_client, network_rx, network_shared_state).await;     
+    });
 
     enable_raw_mode()?;
     let mut stdout = io::stdout();
@@ -33,7 +54,8 @@ pub async fn run() -> Result<()> {
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
-    let mut app = App::new().await;
+    let mut app = App::new(network_tx, Arc::clone(&shared_state));
+    
     let tick_rate = Duration::from_millis(50);
     let mut last_tick = Instant::now();
 

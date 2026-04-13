@@ -48,7 +48,11 @@ fn draw_playlists(f: &mut Frame, app: &mut App, area: Rect) {
 
     let mut items = vec![];
     for playlist in &app.playlists {
-        items.push(ListItem::new(format!(" ♪ {}", playlist)));
+        items.push(ListItem::new(format!(" ♪ {}", playlist.name)));
+    }
+
+    if items.is_empty() {
+        items.push(ListItem::new(" ⏳ Loading..."));
     }
 
     let list = List::new(items)

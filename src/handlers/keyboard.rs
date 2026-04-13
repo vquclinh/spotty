@@ -3,6 +3,8 @@ use crossterm::event::{KeyCode, KeyModifiers, KeyEvent};
 
 use crate::app::home_state::HomeTab;
 
+use crate::ClientRequest;
+
 pub fn handle_key_events(key: KeyEvent, app: &mut App) {
     if key.code == KeyCode::Char('q') 
         || key.code == KeyCode::Esc 
@@ -30,7 +32,10 @@ pub fn handle_key_events(key: KeyEvent, app: &mut App) {
                 match key.code {
                     KeyCode::Char('1') => home_state.active_tab = HomeTab::TopTracks,
                     KeyCode::Char('2') => home_state.active_tab = HomeTab::TopArtists,
-                    KeyCode::Char('3') => home_state.active_tab = HomeTab::RecentlyPlayed,
+                    KeyCode::Char('3') => {
+                        home_state.active_tab = HomeTab::RecentlyPlayed;
+                        let _ = app.network_tx.send(ClientRequest::GetRecentlyPlayed { limit: 50 });
+                    },
                     
                     KeyCode::Right => {
                         home_state.active_tab = match home_state.active_tab {
@@ -38,14 +43,23 @@ pub fn handle_key_events(key: KeyEvent, app: &mut App) {
                             HomeTab::TopArtists => HomeTab::RecentlyPlayed,
                             HomeTab::RecentlyPlayed => HomeTab::TopTracks,
                         };
+                        match home_state.active_tab {
+                            HomeTab::RecentlyPlayed => { let _ = app.network_tx.send(ClientRequest::GetRecentlyPlayed { limit: 50 }); }
+                            _ => {}
+                        }
                     }
 
                     KeyCode::Left => {
                         home_state.active_tab = match home_state.active_tab {
-                            HomeTab::TopTracks => HomeTab::RecentlyPlayed, // Vòng lại cuối
+                            HomeTab::TopTracks => HomeTab::RecentlyPlayed,
                             HomeTab::TopArtists => HomeTab::TopTracks,
                             HomeTab::RecentlyPlayed => HomeTab::TopArtists,
                         };
+
+                        match home_state.active_tab {
+                            HomeTab::RecentlyPlayed => { let _ = app.network_tx.send(ClientRequest::GetRecentlyPlayed { limit: 50 }); }
+                            _ => {}
+                        }
                     }
 
                     KeyCode::Down => {

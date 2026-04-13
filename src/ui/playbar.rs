@@ -7,10 +7,19 @@ use ratatui::{
 };
 
 pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
-    let status = if app.player.is_playing { "▶" } else { "||" };
+    let is_playing = app.playback.as_ref().is_some_and(|p| p.is_playing);
+    let status = if is_playing { "▶" } else { "||" };
     
-    let track_info = if let Some(track) = &app.player.current_track {
-        format!(" {} | {} - {} ", status, track.title, track.artist)
+    let track_info = if let Some(playback) = &app.playback {
+        if let Some(crate::network::models::Playable::Track(track)) = &playback.item {
+            let artist_name = track.artists.first()
+                .map(|a| a.name.clone())
+                .unwrap_or_else(|| "Unknown".to_string());
+                
+            format!(" {} | {} - {} ", status, track.name, artist_name)
+        } else {
+            format!(" {} | Playing a Podcast ", status)
+        }
     } else {
         format!(" {} | No song ", status)
     };

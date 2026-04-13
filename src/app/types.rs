@@ -1,13 +1,6 @@
 use ratatui::widgets::TableState;
 
 #[derive(Clone, PartialEq, Debug)]
-pub struct Track {
-    pub title: String,
-    pub artist: String,
-    pub album: String,
-}
-
-#[derive(Clone, PartialEq, Debug)]
 pub enum ActiveBlock {
     LibraryMenu,
     PlaylistsMenu,
@@ -20,32 +13,20 @@ pub enum ActiveBlock {
     LyricsInfo,
 }
 
-pub struct PlayerState {
-    pub is_playing: bool,
-    pub current_track: Option<Track>,
-    pub queue: Vec<Track>,
-}
-
-#[derive(Clone)]
-pub struct SimplifiedTrack {
-    pub title: String,
-    pub artist: String,
-    pub extra_info: String,
-}
-
-#[derive(Clone)]
-pub struct SimplifiedArtist {
-    pub name: String,
-    pub genres: String,
-}
-
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct StatefulTable<T> {
     pub items: Vec<T>,
     pub state: TableState,
 }
 
 impl<T> StatefulTable<T> {
+    pub fn new() -> Self {
+        Self {
+            items: Vec::new(),
+            state: TableState::default(),
+        }
+    }
+
     pub fn with_items(items: Vec<T>) -> Self {
         let mut state = TableState::default();
         if !items.is_empty() {

@@ -10,7 +10,7 @@ use std::collections::HashMap;
 use std::time::{Instant, Duration};
 use serde_json::Value;
 
-use super::models::{Track, Artist, Album, Playlist, PlaybackState, UserProfile, Playable};
+use super::models::{Track, Artist, Album, Playlist, PlaybackState, UserProfile};
 
 // -------------------------------------- CACHE ---------------------------------------
 pub struct CacheItem<T> {
@@ -58,7 +58,7 @@ impl WebApiClient {
     pub async fn new(cache_ttl_sec: Option<u64>) -> Result<Self> {
         let mut client = auth::create_auth_client().await?;
         auth::authenticate(&mut client).await?;
-
+        
         Ok(Self {
             client,
             cache: cache_ttl_sec.map_or(Cache::default(), Cache::new)
@@ -149,14 +149,67 @@ impl WebApiClient {
         Ok(tracks)
     }
 
-    // pub async fn get_recently_played(&self, limit: u32) -> Result<Vec<Track>> {
-    //     let history = self.client.current_user_recently_played(Some(limit), None).await?;
-    //     let tracks = history.items
-    //         .into_iter()
-    //         .map(|h| Track::from(h.track))
-    //         .collect();
-    //     Ok(tracks)
-    // }
+    // using rspotify to get raw data and then we handle this data
+    // especially handle the "external_ids"
+    pub async fn get_recently_played(&self, limit: u32) -> Result<Vec<Track>> {
+        let endpoint = "me/player/recently-played";
+        let mut params = HashMap::new();
+        let limit_str = limit.to_string();
+        params.insert("limit", limit_str.as_str());
+
+        // get json
+        let json_str = self.client.api_get(endpoint, &params).await?;
+        let v: Value = serde_json::from_str(&json_str)?;
+
+        let mut tracks = Vec::new();
+
+        // go through each items
+        if let Some(items) = v["items"].as_array() {
+            for item in items {
+                if let Some(track_val) = item.get("track") {
+                    
+                    // get id, name, explicit, album name, duration
+                    // safe because we have a case None for each info
+                    let id = track_val["id"].as_str().unwrap_or("").to_string();
+                    let name = track_val["name"].as_str().unwrap_or("Unknown Track").to_string();
+                    let explicit = track_val["explicit"].as_bool().unwrap_or(false);
+
+                    let album_name = track_val["album"]["name"]
+                        .as_str()
+                        .unwrap_or("Unknown Album")
+                        .to_string();
+
+                    let duration_ms = track_val["duration_ms"].as_u64().unwrap_or(0);
+                    let duration = Duration::from_millis(duration_ms);
+                    
+                    let mut artists = Vec::new();
+                    if let Some(artists_array) = track_val["artists"].as_array() {
+                        for artist_val in artists_array {
+                            let artist_name = artist_val["name"].as_str().unwrap_or("Unknown Artist").to_string();
+                            let artist_id = artist_val["id"].as_str().unwrap_or("").to_string();
+                            
+                            artists.push(Artist {
+                                id: artist_id,
+                                name: artist_name,
+                                genres: None,
+                            });
+                        }
+                    }
+
+                    tracks.push(Track {
+                        id,
+                        name,
+                        artists,
+                        album_name,
+                        duration,
+                        explicit,
+                    });
+                }
+            }
+        }
+
+        Ok(tracks)
+    }
 
     pub async fn toggle_playback(&mut self, playing: bool) -> Result<()> {
         if playing {

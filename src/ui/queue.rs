@@ -9,16 +9,7 @@ use ratatui::{
 pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
     let border_color = if app.active_block == ActiveBlock::QueueBlock { Color::Green } else { Color::White };
 
-    let queue_text = if app.player.queue.is_empty() {
-        " Queue... ".to_string()
-    } else {
-        app.player.queue
-            .iter()
-            .enumerate()
-            .map(|(i, track)| format!(" {}. {} - {}", i + 1, track.title, track.artist))
-            .collect::<Vec<String>>()
-            .join("\n")
-    };
+    let queue_text = "\n  [API] Fetching queue from Spotify is coming soon...".to_string();
 
     let block = Paragraph::new(queue_text).block(
         Block::default()

@@ -11,6 +11,7 @@ pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, ar
     let is_home_focused = *active_block == ActiveBlock::HomeBlock;
     let border_color = if is_home_focused { Color::LightCyan } else { Color::White };
 
+    // draw outer block
     let outer_block = Block::default()
         .title(format!(" {} ", state.greeting))
         .borders(Borders::ALL)
@@ -19,6 +20,7 @@ pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, ar
     let inner_area = outer_block.inner(area);
     f.render_widget(outer_block, area);
 
+    // chunk[0] is for tab's name,
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
@@ -29,7 +31,7 @@ pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, ar
 
     let tab_titles: Vec<Line> = vec!["🔥 Top Tracks [1]", "🎤 Top Artists [2]", "🕒 Recently Played [3]"]
         .into_iter()
-        .map(|t| Line::from(t))
+        .map(Line::from)
         .collect();
 
     let active_tab_index = match state.active_tab {
@@ -38,6 +40,7 @@ pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, ar
         HomeTab::RecentlyPlayed => 2,
     };
 
+    // draw a line show 3 tab name
     let tabs = Tabs::new(tab_titles)
         .select(active_tab_index)
         .highlight_style(Style::default().fg(Color::LightGreen).add_modifier(Modifier::BOLD))
@@ -45,6 +48,7 @@ pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, ar
 
     f.render_widget(tabs, chunks[0]);
 
+    // check whether if the width of terminal is > 60
     let show_extra_column = chunks[1].width > 60;
 
     let highlight_style = Style::default().fg(Color::LightMagenta).add_modifier(Modifier::BOLD);
@@ -52,6 +56,7 @@ pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, ar
 
     match state.active_tab {
         HomeTab::TopTracks | HomeTab::RecentlyPlayed => {
+            // if width > 60, we show 3 columns
             let (header_cells, widths) = if show_extra_column {
                 let cells = vec!["  #title", "#artist", "#length"];
                 let w = [Constraint::Percentage(45), Constraint::Percentage(35), Constraint::Percentage(20)];
@@ -64,23 +69,29 @@ pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, ar
 
             let header = Row::new(header_cells).style(header_style);
 
-            let rows: Vec<Row> = if state.active_tab == HomeTab::TopTracks {
-                state.top_tracks.items.iter().map(|t| {
-                    if show_extra_column {
-                        Row::new(vec![format!("  {}", t.title), t.artist.clone(), t.extra_info.clone()])
-                    } else {
-                        Row::new(vec![format!("  {}", t.title), t.artist.clone()])
-                    }
-                }).collect()
+            // determine top tracks or recent tracks and get data
+            let target_table = if state.active_tab == HomeTab::TopTracks {
+                &state.top_tracks
             } else {
-                state.recent_tracks.items.iter().map(|t| {
-                    if show_extra_column {
-                        Row::new(vec![format!("  {}", t.title), t.artist.clone(), t.extra_info.clone()])
-                    } else {
-                        Row::new(vec![format!("  {}", t.title), t.artist.clone()])
-                    }
-                }).collect()
+                &state.recent_tracks
             };
+
+            let rows: Vec<Row> = target_table.items.iter().map(|t| {
+                let title = t.name.clone();
+                
+                let artist = t.artists.first()
+                    .map(|a| a.name.clone())
+                    .unwrap_or_else(|| "Unknown".to_string());
+                
+                let duration_secs = t.duration.as_secs();
+                let duration_str = format!("{}:{:02}", duration_secs / 60, duration_secs % 60);
+
+                if show_extra_column {
+                    Row::new(vec![format!("  {}", title), artist, duration_str])
+                } else {
+                    Row::new(vec![format!("  {}", title), artist])
+                }
+            }).collect();
 
             let table = Table::new(rows, widths)
                 .header(header)
@@ -101,7 +112,11 @@ pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, ar
             let widths = [Constraint::Percentage(40), Constraint::Percentage(60)];
 
             let rows: Vec<Row> = state.top_artists.items.iter().map(|a| {
-                Row::new(vec![format!("  {}", a.name), a.genres.clone()])
+                let genres_str = a.genres.as_ref()
+                    .map(|g| g.join(", "))
+                    .unwrap_or_else(|| "N/A".to_string());
+
+                Row::new(vec![format!("  {}", a.name), genres_str])
             }).collect();
 
             let table = Table::new(rows, widths)

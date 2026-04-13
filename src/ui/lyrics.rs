@@ -6,6 +6,8 @@ use ratatui::{
     widgets::{Block, Borders, Paragraph},
 };
 
+use crate::network::models::Playable::Track;
+
 pub fn draw_text(f: &mut Frame, app: &mut App, area: Rect) {
     let border_color = if app.active_block == ActiveBlock::LyricsText { Color::Green } else { Color:: White };
     let text = "\n\n♫ ... Loading lyrics ... ♫\n\n";
@@ -22,10 +24,20 @@ pub fn draw_text(f: &mut Frame, app: &mut App, area: Rect) {
 pub fn draw_info(f: &mut Frame, app: &mut App, area: Rect) {
     let border_color = if app.active_block == ActiveBlock::LyricsInfo { Color::Green } else { Color::White };
 
-    let info = if let Some(track) = &app.player.current_track {
-        format!("\n Song: {}\n Artist: {}\n Album: {}", track.title, track.artist, track.album)
+    let info = if let Some(playback) = &app.playback {
+        
+        if let Some(Track(track)) = &playback.item {
+            let artist_name = track.artists.first()
+                .map(|a| a.name.clone())
+                .unwrap_or_else(|| "Unknown".to_string());
+
+            format!("\n Song: {}\n Artist: {}\n Album: {}", track.name, artist_name, track.album_name)
+        } else {
+            "\n No track info available.".to_string()
+        }
+
     } else {
-        "\n No song.".to_string()
+        "\n No song currently playing.".to_string()
     };
 
     let block = Paragraph::new(info).block(

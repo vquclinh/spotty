@@ -18,5 +18,9 @@ pub enum ClientRequest {
         offset: Option<u32>,
     },
 
+    GetRecentlyPlayed {
+        limit: u32,
+    },
+
     Player(PlayerRequest),
 }
