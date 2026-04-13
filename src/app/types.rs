@@ -13,7 +13,7 @@ pub enum ActiveBlock {
     LyricsInfo,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct StatefulTable<T> {
     pub items: Vec<T>,
     pub state: TableState,

@@ -11,6 +11,7 @@ pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, ar
     let is_home_focused = *active_block == ActiveBlock::HomeBlock;
     let border_color = if is_home_focused { Color::LightCyan } else { Color::White };
 
+    // draw outer block
     let outer_block = Block::default()
         .title(format!(" {} ", state.greeting))
         .borders(Borders::ALL)
@@ -19,6 +20,7 @@ pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, ar
     let inner_area = outer_block.inner(area);
     f.render_widget(outer_block, area);
 
+    // chunk[0] is for tab's name,
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
@@ -29,7 +31,7 @@ pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, ar
 
     let tab_titles: Vec<Line> = vec!["🔥 Top Tracks [1]", "🎤 Top Artists [2]", "🕒 Recently Played [3]"]
         .into_iter()
-        .map(|t| Line::from(t))
+        .map(Line::from)
         .collect();
 
     let active_tab_index = match state.active_tab {
@@ -38,6 +40,7 @@ pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, ar
         HomeTab::RecentlyPlayed => 2,
     };
 
+    // draw a line show 3 tab name
     let tabs = Tabs::new(tab_titles)
         .select(active_tab_index)
         .highlight_style(Style::default().fg(Color::LightGreen).add_modifier(Modifier::BOLD))
@@ -45,6 +48,7 @@ pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, ar
 
     f.render_widget(tabs, chunks[0]);
 
+    // check whether if the width of terminal is > 60
     let show_extra_column = chunks[1].width > 60;
 
     let highlight_style = Style::default().fg(Color::LightMagenta).add_modifier(Modifier::BOLD);
@@ -52,6 +56,7 @@ pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, ar
 
     match state.active_tab {
         HomeTab::TopTracks | HomeTab::RecentlyPlayed => {
+            // if width > 60, we show 3 columns
             let (header_cells, widths) = if show_extra_column {
                 let cells = vec!["  #title", "#artist", "#length"];
                 let w = [Constraint::Percentage(45), Constraint::Percentage(35), Constraint::Percentage(20)];
@@ -64,6 +69,7 @@ pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, ar
 
             let header = Row::new(header_cells).style(header_style);
 
+            // determine top tracks or recent tracks and get data
             let target_table = if state.active_tab == HomeTab::TopTracks {
                 &state.top_tracks
             } else {

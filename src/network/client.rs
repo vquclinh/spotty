@@ -58,7 +58,7 @@ impl WebApiClient {
     pub async fn new(cache_ttl_sec: Option<u64>) -> Result<Self> {
         let mut client = auth::create_auth_client().await?;
         auth::authenticate(&mut client).await?;
-
+        
         Ok(Self {
             client,
             cache: cache_ttl_sec.map_or(Cache::default(), Cache::new)

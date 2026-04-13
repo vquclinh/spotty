@@ -7,7 +7,7 @@ use ratatui::{
 };
 
 pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
-    let is_playing = app.playback.as_ref().map_or(false, |p| p.is_playing);
+    let is_playing = app.playback.as_ref().is_some_and(|p| p.is_playing);
     let status = if is_playing { "▶" } else { "||" };
     
     let track_info = if let Some(playback) = &app.playback {

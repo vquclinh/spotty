@@ -20,11 +20,16 @@ use std::{io, panic, time::{Duration, Instant}};
 use handlers::handle_key_events;
 use anyhow::{Result};
 
+use std::sync::{Arc, Mutex};
+
 use tokio::sync::mpsc;
 use crate::network::client::WebApiClient;
 use crate::network::request::ClientRequest;
 
+use crate::app::state::IoSharedState;
+
 pub async fn run() -> Result<()> {
+    // when app crash, call disable_raw_mode()
     panic::set_hook(Box::new(|info| {
         let _ = disable_raw_mode();
         let _ = execute!(io::stdout(), LeaveAlternateScreen);
@@ -34,7 +39,10 @@ pub async fn run() -> Result<()> {
     let (network_tx, mut network_rx) = mpsc::unbounded_channel::<ClientRequest>();
 
     let mut spotify_client = WebApiClient::new(Some(1800)).await?;
-
+    
+    let shared_state = Arc::new(Mutex::new(IoSharedState::default()));
+    let network_shared_state = Arc::clone(&shared_state);
+    
     tokio::spawn(async move {
         while let Some(request) = network_rx.recv().await {
             match request {
@@ -45,6 +53,13 @@ pub async fn run() -> Result<()> {
                 }
                 ClientRequest::GetCurrentPlayback => {
                     let _ = spotify_client.get_playback_state().await;
+                }
+                ClientRequest::GetRecentlyPlayed { limit } => {
+                    if let Ok(tracks) = spotify_client.get_recently_played(limit).await {
+                        if let Ok(mut state) = network_shared_state.lock() {
+                            state.recent_tracks = tracks;
+                        } else {}
+                    }
                 }
                 _ => {}
             }
@@ -57,7 +72,7 @@ pub async fn run() -> Result<()> {
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
-    let mut app = App::new(network_tx);
+    let mut app = App::new(network_tx, Arc::clone(&shared_state));
     
     let tick_rate = Duration::from_millis(50);
     let mut last_tick = Instant::now();
