@@ -25,6 +25,7 @@ use std::sync::{Arc, Mutex};
 use tokio::sync::mpsc;
 use crate::network::client::WebApiClient;
 use crate::network::request::ClientRequest;
+use crate::network::handler::start_network_worker;
 
 use crate::app::state::IoSharedState;
 
@@ -44,26 +45,7 @@ pub async fn run() -> Result<()> {
     let network_shared_state = Arc::clone(&shared_state);
     
     tokio::spawn(async move {
-        while let Some(request) = network_rx.recv().await {
-            match request {
-                ClientRequest::GetUserPlaylists => {
-                    if let Ok(playlists) = spotify_client.get_user_playlists().await {
-                        // TODO
-                    }
-                }
-                ClientRequest::GetCurrentPlayback => {
-                    let _ = spotify_client.get_playback_state().await;
-                }
-                ClientRequest::GetRecentlyPlayed { limit } => {
-                    if let Ok(tracks) = spotify_client.get_recently_played(limit).await {
-                        if let Ok(mut state) = network_shared_state.lock() {
-                            state.recent_tracks = tracks;
-                        } else {}
-                    }
-                }
-                _ => {}
-            }
-        }
+        start_network_worker(spotify_client, network_rx, network_shared_state).await;     
     });
 
     enable_raw_mode()?;
