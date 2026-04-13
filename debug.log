@@ -61,5 +61,5 @@ warning: field `cache` is never read
    |     ^^^^^
 
 warning: `console_spotify` (lib) generated 7 warnings (run `cargo fix --lib -p console_spotify` to apply 5 suggestions)
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 3.77s
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 3.44s
      Running `target/debug/scui`

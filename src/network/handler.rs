@@ -23,9 +23,16 @@ pub async fn start_network_worker(
                     }
                 }
                 ClientRequest::GetRecentlyPlayed { limit } => {
-                    if let Ok(tracks) = client.get_recently_played(limit).await {
-                        if let Ok(mut state) = shared_state.lock() {
-                            state.recent_tracks = tracks;
+                    match client.get_recently_played(limit).await { 
+                        Ok(tracks) => {
+                            let _ = std::fs::write("debug_recently.txt", format!("THÀNH CÔNG: Lấy được {} bài hát", tracks.len()));
+                            
+                            if let Ok(mut state) = shared_state.lock() {
+                                state.recent_tracks = tracks;
+                            }
+                        }
+                        Err(e) => {
+                            let _ = std::fs::write("debug_recently.txt", format!("LỖI API SPOTIFY: {:?}", e));
                         }
                     }
                 }
