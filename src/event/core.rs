@@ -12,7 +12,7 @@ pub fn read(tick_rate: Duration) -> anyhow::Result<Event> {
         if let CrosstermEvent::Key(key) = event::read()? {
             return Ok(Event::Key(key));
         }
-    } else {}
+    }
 
     Ok(Event::Tick)
 }

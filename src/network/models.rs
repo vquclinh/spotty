@@ -4,6 +4,8 @@ use rspotify::{
     model::enums::misc::RepeatState,
 };
 
+use serde::Deserialize;
+
 use anyhow::{Result, bail};
 use std::time::Duration;
 use serde_json::Value;
@@ -13,12 +15,14 @@ fn normalize_duration(duration: chrono::Duration) -> Duration {
     duration.to_std().unwrap_or(Duration::ZERO)
 }
 
+#[derive(Debug, Deserialize, Clone)]
 pub struct Artist {
     pub id: String,
     pub name: String,
     pub genres: Option<Vec<String>>,
 }
 
+#[derive(Debug, Deserialize, Clone)]
 pub struct Album {
     pub id: String,
     pub name: String,
@@ -27,6 +31,7 @@ pub struct Album {
     pub tracks: Vec<Track>,
 }
 
+#[derive(Debug, Deserialize, Clone)]
 pub struct Track {
     pub id: String,
     pub name: String,

@@ -10,7 +10,7 @@ use std::collections::HashMap;
 use std::time::{Instant, Duration};
 use serde_json::Value;
 
-use super::models::{Track, Artist, Album, Playlist, PlaybackState, UserProfile, Playable};
+use super::models::{Track, Artist, Album, Playlist, PlaybackState, UserProfile};
 
 // -------------------------------------- CACHE ---------------------------------------
 pub struct CacheItem<T> {

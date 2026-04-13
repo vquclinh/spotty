@@ -1,8 +1,12 @@
 use ratatui::widgets::ListState;
+use tokio::sync::mpsc;
 
 use crate::app::splash_state::SplashState;
-use crate::app::types::{Track, PlayerState, ActiveBlock};
+use crate::app::types::{ActiveBlock};
 use crate::app::route::Route;
+
+use crate::network::models::{Playlist, PlaybackState};
+use crate::network::request::ClientRequest;
 
 pub struct App {
     pub route: Route,
@@ -12,22 +16,21 @@ pub struct App {
     pub should_quit: bool,
     pub show_help: bool,
 
-    pub player: PlayerState,
+    pub network_tx: mpsc::UnboundedSender<ClientRequest>,
 
+    pub playback: Option<PlaybackState>,
     pub liked_songs: usize,
-    pub playlists: Vec<String>,
+    pub playlists: Vec<Playlist>,
+
     pub library_state: ListState,
     pub playlists_state: ListState,
 }
 
 impl App {
-    pub fn new() -> Self {
-        let dummy_track = Track {
-            title: "Making My Way".to_string(),
-            artist: "Son Tung MTP".to_string(),
-            album: "Single".to_string(),
-        };
-
+    pub fn new(network_tx: mpsc::UnboundedSender<ClientRequest>) -> Self {
+        let _ = network_tx.send(ClientRequest::GetCurrentPlayback);
+        let _ = network_tx.send(ClientRequest::GetUserPlaylists);
+        
         Self {
             route: Route::Splash(SplashState::new()),
             active_block: ActiveBlock::PlaylistsMenu,
@@ -35,18 +38,11 @@ impl App {
             show_help: false,
             should_quit: false,
 
-            player: PlayerState {
-                is_playing: true,
-                current_track: Some(dummy_track.clone()),
-                queue: vec![],
-            },
-            
-            liked_songs: 152,
-            playlists: vec![
-                "Lofi Chill".to_string(), 
-                "Gym".to_string(), 
-                "Top Hits 2024".to_string()
-            ],
+            network_tx,
+
+            playback: None,
+            liked_songs: 0,
+            playlists: vec![],
 
             library_state: ListState::default(),
             playlists_state: ListState::default(),
@@ -57,11 +53,5 @@ impl App {
         if let Some(next_route) = self.route.update() {
             self.route = next_route;
         }
-    }
-}
-
-impl Default for App {
-    fn default() -> Self {
-        Self::new()
     }
 }
