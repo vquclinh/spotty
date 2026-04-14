@@ -44,6 +44,7 @@ pub async fn run() -> Result<()> {
     let shared_state = Arc::new(Mutex::new(IoSharedState::default()));
     let network_shared_state = Arc::clone(&shared_state);
     
+    // Move the receiver to a dedicated background thread
     tokio::spawn(async move {
         start_network_worker(spotify_client, network_rx, network_shared_state).await;     
     });
