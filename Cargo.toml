@@ -1,8 +1,8 @@
 [package]
-name = "console_spotify"
+name = "spotty"
 version = "0.1.0"
 edition = "2024"
-authors = ["Vo Quoc Linh"]
+authors = ["Vo Quoc Linh", "night0"]
 description = "A modern Terminal User Interface for Spotify"
 
 [dependencies]
