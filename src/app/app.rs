@@ -13,20 +13,21 @@ use crate::network::request::ClientRequest;
 pub struct App {
     pub route: Route,
     pub active_block: ActiveBlock, 
-    pub history: Vec<(Route, ActiveBlock)>,   // store history about Route and ActiveBlock
+    pub history: Vec<(Route, ActiveBlock)>, // store history about Route and ActiveBlock
 
-    pub network_tx: mpsc::UnboundedSender<ClientRequest>,  // the bridge between UI and Network
+    pub network_tx: mpsc::UnboundedSender<ClientRequest>, // the bridge between UI and Network
     pub shared_state: SharedState,
 
     pub playback: Option<PlaybackState>,
     pub liked_songs: usize,
     pub playlists: Vec<Playlist>,
 
-    pub library_state: ListState,   // to know where you are in the block
+    // Tracks selection and scroll offset
+    pub library_state: ListState,
     pub playlists_state: ListState,
 
-    pub should_quit: bool,   // quit main loop
-    pub show_help: bool,   // turn on pop-up help
+    pub should_quit: bool, // Signal to quit main loop
+    pub show_help: bool, // Signal to turn on pop-up help
 }
 
 impl App {
@@ -34,7 +35,7 @@ impl App {
         network_tx: mpsc::UnboundedSender<ClientRequest>,
         shared_state: SharedState,
     ) -> Self {
-        // at the begin, send a request to get current playback and playlists
+        // At initialization, send a request to get current playback and playlists
         let _ = network_tx.send(ClientRequest::GetCurrentPlayback);
         let _ = network_tx.send(ClientRequest::GetUserPlaylists);
         

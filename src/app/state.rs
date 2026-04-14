@@ -1,8 +1,7 @@
 use std::sync::{Arc, Mutex};
 use crate::network::models::{Track, Playlist, PlaybackState};
 
-// the place where network push data to and UI get data from,
-// Arc and Mutex help us to maintain only one of these operation once time
+// Stores unified network data
 #[derive(Default)]
 pub struct IoSharedState {
     pub playlists: Vec<Playlist>,
@@ -10,4 +9,6 @@ pub struct IoSharedState {
     pub recent_tracks: Vec<Track>,
 }
 
+// SharedState uses Arc and Mutex to ensure thread-safe,
+// exclusive access to IoSharedState
 pub type SharedState = Arc<Mutex<IoSharedState>>;
