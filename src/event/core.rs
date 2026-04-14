@@ -8,10 +8,9 @@ pub enum Event {
 }
 
 pub fn read(tick_rate: Duration) -> anyhow::Result<Event> {
-    if event::poll(tick_rate)? {
-        if let CrosstermEvent::Key(key) = event::read()? {
-            return Ok(Event::Key(key));
-        }
+    if event::poll(tick_rate)?
+    && let CrosstermEvent::Key(key) = event::read()? {
+        return Ok(Event::Key(key));
     }
 
     Ok(Event::Tick)
