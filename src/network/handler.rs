@@ -67,6 +67,17 @@ pub async fn start_network_worker(
                 }
             }
 
+            ClientRequest::GetCurrentPlayback => {
+                match client.get_playback_state().await {
+                    Ok(playback) => {
+                        if let Ok(mut state) = shared_state.lock() {
+                            state.playback = playback; 
+                        }
+                    }
+                    Err(_e) => {}
+                }
+            }
+
             _ => {}
         }
     }

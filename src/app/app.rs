@@ -6,6 +6,7 @@ use crate::app::splash_state::SplashState;
 use crate::app::types::{ActiveBlock, StatefulTable};
 use crate::app::route::Route;
 use crate::app::state::SharedState;
+use crate::app::playbar_state::PlaybarState;
 
 use crate::network::models::{Playlist, PlaybackState};
 use crate::network::request::ClientRequest;
@@ -21,6 +22,7 @@ pub struct App {
     pub playback: Option<PlaybackState>,
     pub liked_songs: usize,
     pub playlists: StatefulTable<Playlist>,
+    pub playbar_state: PlaybarState,
 
     // Tracks selection and scroll offset
     pub library_state: ListState,
@@ -55,6 +57,7 @@ impl App {
 
             library_state: ListState::default(),
             playlists_state: ListState::default(),
+            playbar_state: PlaybarState::default(),
         }
     }
 
