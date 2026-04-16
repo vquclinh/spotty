@@ -1,2 +1,0 @@
-SUCCESS: Đã lấy được 15 Artists
-Chi tiết nghệ sĩ đầu tiên: Some(Artist { id: "0ZbgKh0FgPYeFP38nVaEGp", name: "Obito" })

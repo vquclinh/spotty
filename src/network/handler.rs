@@ -48,16 +48,11 @@ pub async fn start_network_worker(
             ClientRequest::GetTopArtists { limit } => {
                 match client.get_user_top_artists(limit).await {
                     Ok(artists) => {
-                        let debug_msg = format!("SUCCESS: Đã lấy được {} Artists\nChi tiết nghệ sĩ đầu tiên: {:?}", artists.len(), artists.first());
-                        let _ = std::fs::write("debug_top_artists.txt", debug_msg);
-
                         if let Ok(mut state) = shared_state.lock() {
                             state.top_artists = artists;
                         }
                     }
-                    Err(e) => {
-                        let _ = std::fs::write("debug_top_artists.txt", format!("ERROR API SPOTIFY (Top Artists): {:?}", e));
-                    }
+                    Err(_e) => {}
                 }
             }
             _ => {}
