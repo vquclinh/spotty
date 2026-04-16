@@ -191,6 +191,7 @@ impl From<rspotify::model::FullEpisode> for Episode {
     }
 }
 
+#[derive(Debug, Deserialize, Clone)]
 pub struct Playlist {
     pub id: String,
     pub name: String,

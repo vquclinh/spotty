@@ -3,7 +3,7 @@ use tokio::sync::mpsc;
 
 use crate::app::home_state::HomeTab;
 use crate::app::splash_state::SplashState;
-use crate::app::types::ActiveBlock;
+use crate::app::types::{ActiveBlock, StatefulTable};
 use crate::app::route::Route;
 use crate::app::state::SharedState;
 
@@ -20,7 +20,7 @@ pub struct App {
 
     pub playback: Option<PlaybackState>,
     pub liked_songs: usize,
-    pub playlists: Vec<Playlist>,
+    pub playlists: StatefulTable<Playlist>,
 
     // Tracks selection and scroll offset
     pub library_state: ListState,
@@ -51,7 +51,7 @@ impl App {
 
             playback: None,
             liked_songs: 0,
-            playlists: vec![],
+            playlists: StatefulTable::new(),
 
             library_state: ListState::default(),
             playlists_state: ListState::default(),
@@ -99,23 +99,33 @@ impl App {
                 self.playback = shared_state.playback.take();
             }
 
-            if let Route::Home(home_state) = &mut self.route {
+            match &mut self.route {
+                Route::Home(home_state) => {
                 
-                if !shared_state.recent_tracks.is_empty() {
-                    home_state.recent_tracks.items = shared_state.recent_tracks.drain(..).collect();
+                    if !shared_state.recent_tracks.is_empty() {
+                        home_state.recent_tracks.items = shared_state.recent_tracks.drain(..).collect();
+                    }
+
+                    if !shared_state.playlists.is_empty() {
+                        self.playlists.items = shared_state.playlists.drain(..).collect();
+                    }
+
+                    if !shared_state.top_tracks.is_empty() {
+                        home_state.top_tracks.items = shared_state.top_tracks.drain(..).collect();
+                    }
+
+                    if !shared_state.top_artists.is_empty() {
+                        home_state.top_artists.items = shared_state.top_artists.drain(..).collect();
+                    }
                 }
 
-                if !shared_state.playlists.is_empty() {
-                    self.playlists = shared_state.playlists.drain(..).collect();
+                Route::PlaylistDetail(playlist_state) => {
+                    if !shared_state.playlist_tracks.is_empty() {
+                        playlist_state.tracks.items = shared_state.playlist_tracks.drain(..).collect();
+                    }
                 }
 
-                if !shared_state.top_tracks.is_empty() {
-                    home_state.top_tracks.items = shared_state.top_tracks.drain(..).collect();
-                }
-
-                if !shared_state.top_artists.is_empty() {
-                    home_state.top_artists.items = shared_state.top_artists.drain(..).collect();
-                }
+                _ => {}
             }
         }
     }

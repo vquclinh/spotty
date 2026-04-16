@@ -7,9 +7,13 @@ pub struct IoSharedState {
     pub playlists: Vec<Playlist>,
     pub playback: Option<PlaybackState>,
 
+    // home-state
     pub recent_tracks: Vec<Track>,
     pub top_tracks: Vec<Track>,
     pub top_artists: Vec<Artist>,
+
+    // playlist-detail-state
+    pub playlist_tracks: Vec<Track>,
 }
 
 // SharedState uses Arc and Mutex to ensure thread-safe,

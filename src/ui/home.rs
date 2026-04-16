@@ -47,9 +47,10 @@ pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, ar
         .divider(" | ");
 
     f.render_widget(tabs, chunks[0]);
-
+    
     // check whether if the width of terminal is > 60
-    let show_extra_column = chunks[1].width > 60;
+    let table_width = chunks[1].width;
+    let show_extra_column = table_width > 60;
 
     let highlight_style = Style::default().fg(Color::LightMagenta).add_modifier(Modifier::BOLD);
     let header_style = Style::default().fg(Color::DarkGray).add_modifier(Modifier::BOLD);
@@ -69,6 +70,18 @@ pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, ar
 
             let header = Row::new(header_cells).style(header_style);
 
+            let (title_max, artist_max) = if show_extra_column {
+                (
+                    ((table_width as f32 * 0.45) as u16).saturating_sub(6),
+                    ((table_width as f32 * 0.35) as u16).saturating_sub(2),
+                )
+            } else {
+                (
+                    ((table_width as f32 * 0.55) as u16).saturating_sub(6),
+                    ((table_width as f32 * 0.45) as u16).saturating_sub(2),
+                )
+            };
+
             // determine top tracks or recent tracks and get data
             let target_table = if state.active_tab == HomeTab::TopTracks {
                 &state.top_tracks
@@ -77,19 +90,21 @@ pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, ar
             };
 
             let rows: Vec<Row> = target_table.items.iter().map(|t| {
-                let title = t.name.clone();
+                let trunc_title = truncate(&t.name, title_max);
                 
                 let artist = t.artists.first()
                     .map(|a| a.name.clone())
                     .unwrap_or_else(|| "Unknown".to_string());
+
+                let trunc_artist = truncate(&artist, artist_max);
                 
                 let duration_secs = t.duration.as_secs();
                 let duration_str = format!("{}:{:02}", duration_secs / 60, duration_secs % 60);
 
                 if show_extra_column {
-                    Row::new(vec![format!("  {}", title), artist, duration_str])
+                    Row::new(vec![format!("  {}", trunc_title), trunc_artist, duration_str])
                 } else {
-                    Row::new(vec![format!("  {}", title), artist])
+                    Row::new(vec![format!("  {}", trunc_title), trunc_artist])
                 }
             }).collect();
 
@@ -111,9 +126,11 @@ pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, ar
         HomeTab::TopArtists => {
             let header = Row::new(vec!["  #artist"]).style(header_style);
             let widths = [Constraint::Percentage(40), Constraint::Percentage(60)];
+            let artist_max = ((table_width as f32 * 0.40) as u16).saturating_sub(6);
 
             let rows: Vec<Row> = state.top_artists.items.iter().map(|a| {
-                Row::new(vec![format!("  {}", a.name)])
+                let trunc_name = truncate(&a.name, artist_max);
+                Row::new(vec![format!("  {}", trunc_name)])
             }).collect();
 
             let table = Table::new(rows, widths)
@@ -124,5 +141,22 @@ pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, ar
 
             f.render_stateful_widget(table, chunks[1], &mut state.top_artists.state);
         }
+    }
+}
+
+// helper for cutting string and ...
+fn truncate(text: &str, max_width: u16) -> String {
+    let max_width = max_width as usize;
+    let char_count = text.chars().count();
+    
+    if char_count > max_width {
+        if max_width <= 3 {
+            return text.chars().take(max_width).collect();
+        }
+        
+        let truncated: String = text.chars().take(max_width - 3).collect();
+        format!("{}...", truncated)
+    } else {
+        text.to_string()
     }
 }

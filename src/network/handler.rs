@@ -6,7 +6,7 @@ use tokio::sync::mpsc;
 // Match request type and execute it with WebApiClient
 // then store in shared state
 pub async fn start_network_worker(
-    mut client: WebApiClient,
+    client: WebApiClient,
     mut rx: mpsc::UnboundedReceiver<ClientRequest>,
     shared_state: SharedState,
 ) {
@@ -55,6 +55,18 @@ pub async fn start_network_worker(
                     Err(_e) => {}
                 }
             }
+
+            ClientRequest::GetPlaylistTracks { playlist_id, limit, offset } => {
+                match client.get_playlist_tracks(&playlist_id, limit, offset).await {
+                    Ok(tracks) => {
+                        if let Ok(mut state) = shared_state.lock() {
+                            state.playlist_tracks = tracks; 
+                        }
+                    }
+                    Err(_e) => {}
+                }
+            }
+
             _ => {}
         }
     }

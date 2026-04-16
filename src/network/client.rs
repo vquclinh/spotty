@@ -14,6 +14,7 @@ use serde_json::Value;
 use super::models::{Track, Artist, Album, Playlist, PlaybackState, UserProfile};
 
 // -------------------------------------- CACHE ---------------------------------------
+#[allow(dead_code)]
 pub struct CacheItem<T> {
     item: T,
     fetched_at: Instant
@@ -50,6 +51,7 @@ impl Default for Cache {
 }
 
 // ---------------------------------------- WEB API CLIENT ----------------------------
+#[allow(dead_code)]
 pub struct WebApiClient {
     client: AuthCodePkceSpotify,
     cache: Cache

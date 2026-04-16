@@ -39,7 +39,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
             Route::Home(home_state) => crate::ui::home::draw(f, home_state, &app.active_block, content_chunks[1]),
             Route::Search(search_state) => search::draw(f, search_state, &app.active_block, content_chunks[1]),
             Route::Queue => queue::draw(f, app, content_chunks[1]),
-            Route::PlaylistDetail => playlist::draw(f, app, content_chunks[1]),
+            Route::PlaylistDetail(playlist_state) => playlist::draw(f, playlist_state, &app.active_block, content_chunks[1]),
             _ => {}
         }
     }
