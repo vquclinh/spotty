@@ -2,7 +2,8 @@ use rspotify::{
     prelude::*,
     AuthCodePkceSpotify,
     model::idtypes::PlaylistId,
-    model::PlayableItem
+    model::PlayableItem,
+    model::TimeRange
 };
 use super::auth;
 use anyhow::{Result};
@@ -146,6 +147,37 @@ impl WebApiClient {
             })
             .collect();
 
+        Ok(tracks)
+    }
+
+    // get user top tracks in 4 months (ShortTerm)
+    pub async fn get_user_top_tracks (&self, limit: u32) -> Result<Vec<Track>> {
+        let page = self.client.current_user_top_tracks_manual(
+            Some(TimeRange::ShortTerm),
+            Some(limit),
+            None
+        ).await?;
+        
+        let tracks = page.items
+            .into_iter()
+            .map(|t| {
+                let artists = t.artists.into_iter().map(|a| Artist {
+                    id: a.id.map(|id| id.to_string()).unwrap_or_default(),
+                    name: a.name,
+                    genres: None,
+                }).collect();
+
+                Track {
+                    id: t.id.map(|id| id.to_string()).unwrap_or_default(),
+                    name: t.name,
+                    artists,
+                    album_name: t.album.name,
+                    duration: Duration::from_millis(t.duration.num_milliseconds() as u64),
+                    explicit: t.explicit,
+                }
+            }).collect();
+
+        
         Ok(tracks)
     }
 

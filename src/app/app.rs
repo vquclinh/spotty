@@ -9,6 +9,7 @@ use crate::app::state::SharedState;
 
 use crate::network::models::{Playlist, PlaybackState};
 use crate::network::request::ClientRequest;
+use crate::ui::home;
 
 pub struct App {
     pub route: Route,
@@ -69,7 +70,7 @@ impl App {
                         let _ = self.network_tx.send(ClientRequest::GetRecentlyPlayed { limit: 30 });
                     }
                     HomeTab::TopTracks => {
-                        // TODO
+                        let _ = self.network_tx.send(ClientRequest::GetTopTracks { limit: 20 });
                     }
                     HomeTab::TopArtists => {
                         // TODO
@@ -107,6 +108,10 @@ impl App {
 
                 if !shared_state.playlists.is_empty() {
                     self.playlists = shared_state.playlists.drain(..).collect();
+                }
+
+                if !shared_state.top_tracks.is_empty() {
+                    home_state.top_tracks.items = shared_state.top_tracks.drain(..).collect();
                 }
             }
         }

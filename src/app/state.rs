@@ -6,7 +6,9 @@ use crate::network::models::{Track, Playlist, PlaybackState};
 pub struct IoSharedState {
     pub playlists: Vec<Playlist>,
     pub playback: Option<PlaybackState>,
+    
     pub recent_tracks: Vec<Track>,
+    pub top_tracks: Vec<Track>,
 }
 
 // SharedState uses Arc and Mutex to ensure thread-safe,

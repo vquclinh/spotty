@@ -13,24 +13,35 @@ pub async fn start_network_worker(
     while let Some(request) = rx.recv().await {
         match request {
             ClientRequest::GetUserPlaylists => {
-                if let Ok(playlists) = client.get_user_playlists().await {
-                    if let Ok(mut state) = shared_state.lock() {
-                        state.playlists = playlists;
+                match client.get_user_playlists().await {
+                    Ok(playlists) => {
+                        if let Ok(mut state) = shared_state.lock() {
+                            state.playlists = playlists;
+                        }
                     }
+                    Err(_e) => {}
                 }
             }
+
             ClientRequest::GetRecentlyPlayed { limit } => {
                 match client.get_recently_played(limit).await { 
                     Ok(tracks) => {
-                        // let _ = std::fs::write("debug_recently.txt", format!("SUCCESS get {} song", tracks.len()));
-                        
                         if let Ok(mut state) = shared_state.lock() {
                             state.recent_tracks = tracks;
                         }
                     }
-                    Err(e) => {
-                        // let _ = std::fs::write("debug_recently.txt", format!("ERROR API SPOTIFY: {:?}", e));
+                    Err(_e) => {}
+                }
+            }
+
+            ClientRequest::GetTopTracks { limit } => {
+                match client.get_user_top_tracks(limit).await {
+                    Ok(tracks) => {
+                        if let Ok(mut state) = shared_state.lock() {
+                            state.top_tracks = tracks; 
+                        }
                     }
+                    Err(_e) => {}
                 }
             }
             _ => {}

@@ -30,7 +30,11 @@ pub fn handle_key_events(key: KeyEvent, app: &mut App) {
         Route::Home(home_state) => {
             if app.active_block == ActiveBlock::HomeBlock {
                 match key.code {
-                    KeyCode::Char('1') => home_state.active_tab = HomeTab::TopTracks,
+                    KeyCode::Char('1') => {
+                        home_state.active_tab = HomeTab::TopTracks;
+                        let _ = app.network_tx.send(ClientRequest::GetTopTracks { limit: 20 });
+
+                    }
                     KeyCode::Char('2') => home_state.active_tab = HomeTab::TopArtists,
                     KeyCode::Char('3') => {
                         home_state.active_tab = HomeTab::RecentlyPlayed;
@@ -44,6 +48,7 @@ pub fn handle_key_events(key: KeyEvent, app: &mut App) {
                             HomeTab::RecentlyPlayed => HomeTab::TopTracks,
                         };
                         match home_state.active_tab {
+                            HomeTab::TopTracks => { let _ = app.network_tx.send(ClientRequest::GetTopTracks { limit: 20 }); }
                             HomeTab::RecentlyPlayed => { let _ = app.network_tx.send(ClientRequest::GetRecentlyPlayed { limit: 50 }); }
                             _ => {}
                         }
@@ -57,6 +62,7 @@ pub fn handle_key_events(key: KeyEvent, app: &mut App) {
                         };
 
                         match home_state.active_tab {
+                            HomeTab::TopTracks => { let _ = app.network_tx.send(ClientRequest::GetTopTracks { limit: 20 }); }
                             HomeTab::RecentlyPlayed => { let _ = app.network_tx.send(ClientRequest::GetRecentlyPlayed { limit: 50 }); }
                             _ => {}
                         }
