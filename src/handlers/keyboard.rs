@@ -4,6 +4,11 @@ use crossterm::event::KeyEvent;
 use super::{global, sidebar, home, playlist};
 
 pub fn handle_key_events(key: KeyEvent, app: &mut App) {
+    if app.show_help {
+        app.show_help = false;
+        return;
+    }
+    
     // global keyboard
     if global::handle_global_events(key, app) {
         return;
