@@ -99,15 +99,15 @@ impl App {
                 self.playback = shared_state.playback.take();
             }
 
+            if !shared_state.playlists.is_empty() {
+                self.playlists.items = shared_state.playlists.drain(..).collect();
+            }
+
             match &mut self.route {
                 Route::Home(home_state) => {
                 
                     if !shared_state.recent_tracks.is_empty() {
                         home_state.recent_tracks.items = shared_state.recent_tracks.drain(..).collect();
-                    }
-
-                    if !shared_state.playlists.is_empty() {
-                        self.playlists.items = shared_state.playlists.drain(..).collect();
                     }
 
                     if !shared_state.top_tracks.is_empty() {

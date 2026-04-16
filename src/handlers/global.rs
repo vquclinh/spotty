@@ -1,4 +1,5 @@
 use crate::app::{ActiveBlock, App, route::Route};
+use crate::app::home_state::HomeState;
 use crossterm::event::{KeyCode, KeyModifiers, KeyEvent};
 
 pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
@@ -8,6 +9,18 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
         || (key.code == KeyCode::Char('c') && key.modifiers.contains(KeyModifiers::CONTROL)) 
     {
         app.should_quit = true;
+        return true;
+    }
+
+    // home
+    if key.code == KeyCode::Char('H') {
+        if matches!(app.route, Route::Home(_)) {
+            return true; 
+        }
+
+        app.set_current_route(Route::Home(HomeState::default())); 
+        app.active_block = ActiveBlock::HomeBlock;
+
         return true;
     }
 

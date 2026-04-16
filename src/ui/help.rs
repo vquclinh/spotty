@@ -24,6 +24,7 @@ pub fn draw(f: &mut Frame, area: Rect) {
         Row::new(vec![" 1-3", "Switch Home Tabs"]),
         Row::new(vec![" Enter", "Select Item"]),
         Row::new(vec![" Backspace, b", "Back to Menu"]),
+        Row::new(vec![" H", "Return to Home"]),
         Row::new(vec![""]),
 
         Row::new(vec![" Space", "Play / Pause"]),
