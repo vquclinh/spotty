@@ -19,7 +19,6 @@ fn normalize_duration(duration: chrono::Duration) -> Duration {
 pub struct Artist {
     pub id: String,
     pub name: String,
-    pub genres: Option<Vec<String>>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -75,7 +74,6 @@ impl Track {
             .map(|a| Artist {
                 id: a["id"].as_str().unwrap_or_default().to_string(),
                 name: a["name"].as_str().unwrap_or("Unknown Artist").to_string(),
-                genres: None,
             })
             .collect();
 
@@ -99,7 +97,6 @@ impl From<rspotify::model::FullTrack> for Track {
             artists: t.artists.into_iter().map(|a| Artist {
                 id: a.id.map(|id| id.to_string()).unwrap_or_default(),
                 name: a.name,
-                genres: None,
             }).collect(),
             duration: normalize_duration(t.duration),
             explicit: t.explicit,

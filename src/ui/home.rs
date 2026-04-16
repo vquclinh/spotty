@@ -4,7 +4,7 @@ use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::Line,
-    widgets::{Block, Borders, Tabs, Table, Row},
+    widgets::{Block, Borders, Tabs, Table, Row, HighlightSpacing},
 };
 
 pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, area: Rect) {
@@ -96,7 +96,8 @@ pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, ar
             let table = Table::new(rows, widths)
                 .header(header)
                 .row_highlight_style(highlight_style)
-                .highlight_symbol("▶ ");
+                .highlight_symbol("▶ ")
+                .highlight_spacing(HighlightSpacing::Always);
 
             let state_to_use = if state.active_tab == HomeTab::TopTracks {
                 &mut state.top_tracks.state
@@ -108,21 +109,18 @@ pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, ar
         }
 
         HomeTab::TopArtists => {
-            let header = Row::new(vec!["  Artist", "Genres"]).style(header_style);
+            let header = Row::new(vec!["  #artist"]).style(header_style);
             let widths = [Constraint::Percentage(40), Constraint::Percentage(60)];
 
             let rows: Vec<Row> = state.top_artists.items.iter().map(|a| {
-                let genres_str = a.genres.as_ref()
-                    .map(|g| g.join(", "))
-                    .unwrap_or_else(|| "N/A".to_string());
-
-                Row::new(vec![format!("  {}", a.name), genres_str])
+                Row::new(vec![format!("  {}", a.name)])
             }).collect();
 
             let table = Table::new(rows, widths)
                 .header(header)
                 .row_highlight_style(highlight_style)
-                .highlight_symbol("▶ ");
+                .highlight_symbol("▶ ")
+                .highlight_spacing(HighlightSpacing::Always);
 
             f.render_stateful_widget(table, chunks[1], &mut state.top_artists.state);
         }

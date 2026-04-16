@@ -150,8 +150,8 @@ impl WebApiClient {
         Ok(tracks)
     }
 
-    // get user top tracks in 4 months (ShortTerm)
-    pub async fn get_user_top_tracks (&self, limit: u32) -> Result<Vec<Track>> {
+    // get user top tracks last 4 months (ShortTerm)
+    pub async fn get_user_top_tracks(&self, limit: u32) -> Result<Vec<Track>> {
         let page = self.client.current_user_top_tracks_manual(
             Some(TimeRange::ShortTerm),
             Some(limit),
@@ -164,7 +164,6 @@ impl WebApiClient {
                 let artists = t.artists.into_iter().map(|a| Artist {
                     id: a.id.map(|id| id.to_string()).unwrap_or_default(),
                     name: a.name,
-                    genres: None,
                 }).collect();
 
                 Track {
@@ -179,6 +178,36 @@ impl WebApiClient {
 
         
         Ok(tracks)
+    }
+
+    // get user top artists last 4 months (ShortTerm)
+    pub async  fn get_user_top_artists(&self, limit: u32) -> Result<Vec<Artist>> {
+        let endpoint = "me/top/artists";
+        let mut params = HashMap::new();
+
+        let limit_str = limit.to_string();
+        params.insert("limit", limit_str.as_str());
+        params.insert("time_range", "short_term");
+
+        let json_str = self.client.api_get(endpoint, &params).await?;
+        let v: Value = serde_json::from_str(&json_str)?;
+
+        let mut artists = Vec::new();
+
+        if let Some(items) = v["items"].as_array() {
+            for item in items {
+                let id = item["id"].as_str().unwrap_or("").to_string();
+                let name = item["name"].as_str().unwrap_or("Unknown Artist").to_string();
+
+                artists.push(Artist {
+                    id,
+                    name,
+                });
+            }
+            
+        }
+
+        Ok(artists)
     }
 
     // using rspotify to get raw data and then we handle this data
@@ -223,7 +252,6 @@ impl WebApiClient {
                             artists.push(Artist {
                                 id: artist_id,
                                 name: artist_name,
-                                genres: None,
                             });
                         }
                     }

@@ -26,5 +26,9 @@ pub enum ClientRequest {
         limit: u32,
     },
     
+    GetTopArtists {
+        limit: u32,
+    },
+    
     Player(PlayerRequest),
 }

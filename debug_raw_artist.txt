@@ -1,0 +1,27 @@
+{
+  "external_urls": {
+    "spotify": "https://open.spotify.com/artist/0ZbgKh0FgPYeFP38nVaEGp"
+  },
+  "href": "https://api.spotify.com/v1/artists/0ZbgKh0FgPYeFP38nVaEGp",
+  "id": "0ZbgKh0FgPYeFP38nVaEGp",
+  "images": [
+    {
+      "height": 640,
+      "url": "https://i.scdn.co/image/ab6761610000e5eb1e5be0003167776bef2fc911",
+      "width": 640
+    },
+    {
+      "height": 320,
+      "url": "https://i.scdn.co/image/ab676161000051741e5be0003167776bef2fc911",
+      "width": 320
+    },
+    {
+      "height": 160,
+      "url": "https://i.scdn.co/image/ab6761610000f1781e5be0003167776bef2fc911",
+      "width": 160
+    }
+  ],
+  "name": "Obito",
+  "type": "artist",
+  "uri": "spotify:artist:0ZbgKh0FgPYeFP38nVaEGp"
+}

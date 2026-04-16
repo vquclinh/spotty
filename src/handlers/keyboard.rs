@@ -32,13 +32,16 @@ pub fn handle_key_events(key: KeyEvent, app: &mut App) {
                 match key.code {
                     KeyCode::Char('1') => {
                         home_state.active_tab = HomeTab::TopTracks;
-                        let _ = app.network_tx.send(ClientRequest::GetTopTracks { limit: 20 });
+                        let _ = app.network_tx.send(ClientRequest::GetTopTracks { limit: 15 });
 
-                    }
-                    KeyCode::Char('2') => home_state.active_tab = HomeTab::TopArtists,
+                    },
+                    KeyCode::Char('2') => {
+                        home_state.active_tab = HomeTab::TopArtists;
+                        let _ = app.network_tx.send(ClientRequest::GetTopArtists { limit: 15 });
+                    },
                     KeyCode::Char('3') => {
                         home_state.active_tab = HomeTab::RecentlyPlayed;
-                        let _ = app.network_tx.send(ClientRequest::GetRecentlyPlayed { limit: 50 });
+                        let _ = app.network_tx.send(ClientRequest::GetRecentlyPlayed { limit: 15 });
                     },
                     
                     KeyCode::Right => {
@@ -48,8 +51,9 @@ pub fn handle_key_events(key: KeyEvent, app: &mut App) {
                             HomeTab::RecentlyPlayed => HomeTab::TopTracks,
                         };
                         match home_state.active_tab {
-                            HomeTab::TopTracks => { let _ = app.network_tx.send(ClientRequest::GetTopTracks { limit: 20 }); }
-                            HomeTab::RecentlyPlayed => { let _ = app.network_tx.send(ClientRequest::GetRecentlyPlayed { limit: 50 }); }
+                            HomeTab::TopTracks => { let _ = app.network_tx.send(ClientRequest::GetTopTracks { limit: 15 }); }
+                            HomeTab::RecentlyPlayed => { let _ = app.network_tx.send(ClientRequest::GetRecentlyPlayed { limit: 15 }); }
+                            HomeTab::TopArtists => { let _ = app.network_tx.send(ClientRequest::GetTopArtists { limit: 15 }); }
                             _ => {}
                         }
                     }
@@ -62,8 +66,9 @@ pub fn handle_key_events(key: KeyEvent, app: &mut App) {
                         };
 
                         match home_state.active_tab {
-                            HomeTab::TopTracks => { let _ = app.network_tx.send(ClientRequest::GetTopTracks { limit: 20 }); }
-                            HomeTab::RecentlyPlayed => { let _ = app.network_tx.send(ClientRequest::GetRecentlyPlayed { limit: 50 }); }
+                            HomeTab::TopTracks => { let _ = app.network_tx.send(ClientRequest::GetTopTracks { limit: 15 }); }
+                            HomeTab::RecentlyPlayed => { let _ = app.network_tx.send(ClientRequest::GetRecentlyPlayed { limit: 15 }); }
+                            HomeTab::TopArtists => { let _ = app.network_tx.send(ClientRequest::GetTopArtists { limit: 15 }); }
                             _ => {}
                         }
                     }
