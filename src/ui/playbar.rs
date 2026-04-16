@@ -1,4 +1,4 @@
-use crate::app::App;
+use crate::app::{App, ActiveBlock};
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect, Alignment},
@@ -8,13 +8,7 @@ use ratatui::{
 };
 
 pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
-    let outer_block = Block::default()
-        .title(" Now Playing ")
-        .borders(Borders::ALL)
-        .border_style(Style::default().fg(Color::White));
-        
-    let inner_area = outer_block.inner(area);
-    f.render_widget(outer_block, area);
+    let border_color = if app.active_block == ActiveBlock::Playbar { Color::LightCyan } else { Color::White };
 
     // data from spotify
     let (is_playing, track_name, artist_name, progress_ms, duration_ms) = if let Some(playback) = &app.playback {
@@ -33,6 +27,16 @@ pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
     } else {
         (false, "No song".to_string(), "".to_string(), 0, 0)
     };
+    
+    let outer_block = Block::default()
+        .title(" Now Playing ")
+        .borders(Borders::ALL)
+        .border_style(Style::default().fg(border_color));
+        
+    let inner_area = outer_block.inner(area);
+    f.render_widget(outer_block, area);
+
+    
 
     // no song
     if duration_ms == 0 && track_name == "No song" {

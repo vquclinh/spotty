@@ -32,8 +32,15 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
                 Route::PlaylistDetail(_) => ActiveBlock::PlaylistTracks,
                 _ => ActiveBlock::HomeBlock,
             },
-            ActiveBlock::HomeBlock | ActiveBlock::PlaylistTracks => ActiveBlock::QueueBlock,
-            ActiveBlock::QueueBlock => ActiveBlock::LibraryMenu,
+            ActiveBlock::HomeBlock 
+            | ActiveBlock::PlaylistTracks 
+            | ActiveBlock::QueueBlock 
+            | ActiveBlock::LyricsText => {
+                ActiveBlock::Playbar
+            },
+            
+            ActiveBlock::Playbar => ActiveBlock::LibraryMenu,
+            
             _ => ActiveBlock::LibraryMenu,
         };
         return true; 
