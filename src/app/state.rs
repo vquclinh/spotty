@@ -1,5 +1,5 @@
 use std::sync::{Arc, Mutex};
-use crate::network::models::{Artist, PlaybackState, Playlist, Track};
+use crate::network::models::{Artist, PlaybackState, Playlist, Track, SearchResults};
 
 // Stores unified network data
 #[derive(Default)]
@@ -14,6 +14,9 @@ pub struct IoSharedState {
 
     // playlist-detail-state
     pub playlist_tracks: Vec<Track>,
+
+    // search results
+    pub search_results: SearchResults,
 }
 
 // SharedState uses Arc and Mutex to ensure thread-safe,

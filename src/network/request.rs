@@ -29,6 +29,8 @@ pub enum ClientRequest {
     GetTopArtists {
         limit: u32,
     },
+
+    SearchAll { query: String, limit: u32 },
     
     Player(PlayerRequest),
 }
