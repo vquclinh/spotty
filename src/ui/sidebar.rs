@@ -3,7 +3,7 @@ use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
-    widgets::{Block, Borders, List, ListItem},
+    widgets::{Block, Borders, List, ListItem, Table, Row},
 };
 
 pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
@@ -16,6 +16,7 @@ pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
     draw_playlists(f, app, chunks[1]);
 }
 
+// library
 fn draw_library(f: &mut Frame, app: &mut App, area: Rect) {
     let border_color = if app.active_block == ActiveBlock::LibraryMenu { Color::LightCyan } else { Color::White };
 
@@ -35,7 +36,6 @@ fn draw_library(f: &mut Frame, app: &mut App, area: Rect) {
         )
         .highlight_style(
             Style::default()
-                .bg(Color::DarkGray)
                 .fg(Color::Cyan)
                 .add_modifier(Modifier::BOLD),
         );
@@ -43,31 +43,31 @@ fn draw_library(f: &mut Frame, app: &mut App, area: Rect) {
     f.render_stateful_widget(list, area, &mut app.library_state);
 }
 
+// playlists
 fn draw_playlists(f: &mut Frame, app: &mut App, area: Rect) {
     let border_color = if app.active_block == ActiveBlock::PlaylistsMenu { Color::LightCyan } else { Color::White };
+    let mut rows: Vec<Row> = vec![];
 
-    let mut items = vec![];
-    for playlist in &app.playlists {
-        items.push(ListItem::new(format!(" ♪ {}", playlist.name)));
+    for playlist in &app.playlists.items {
+        rows.push(Row::new(vec![format!(" ♪ {}", playlist.name)]));
     }
 
-    if items.is_empty() {
-        items.push(ListItem::new(" ⏳ Loading..."));
+    if rows.is_empty() {
+        rows.push(Row::new(vec![" ⏳ Loading...".to_string()]));
     }
 
-    let list = List::new(items)
+    let table = Table::new(rows, [Constraint::Percentage(100)])
         .block(
             Block::default()
                 .title(" Playlists ")
                 .borders(Borders::ALL)
                 .border_style(Style::default().fg(border_color)),
         )
-        .highlight_style(
+        .row_highlight_style(
             Style::default()
-                .bg(Color::DarkGray)
                 .fg(Color::Cyan)
                 .add_modifier(Modifier::BOLD),
         );
 
-    f.render_stateful_widget(list, area, &mut app.playlists_state);
+    f.render_stateful_widget(table, area, &mut app.playlists.state);
 }

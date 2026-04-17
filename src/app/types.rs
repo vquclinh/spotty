@@ -11,6 +11,7 @@ pub enum ActiveBlock {
     PlaylistTracks,
     LyricsText,
     LyricsInfo,
+    Playbar,
 }
 
 #[derive(Clone, Default)]

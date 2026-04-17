@@ -37,9 +37,9 @@ pub async fn run() -> Result<()> {
         eprintln!("App crashed: {}", info);
     }));
 
-    let (network_tx, mut network_rx) = mpsc::unbounded_channel::<ClientRequest>();
+    let (network_tx, network_rx) = mpsc::unbounded_channel::<ClientRequest>();
 
-    let mut spotify_client = WebApiClient::new(Some(1800)).await?;
+    let spotify_client = WebApiClient::new(Some(1800)).await?;
     
     let shared_state = Arc::new(Mutex::new(IoSharedState::default()));
     let network_shared_state = Arc::clone(&shared_state);
