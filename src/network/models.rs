@@ -279,10 +279,10 @@ pub enum Playable {
     Episode(Episode)
 }
 
-pub struct Searchable {
+#[derive(Default, Debug, Clone)]
+pub struct SearchResults {
     pub tracks: Vec<Track>,
-    pub albums: Vec<Album>,
     pub artists: Vec<Artist>,
+    pub albums: Vec<Album>,
     pub playlists: Vec<Playlist>,
-    pub episodes: Vec<Episode>,
 }

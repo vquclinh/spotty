@@ -78,6 +78,23 @@ pub async fn start_network_worker(
                 }
             }
 
+            ClientRequest::SearchAll { query, limit } => {
+                match client.search_all(&query, limit).await {
+                    Ok(results) => {
+                        let debug_info = format!(" SEARCH QUERY: {} \n{:#?}", query, results);
+                        let _ = std::fs::write("debug_search.txt", debug_info);
+
+                        if let Ok(mut state) = shared_state.lock() {
+                            state.search_results = results; 
+                        }
+                    }
+                    Err(e) => {
+                        let error_info = format!(" ERROR QUERY: {} \n{:#?}", query, e);
+                        let _ = std::fs::write("debug_search.txt", error_info);
+                    }
+                }
+            }
+
             _ => {}
         }
     }

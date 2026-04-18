@@ -1,4 +1,4 @@
-use crate::app::{ActiveBlock, App, route::Route};
+use crate::{app::{ActiveBlock, App, route::Route}, handlers::search};
 use crossterm::event::KeyEvent;
 
 use super::{global, sidebar, home, playlist};
@@ -9,6 +9,11 @@ pub fn handle_key_events(key: KeyEvent, app: &mut App) {
         return;
     }
     
+    if app.active_block == ActiveBlock::SearchInput {
+        search::handle_search_events(key, app);
+        return;
+    }
+
     // global keyboard
     if global::handle_global_events(key, app) {
         return;
@@ -26,6 +31,10 @@ pub fn handle_key_events(key: KeyEvent, app: &mut App) {
         }
         ActiveBlock::PlaylistTracks => {
             playlist::handle_playlist_events(key, app);
+            return;
+        }
+        ActiveBlock::SearchResults => {
+            search::handle_search_events(key, app);
             return;
         }
         _ => {}

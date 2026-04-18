@@ -1,5 +1,6 @@
 use crate::app::{ActiveBlock, App, route::Route};
 use crate::app::home_state::HomeState;
+use crate::app::search_state::{SearchState, SearchHoveredPane};
 use crossterm::event::{KeyCode, KeyModifiers, KeyEvent};
 
 pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
@@ -24,23 +25,53 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
         return true;
     }
 
+    // search
+    if key.code == KeyCode::Char('s') {
+        if !matches!(app.route, Route::Search(_)) {
+            app.set_current_route(Route::Search(SearchState::default()));
+        }
+
+        app.active_block = ActiveBlock::SearchInput;
+        
+        return true;
+    }
+
     // active block
     if key.code == KeyCode::Tab && !key.modifiers.contains(KeyModifiers::CONTROL) {
+        if app.active_block == ActiveBlock::SearchResults {
+            return false;
+        }
+        
         app.active_block = match app.active_block {
             ActiveBlock::LibraryMenu => ActiveBlock::PlaylistsMenu,
             ActiveBlock::PlaylistsMenu => match app.route {
                 Route::PlaylistDetail(_) => ActiveBlock::PlaylistTracks,
+                Route::Search(_) => ActiveBlock::SearchInput,
                 _ => ActiveBlock::HomeBlock,
             },
+
+            ActiveBlock::SearchInput => {
+                if let Route::Search(ref mut search_state) = app.route {
+                    search_state.hovered_pane = SearchHoveredPane::Tracks;
+                }
+                ActiveBlock::SearchResults
+            },
+
             ActiveBlock::HomeBlock 
             | ActiveBlock::PlaylistTracks 
             | ActiveBlock::QueueBlock 
             | ActiveBlock::LyricsText => {
                 ActiveBlock::Playbar
             },
-            
-            ActiveBlock::Playbar => ActiveBlock::LibraryMenu,
-            
+
+            ActiveBlock::Playbar => {
+                if matches!(app.route, Route::Search(_)) {
+                    ActiveBlock::SearchInput 
+                } else {
+                    ActiveBlock::LibraryMenu
+                }
+            },
+
             _ => ActiveBlock::LibraryMenu,
         };
         return true; 

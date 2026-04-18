@@ -128,6 +128,14 @@ impl App {
                     }
                 }
 
+                Route::Search(search_state) => {
+                    if !shared_state.search_results.tracks.is_empty() 
+                        || !shared_state.search_results.artists.is_empty() 
+                    {
+                        search_state.results = std::mem::take(&mut shared_state.search_results);
+                    }
+                }
+
                 _ => {}
             }
         }

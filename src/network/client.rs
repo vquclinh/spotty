@@ -273,6 +273,100 @@ impl WebApiClient {
         Ok(tracks)
     }
 
+    // search
+    pub async fn search_all(&self, query: &str, limit: u32) -> Result<super::models::SearchResults> {
+        let safe_query = query.replace(" ", "%20");
+
+        let endpoint = format!(
+            "search?q={}&type=track,album,artist,playlist&limit={}", 
+            safe_query, limit
+        );
+
+
+        let empty_params: std::collections::HashMap<&str, &str> = std::collections::HashMap::new();
+
+        let json_str = self.client.api_get(&endpoint, &empty_params).await?;
+        let v: Value = serde_json::from_str(&json_str)?;
+
+        let mut results = super::models::SearchResults::default();
+
+        // tracks
+        if let Some(items) = v["tracks"]["items"].as_array() {
+            for track_val in items {
+                let id = track_val["id"].as_str().unwrap_or("").to_string();
+                let name = track_val["name"].as_str().unwrap_or("Unknown Track").to_string();
+                let explicit = track_val["explicit"].as_bool().unwrap_or(false);
+                let album_name = track_val["album"]["name"].as_str().unwrap_or("Unknown Album").to_string();
+                let duration = Duration::from_millis(track_val["duration_ms"].as_u64().unwrap_or(0));
+                
+                let mut artists = Vec::new();
+                if let Some(artists_array) = track_val["artists"].as_array() {
+                    for artist_val in artists_array {
+                        artists.push(Artist {
+                            id: artist_val["id"].as_str().unwrap_or("").to_string(),
+                            name: artist_val["name"].as_str().unwrap_or("Unknown Artist").to_string(),
+                        });
+                    }
+                }
+                results.tracks.push(Track { id, name, artists, album_name, duration, explicit });
+            }
+        }
+
+        // artists
+        if let Some(items) = v["artists"]["items"].as_array() {
+            for item in items {
+                results.artists.push(Artist {
+                    id: item["id"].as_str().unwrap_or("").to_string(),
+                    name: item["name"].as_str().unwrap_or("Unknown Artist").to_string(),
+                });
+            }
+        }
+
+        // albums
+        if let Some(items) = v["albums"]["items"].as_array() {
+            for item in items {
+                let id = item["id"].as_str().unwrap_or("").to_string();
+                let name = item["name"].as_str().unwrap_or("Unknown Album").to_string();
+                let release_date = item["release_date"].as_str().unwrap_or("Unknown").to_string();
+
+                let mut artists = Vec::new();
+                if let Some(artists_array) = item["artists"].as_array() {
+                    for artist_val in artists_array {
+                        artists.push(Artist {
+                            id: artist_val["id"].as_str().unwrap_or("").to_string(),
+                            name: artist_val["name"].as_str().unwrap_or("Unknown Artist").to_string(),
+                        });
+                    }
+                }
+
+                results.albums.push(super::models::Album {
+                    id,
+                    name,
+                    artists,
+                    release_date,
+                    tracks: Vec::new(), 
+                });
+            }
+        }
+
+        // playlist
+        if let Some(items) = v["playlists"]["items"].as_array() {
+            for item in items {
+                let owner_name = item["owner"]["display_name"].as_str().unwrap_or("Unknown").to_string();
+                
+                results.playlists.push(super::models::Playlist {
+                    id: item["id"].as_str().unwrap_or("").to_string(),
+                    name: item["name"].as_str().unwrap_or("Unknown Playlist").to_string(),
+                    owner: owner_name,
+                    description: item["description"].as_str().unwrap_or("").to_string(),
+                    tracks: Vec::new(), // Now, tracks is empty
+                });
+            }
+        }
+
+        Ok(results)
+    }
+
     pub async fn toggle_playback(&mut self, playing: bool) -> Result<()> {
         if playing {
             self.client.pause_playback(None).await?
