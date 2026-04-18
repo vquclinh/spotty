@@ -143,7 +143,7 @@ impl PlayableItem {
                 }
             }
         }
-}
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
