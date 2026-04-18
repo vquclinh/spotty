@@ -70,6 +70,7 @@ pub struct Playlist {
 }
 
 #[derive(Debug, Deserialize, Clone, Copy, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
 pub enum RepeatState {
     Off,
     Track,

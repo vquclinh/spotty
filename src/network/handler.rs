@@ -70,11 +70,23 @@ pub async fn start_network_worker(
             ClientRequest::GetCurrentPlayback => {
                 match client.get_current_playback().await {
                     Ok(playback) => {
+                        let debug_info = format!(
+                            "🟢 LẤY TRẠNG THÁI PLAYBACK THÀNH CÔNG:\n- Dữ liệu trả về: {:#?}", 
+                            playback
+                        );
+                        let _ = std::fs::write("debug_playback.txt", debug_info);
+
                         if let Ok(mut state) = shared_state.lock() {
                             state.playback = playback; 
                         }
                     }
-                    Err(_e) => {}
+                    Err(e) => {
+                        let error_info = format!(
+                            "🔴 LỖI LẤY TRẠNG THÁI PLAYBACK:\n- Chi tiết lỗi: {:#?}", 
+                            e
+                        );
+                        let _ = std::fs::write("debug_playback.txt", error_info);
+                    }
                 }
             }
 
