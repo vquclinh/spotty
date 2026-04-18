@@ -1,7 +1,6 @@
 use crate::app::state::SharedState;
 use crate::network::client::WebApiClient;
 use crate::network::request::ClientRequest;
-use crate::network::models::*;
 use tokio::sync::mpsc;
 
 // Match request type and execute it with WebApiClient

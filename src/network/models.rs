@@ -155,16 +155,6 @@ pub enum SearchType {
     Episode
 }
 
-#[derive(Debug, Deserialize, Clone)]
-#[serde(tag = "type", rename_all = "snake_case")]
-pub enum SearchItem {
-    Track(Track),
-    Album(Album),
-    Artist(Artist),
-    Playlist(Playlist),
-    Episode(Episode),
-}
-
 #[derive(Debug, Deserialize, Clone, Default)]
 pub struct SearchResult {
     pub playlists: Option<Page<Playlist>>,

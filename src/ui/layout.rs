@@ -39,7 +39,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         _ => {
             let content_chunks = Layout::default()
                 .direction(Direction::Horizontal)
-                .constraints([Constraint::Percentage(22), Constraint::Percentage(70)])
+                .constraints([Constraint::Percentage(22), Constraint::Percentage(78)])
                 .split(main_chunks[0]);
 
             sidebar::draw(f, app, content_chunks[0]);
