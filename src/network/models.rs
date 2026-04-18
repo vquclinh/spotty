@@ -166,7 +166,7 @@ pub enum SearchItem {
     Episode(Episode),
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Default)]
 pub struct SearchResult {
     pub playlists: Option<Vec<Playlist>>,
     pub albums: Option<Vec<Album>>,

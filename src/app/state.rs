@@ -14,6 +14,10 @@ pub struct IoSharedState {
 
     // playlist-detail-state
     pub playlist_items: Vec<PlayableItem>,
+    pub playlist_tracks: Vec<Track>,
+
+    // search results
+    pub search_results: SearchResult,
 }
 
 // SharedState uses Arc and Mutex to ensure thread-safe,

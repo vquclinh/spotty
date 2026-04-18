@@ -1,6 +1,7 @@
 use crate::app::state::SharedState;
 use crate::network::client::WebApiClient;
 use crate::network::request::ClientRequest;
+use crate::network::models::*;
 use tokio::sync::mpsc;
 
 // Match request type and execute it with WebApiClient
@@ -75,6 +76,23 @@ pub async fn start_network_worker(
                         }
                     }
                     Err(_e) => {}
+                }
+            }
+
+            ClientRequest::SearchItems { query, search_types, limit } => {
+                match client.search_items(&query, search_types, limit).await {
+                    Ok(results) => {
+                        let debug_info = format!(" SEARCH QUERY: {} \n{:#?}", query, results);
+                        let _ = std::fs::write("debug_search.txt", debug_info);
+
+                        if let Ok(mut state) = shared_state.lock() {
+                            state.search_results = results; 
+                        }
+                    }
+                    Err(e) => {
+                        let error_info = format!(" ERROR QUERY: {} \n{:#?}", query, e);
+                        let _ = std::fs::write("debug_search.txt", error_info);
+                    }
                 }
             }
 

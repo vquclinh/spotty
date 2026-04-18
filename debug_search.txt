@@ -1,0 +1,30 @@
+ ERROR QUERY: obito 
+Error {
+    context: "GET request failed at: search",
+    source: Http(
+        StatusCode(
+            Response {
+                url: "https://api.spotify.com/v1/search?q=obito&type=track%2Cartist%2Calbum%2Cplaylist&limit=20",
+                status: 400,
+                headers: {
+                    "content-type": "application/json; charset=utf-8",
+                    "cache-control": "private, max-age=0",
+                    "access-control-allow-origin": "*",
+                    "access-control-allow-headers": "Accept, App-Platform, Authorization, Content-Type, Origin, Retry-After, Spotify-App-Version, X-Cloud-Trace-Context, client-token, content-access-token",
+                    "access-control-allow-methods": "GET, POST, OPTIONS, PUT, DELETE, PATCH",
+                    "access-control-allow-credentials": "true",
+                    "access-control-max-age": "604800",
+                    "content-length": "56",
+                    "strict-transport-security": "max-age=31536000",
+                    "x-content-type-options": "nosniff",
+                    "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+                    "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+                    "vary": "Accept-Encoding",
+                    "date": "Sat, 18 Apr 2026 06:33:00 GMT",
+                    "server": "envoy",
+                    "via": "HTTP/2 edgeproxy, 1.1 google",
+                },
+            },
+        ),
+    ),
+}

@@ -180,6 +180,7 @@ impl WebApiClient {
         let endpoint = if playing { "me/player/pause" } else { "me/player/play" };
         // Use empty json! object for PUT requests with no body
         helper::put::<Value, _>(&self.client, endpoint, &json!({})).await?;
+
         Ok(())
     }
 

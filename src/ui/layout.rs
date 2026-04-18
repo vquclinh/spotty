@@ -7,6 +7,7 @@ use ratatui::{
 use super::{splash, lyrics, playbar, queue, search, sidebar, playlist, help};
 
 pub fn draw(f: &mut Frame, app: &mut App) {
+    // splash
     if let Route::Splash(splash_state) = &app.route {
         splash::draw(f, splash_state, f.area());
         return; 
@@ -19,28 +20,36 @@ pub fn draw(f: &mut Frame, app: &mut App) {
 
     playbar::draw(f, app, main_chunks[1]);
 
-    if matches!(app.route, Route::Lyrics) {
-        let lyrics_chunks = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints([Constraint::Percentage(60), Constraint::Percentage(40)])
-            .split(main_chunks[0]);
+    match &mut app.route {
+        Route::Lyrics => {
+            let lyrics_chunks = Layout::default()
+                .direction(Direction::Horizontal)
+                .constraints([Constraint::Percentage(60), Constraint::Percentage(40)])
+                .split(main_chunks[0]);
 
-        lyrics::draw_text(f, app, lyrics_chunks[0]);
-        lyrics::draw_info(f, app, lyrics_chunks[1]);
-    } else {
-        let content_chunks = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints([Constraint::Percentage(22), Constraint::Percentage(78)])
-            .split(main_chunks[0]);
+            lyrics::draw_text(f, app, lyrics_chunks[0]);
+            lyrics::draw_info(f, app, lyrics_chunks[1]);
+        }
 
-        sidebar::draw(f, app, content_chunks[0]);
+        Route::Search(_) => {
+            search::draw(f, app, main_chunks[0]);
+        }
 
-        match &mut app.route {
-            Route::Home(home_state) => crate::ui::home::draw(f, home_state, &app.active_block, content_chunks[1]),
-            Route::Search(search_state) => search::draw(f, search_state, &app.active_block, content_chunks[1]),
-            Route::Queue => queue::draw(f, app, content_chunks[1]),
-            Route::PlaylistDetail(playlist_state) => playlist::draw(f, playlist_state, &app.active_block, content_chunks[1]),
-            _ => {}
+        // state that has sidebar and library
+        _ => {
+            let content_chunks = Layout::default()
+                .direction(Direction::Horizontal)
+                .constraints([Constraint::Percentage(22), Constraint::Percentage(70)])
+                .split(main_chunks[0]);
+
+            sidebar::draw(f, app, content_chunks[0]);
+
+            match &mut app.route {
+                Route::Home(home_state) => crate::ui::home::draw(f, home_state, &app.active_block, content_chunks[1]),
+                Route::Queue => queue::draw(f, app, content_chunks[1]),
+                Route::PlaylistDetail(playlist_state) => playlist::draw(f, playlist_state, &app.active_block, content_chunks[1]),
+                _ => {}
+            }
         }
     }
 

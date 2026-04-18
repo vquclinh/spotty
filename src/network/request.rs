@@ -38,11 +38,9 @@ pub enum ClientRequest {
         limit: u32,
     },
 
-    Search {
+    SearchItems {
         query: String,
         search_types: Vec<SearchType>,
         limit: u32,
     },
-
-    Player(PlayerRequest),
 }

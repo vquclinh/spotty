@@ -81,7 +81,7 @@ pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
     let gauge = Gauge::default()
         .gauge_style(Style::default().fg(Color::LightGreen).bg(Color::DarkGray))
         .ratio(percent)
-        .label(Span::styled(label, Style::default().fg(Color::White).add_modifier(Modifier::BOLD)));
+        .label(Span::styled(label, Style::default().add_modifier(Modifier::BOLD)));
     
     let gauge_area = Rect {
         x: chunks[1].x + 1, y: chunks[1].y,
