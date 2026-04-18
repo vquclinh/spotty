@@ -21,7 +21,7 @@ pub fn handle_home_events(key: KeyEvent, app: &mut App) {
                 let _ = network_tx.send(ClientRequest::GetRecentlyPlayed { limit: 15, offset: 0 });
             },
             
-            KeyCode::Right | KeyCode::Char('l') => {
+            KeyCode::Left | KeyCode::Char('h') => {
                 home_state.active_tab = match home_state.active_tab {
                     HomeTab::TopTracks => HomeTab::TopArtists,
                     HomeTab::TopArtists => HomeTab::RecentlyPlayed,
@@ -34,7 +34,7 @@ pub fn handle_home_events(key: KeyEvent, app: &mut App) {
                 }
             }
 
-            KeyCode::Left | KeyCode::Char('h') => {
+            KeyCode::Right | KeyCode::Char('l') => {
                 home_state.active_tab = match home_state.active_tab {
                     HomeTab::TopTracks => HomeTab::RecentlyPlayed,
                     HomeTab::TopArtists => HomeTab::TopTracks,

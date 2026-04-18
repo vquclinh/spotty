@@ -1,4 +1,4 @@
- SEARCH QUERY: obito 
+ SEARCH QUERY: obit 
 SearchResult {
     playlists: Some(
         Page {
@@ -37,46 +37,6 @@ SearchResult {
                         Page {
                             items: [],
                             total: 40,
-                            offset: 0,
-                            limit: 0,
-                            next: None,
-                        },
-                    ),
-                },
-                Playlist {
-                    id: "5sg7wT1gQsyZqFpGfLfM0N",
-                    name: "ngoại lệ của nhau <3 - Obito",
-                    owner: User {
-                        id: "31gqoz3atsbcmme6nbmx72ruu3ti",
-                        display_name: "Tú Anh",
-                    },
-                    description: Some(
-                        "",
-                    ),
-                    items: Some(
-                        Page {
-                            items: [],
-                            total: 70,
-                            offset: 0,
-                            limit: 0,
-                            next: None,
-                        },
-                    ),
-                },
-                Playlist {
-                    id: "24ztZSSNneStTEsPqEYYAh",
-                    name: "2323",
-                    owner: User {
-                        id: "31u4mnutpybbrvtxnyzsyjacmila",
-                        display_name: "klfl",
-                    },
-                    description: Some(
-                        "",
-                    ),
-                    items: Some(
-                        Page {
-                            items: [],
-                            total: 23,
                             offset: 0,
                             limit: 0,
                             next: None,
@@ -123,12 +83,72 @@ SearchResult {
                         },
                     ),
                 },
+                Playlist {
+                    id: "5sg7wT1gQsyZqFpGfLfM0N",
+                    name: "ngoại lệ của nhau <3 - Obito",
+                    owner: User {
+                        id: "31gqoz3atsbcmme6nbmx72ruu3ti",
+                        display_name: "Tú Anh",
+                    },
+                    description: Some(
+                        "",
+                    ),
+                    items: Some(
+                        Page {
+                            items: [],
+                            total: 70,
+                            offset: 0,
+                            limit: 0,
+                            next: None,
+                        },
+                    ),
+                },
+                Playlist {
+                    id: "7BbjNj47w5Mp3KLzdfMgGK",
+                    name: "thap trap tu do - Obito",
+                    owner: User {
+                        id: "31afe67irj5aelgcdco4ylncjdv4",
+                        display_name: "bigh yeu em",
+                    },
+                    description: Some(
+                        "",
+                    ),
+                    items: Some(
+                        Page {
+                            items: [],
+                            total: 5,
+                            offset: 0,
+                            limit: 0,
+                            next: None,
+                        },
+                    ),
+                },
+                Playlist {
+                    id: "3Ui72U6JieWKubkk7lxiBz",
+                    name: "Tlinh, lowg, mck, obito, vstra, ,wxrdie,drt,..??",
+                    owner: User {
+                        id: "31ysfsehe4vfr7govhfvngyl6xne",
+                        display_name: "njl",
+                    },
+                    description: Some(
+                        "🏳\u{fe0f}\u{200d}🌈🫃🏿",
+                    ),
+                    items: Some(
+                        Page {
+                            items: [],
+                            total: 70,
+                            offset: 0,
+                            limit: 0,
+                            next: None,
+                        },
+                    ),
+                },
             ],
-            total: 14,
+            total: 15,
             offset: 0,
             limit: 10,
             next: Some(
-                "https://api.spotify.com/v1/search?offset=10&limit=10&query=obito&type=playlist",
+                "https://api.spotify.com/v1/search?offset=10&limit=10&query=obit&type=playlist",
             ),
         },
     ),
@@ -152,41 +172,6 @@ SearchResult {
                     ],
                     release_date: Some(
                         "2023-10-10",
-                    ),
-                    tracks: None,
-                },
-                Album {
-                    id: "2to6IlNCAwis7r76phSsMZ",
-                    name: "Shay nắnggg",
-                    artists: [
-                        Artist {
-                            id: "2aQnC3DbZB9GbauvhAw7ve",
-                            name: "AMEE",
-                            genres: None,
-                        },
-                        Artist {
-                            id: "0ZbgKh0FgPYeFP38nVaEGp",
-                            name: "Obito",
-                            genres: None,
-                        },
-                    ],
-                    release_date: Some(
-                        "2022-06-06",
-                    ),
-                    tracks: None,
-                },
-                Album {
-                    id: "1vi1WySkgPGkbR8NnQzlXu",
-                    name: "99%",
-                    artists: [
-                        Artist {
-                            id: "1zSv9qZANOWB4HRE8sxeTL",
-                            name: "RPT MCK",
-                            genres: None,
-                        },
-                    ],
-                    release_date: Some(
-                        "2023-03-02",
                     ),
                     tracks: None,
                 },
@@ -216,21 +201,6 @@ SearchResult {
                     tracks: None,
                 },
                 Album {
-                    id: "5DUq1RazriMLxB7eKmcWdR",
-                    name: "Buồn Hay Vui (feat. RPT MCK, Obito, Ronboogz & Boyzed)",
-                    artists: [
-                        Artist {
-                            id: "22MX8BG5870DGzpNricY7q",
-                            name: "VSOUL",
-                            genres: None,
-                        },
-                    ],
-                    release_date: Some(
-                        "2023-12-25",
-                    ),
-                    tracks: None,
-                },
-                Album {
                     id: "3Qsp8mywrgRP9hZ9cHe0xH",
                     name: "Panorama",
                     artists: [
@@ -251,6 +221,36 @@ SearchResult {
                     tracks: None,
                 },
                 Album {
+                    id: "1vi1WySkgPGkbR8NnQzlXu",
+                    name: "99%",
+                    artists: [
+                        Artist {
+                            id: "1zSv9qZANOWB4HRE8sxeTL",
+                            name: "RPT MCK",
+                            genres: None,
+                        },
+                    ],
+                    release_date: Some(
+                        "2023-03-02",
+                    ),
+                    tracks: None,
+                },
+                Album {
+                    id: "1wmnEWgcDdCcOujQpLwYxc",
+                    name: "THE WXRDIES",
+                    artists: [
+                        Artist {
+                            id: "1Jmkhzve9TuXHUUWGmpANw",
+                            name: "Wxrdie",
+                            genres: None,
+                        },
+                    ],
+                    release_date: Some(
+                        "2024-11-12",
+                    ),
+                    tracks: None,
+                },
+                Album {
                     id: "3Qpia0Gp3Lu1IGTrb4anUM",
                     name: "Dạo Này",
                     artists: [
@@ -262,6 +262,21 @@ SearchResult {
                     ],
                     release_date: Some(
                         "2025-12-24",
+                    ),
+                    tracks: None,
+                },
+                Album {
+                    id: "5HPEQG2WxAL0eIYBYtDy5y",
+                    name: "When You Look at Me (feat. Seachains)",
+                    artists: [
+                        Artist {
+                            id: "0ZbgKh0FgPYeFP38nVaEGp",
+                            name: "Obito",
+                            genres: None,
+                        },
+                    ],
+                    release_date: Some(
+                        "2019-12-23",
                     ),
                     tracks: None,
                 },
@@ -286,24 +301,14 @@ SearchResult {
                     tracks: None,
                 },
                 Album {
-                    id: "7zEbWbVrweWdPTD28xP7xx",
-                    name: "Obito",
+                    id: "2to6IlNCAwis7r76phSsMZ",
+                    name: "Shay nắnggg",
                     artists: [
                         Artist {
-                            id: "51YxtEFabVnuIaUiFV6mlD",
-                            name: "HAKAI",
+                            id: "2aQnC3DbZB9GbauvhAw7ve",
+                            name: "AMEE",
                             genres: None,
                         },
-                    ],
-                    release_date: Some(
-                        "2020-05-16",
-                    ),
-                    tracks: None,
-                },
-                Album {
-                    id: "5kv54t3UIhFoHxq6JKOVpo",
-                    name: "Si mê you",
-                    artists: [
                         Artist {
                             id: "0ZbgKh0FgPYeFP38nVaEGp",
                             name: "Obito",
@@ -311,16 +316,31 @@ SearchResult {
                         },
                     ],
                     release_date: Some(
-                        "2022-10-09",
+                        "2022-06-06",
+                    ),
+                    tracks: None,
+                },
+                Album {
+                    id: "5DUq1RazriMLxB7eKmcWdR",
+                    name: "Buồn Hay Vui (feat. RPT MCK, Obito, Ronboogz & Boyzed)",
+                    artists: [
+                        Artist {
+                            id: "22MX8BG5870DGzpNricY7q",
+                            name: "VSOUL",
+                            genres: None,
+                        },
+                    ],
+                    release_date: Some(
+                        "2023-12-25",
                     ),
                     tracks: None,
                 },
             ],
-            total: 15,
+            total: 12,
             offset: 0,
             limit: 10,
             next: Some(
-                "https://api.spotify.com/v1/search?offset=10&limit=10&query=obito&type=album",
+                "https://api.spotify.com/v1/search?offset=10&limit=10&query=obit&type=album",
             ),
         },
     ),
@@ -338,13 +358,8 @@ SearchResult {
                     genres: None,
                 },
                 Artist {
-                    id: "2aMo0CYbTieTisS0BlWc59",
-                    name: "VSTRA",
-                    genres: None,
-                },
-                Artist {
-                    id: "5xY6E5PMZNtz9jDvxTRiGI",
-                    name: "Dangrangto",
+                    id: "1WvNgEoB66jmHodcj15Zi9",
+                    name: "B Ray",
                     genres: None,
                 },
                 Artist {
@@ -353,13 +368,13 @@ SearchResult {
                     genres: None,
                 },
                 Artist {
-                    id: "3diftVOq7aEIebXKkC34oR",
-                    name: "tlinh",
+                    id: "3hRnvEdu1iPyB6EzMBbuZq",
+                    name: "Shiki",
                     genres: None,
                 },
                 Artist {
-                    id: "7L3D8AutE2MBqfkr8w63DG",
-                    name: "Obito",
+                    id: "5xY6E5PMZNtz9jDvxTRiGI",
+                    name: "Dangrangto",
                     genres: None,
                 },
                 Artist {
@@ -373,8 +388,13 @@ SearchResult {
                     genres: None,
                 },
                 Artist {
-                    id: "7asvA6Yz9cItmIbt2HNUPQ",
-                    name: "Obito.Triple3",
+                    id: "48vP5SxlTO6yOI7SLKIOQV",
+                    name: "Obie Wanshot",
+                    genres: None,
+                },
+                Artist {
+                    id: "08GTkgJXi9tedLqjbLDLCP",
+                    name: "ObieDaz",
                     genres: None,
                 },
             ],
@@ -382,37 +402,13 @@ SearchResult {
             offset: 0,
             limit: 10,
             next: Some(
-                "https://api.spotify.com/v1/search?offset=10&limit=10&query=obito&type=artist",
+                "https://api.spotify.com/v1/search?offset=10&limit=10&query=obit&type=artist",
             ),
         },
     ),
     tracks: Some(
         Page {
             items: [
-                Track {
-                    id: "1UQNU5O9VttUgO16pxUnjw",
-                    name: "Đánh Đổi",
-                    artists: [
-                        Artist {
-                            id: "0ZbgKh0FgPYeFP38nVaEGp",
-                            name: "Obito",
-                            genres: None,
-                        },
-                        Artist {
-                            id: "3hRnvEdu1iPyB6EzMBbuZq",
-                            name: "Shiki",
-                            genres: None,
-                        },
-                        Artist {
-                            id: "1zSv9qZANOWB4HRE8sxeTL",
-                            name: "RPT MCK",
-                            genres: None,
-                        },
-                    ],
-                    album_name: "",
-                    duration: 226.993s,
-                    explicit: true,
-                },
                 Track {
                     id: "4MCP9l0QB9YN2LCkIy8mz4",
                     name: "Dạo Này",
@@ -452,8 +448,8 @@ SearchResult {
                     explicit: true,
                 },
                 Track {
-                    id: "1hFZdk0jIkrMEribQHxGhP",
-                    name: "Simple Love",
+                    id: "1UQNU5O9VttUgO16pxUnjw",
+                    name: "Đánh Đổi",
                     artists: [
                         Artist {
                             id: "0ZbgKh0FgPYeFP38nVaEGp",
@@ -461,13 +457,56 @@ SearchResult {
                             genres: None,
                         },
                         Artist {
-                            id: "6UiKZD9yB7Gxjol62s431k",
-                            name: "Seachains",
+                            id: "3hRnvEdu1iPyB6EzMBbuZq",
+                            name: "Shiki",
+                            genres: None,
+                        },
+                        Artist {
+                            id: "1zSv9qZANOWB4HRE8sxeTL",
+                            name: "RPT MCK",
                             genres: None,
                         },
                     ],
                     album_name: "",
-                    duration: 213.721s,
+                    duration: 226.993s,
+                    explicit: true,
+                },
+                Track {
+                    id: "2Asy51yFMEG8Qjh15kvQeD",
+                    name: "Tell the kids i love them",
+                    artists: [
+                        Artist {
+                            id: "0ZbgKh0FgPYeFP38nVaEGp",
+                            name: "Obito",
+                            genres: None,
+                        },
+                        Artist {
+                            id: "3hRnvEdu1iPyB6EzMBbuZq",
+                            name: "Shiki",
+                            genres: None,
+                        },
+                    ],
+                    album_name: "",
+                    duration: 224.175s,
+                    explicit: true,
+                },
+                Track {
+                    id: "2rG6N3Czmz552WmxAvlI3P",
+                    name: "Champion",
+                    artists: [
+                        Artist {
+                            id: "0ZbgKh0FgPYeFP38nVaEGp",
+                            name: "Obito",
+                            genres: None,
+                        },
+                        Artist {
+                            id: "3hRnvEdu1iPyB6EzMBbuZq",
+                            name: "Shiki",
+                            genres: None,
+                        },
+                    ],
+                    album_name: "",
+                    duration: 349.319s,
                     explicit: false,
                 },
                 Track {
@@ -493,6 +532,63 @@ SearchResult {
                     album_name: "",
                     duration: 165.555s,
                     explicit: false,
+                },
+                Track {
+                    id: "1hFZdk0jIkrMEribQHxGhP",
+                    name: "Simple Love",
+                    artists: [
+                        Artist {
+                            id: "0ZbgKh0FgPYeFP38nVaEGp",
+                            name: "Obito",
+                            genres: None,
+                        },
+                        Artist {
+                            id: "6UiKZD9yB7Gxjol62s431k",
+                            name: "Seachains",
+                            genres: None,
+                        },
+                    ],
+                    album_name: "",
+                    duration: 213.721s,
+                    explicit: false,
+                },
+                Track {
+                    id: "5XfGQZA0ioQAWUjlyJRcHc",
+                    name: "1000 Ánh Mắt",
+                    artists: [
+                        Artist {
+                            id: "3hRnvEdu1iPyB6EzMBbuZq",
+                            name: "Shiki",
+                            genres: None,
+                        },
+                        Artist {
+                            id: "0ZbgKh0FgPYeFP38nVaEGp",
+                            name: "Obito",
+                            genres: None,
+                        },
+                    ],
+                    album_name: "",
+                    duration: 152s,
+                    explicit: false,
+                },
+                Track {
+                    id: "2OucKhBwbCuIdCq9qKXUqR",
+                    name: "Sài Gòn ơi",
+                    artists: [
+                        Artist {
+                            id: "0ZbgKh0FgPYeFP38nVaEGp",
+                            name: "Obito",
+                            genres: None,
+                        },
+                        Artist {
+                            id: "3hRnvEdu1iPyB6EzMBbuZq",
+                            name: "Shiki",
+                            genres: None,
+                        },
+                    ],
+                    album_name: "",
+                    duration: 188.256s,
+                    explicit: true,
                 },
                 Track {
                     id: "4OXAneZHFJyQV1RuzCzmH3",
@@ -528,88 +624,12 @@ SearchResult {
                     duration: 291.75s,
                     explicit: false,
                 },
-                Track {
-                    id: "2Asy51yFMEG8Qjh15kvQeD",
-                    name: "Tell the kids i love them",
-                    artists: [
-                        Artist {
-                            id: "0ZbgKh0FgPYeFP38nVaEGp",
-                            name: "Obito",
-                            genres: None,
-                        },
-                        Artist {
-                            id: "3hRnvEdu1iPyB6EzMBbuZq",
-                            name: "Shiki",
-                            genres: None,
-                        },
-                    ],
-                    album_name: "",
-                    duration: 224.175s,
-                    explicit: true,
-                },
-                Track {
-                    id: "4AgtjMvQyIflyk8CYdVfm7",
-                    name: "Tháp Drill Tự Do",
-                    artists: [
-                        Artist {
-                            id: "50iDpqGL9WSAO08k59LX3Q",
-                            name: "ARB Crew",
-                            genres: None,
-                        },
-                        Artist {
-                            id: "3jIIOLU3QHAMHW0OlmIkK1",
-                            name: "Scorplie",
-                            genres: None,
-                        },
-                        Artist {
-                            id: "0HObUb1ZCln5ReXPNeNbRP",
-                            name: "Cạp suy tình",
-                            genres: None,
-                        },
-                    ],
-                    album_name: "",
-                    duration: 106.295s,
-                    explicit: false,
-                },
-                Track {
-                    id: "5XfGQZA0ioQAWUjlyJRcHc",
-                    name: "1000 Ánh Mắt",
-                    artists: [
-                        Artist {
-                            id: "3hRnvEdu1iPyB6EzMBbuZq",
-                            name: "Shiki",
-                            genres: None,
-                        },
-                        Artist {
-                            id: "0ZbgKh0FgPYeFP38nVaEGp",
-                            name: "Obito",
-                            genres: None,
-                        },
-                    ],
-                    album_name: "",
-                    duration: 152s,
-                    explicit: false,
-                },
-                Track {
-                    id: "5b2tuX2lP0lpCR8EGNVkrx",
-                    name: "Si mê you",
-                    artists: [
-                        Artist {
-                            id: "0ZbgKh0FgPYeFP38nVaEGp",
-                            name: "Obito",
-                            genres: None,
-                        },
-                    ],
-                    album_name: "",
-                    duration: 183s,
-                    explicit: false,
-                },
             ],
-            total: 12,
+            total: 11,
             offset: 0,
             limit: 10,
             next: Some(
-                "https://api.spotify.com/v1/search?offset=10&limit=10&query=obito&type=track",
+                "https://api.spotify.com/v1/search?offset=10&limit=10&query=obit&type=track",
             ),
         },
     ),
