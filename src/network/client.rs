@@ -114,10 +114,6 @@ impl WebApiClient {
 
         let res: Value = helper::get(&self.client, &endpoint, &params).await?;
 
-        if let Ok(pretty_json) = serde_json::to_string_pretty(&res) {
-            let _ = std::fs::write("debug_raw_response.json", pretty_json);
-        }
-
         let items: Vec<PlayableItem> = res["items"]
             .as_array()
             .unwrap_or(&vec![])
