@@ -105,7 +105,7 @@ impl WebApiClient {
     }
 
     pub async fn get_playlist_items(&self, id: &str, limit: u32, offset: u32) -> Result<Vec<PlayableItem>> {
-        let endpoint = format!("playlists/{}/tracks", id);
+        let endpoint = format!("playlists/{}/items", id);
         let mut params = HashMap::new();
         let limit_str = limit.to_string();
         let offset_str = offset.to_string();
@@ -114,19 +114,22 @@ impl WebApiClient {
 
         let res: Value = helper::get(&self.client, &endpoint, &params).await?;
 
-        // Playlist items are nested under item: { track: { ... } }
+        if let Ok(pretty_json) = serde_json::to_string_pretty(&res) {
+            let _ = std::fs::write("debug_raw_response.json", pretty_json);
+        }
+
         let items: Vec<PlayableItem> = res["items"]
             .as_array()
             .unwrap_or(&vec![])
             .iter()
-            .filter_map(|item| {
-                let track = item.get("track").filter(|v| !v.is_null());
-                let episode = item.get("episode").filter(|v| !v.is_null());
+            .filter_map(|wrapper| {
+                let target = wrapper.get("track")
+                    .or_else(|| wrapper.get("item"))
+                    .filter(|v| !v.is_null())?;
 
-                let target = track.or(episode)?;
-                serde_json::from_value(target.clone()).ok()
+                serde_json::from_value::<PlayableItem>(target.clone()).ok()
             })
-        .collect();
+            .collect();
 
         Ok(items)
     }
