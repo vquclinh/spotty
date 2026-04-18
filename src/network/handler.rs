@@ -24,8 +24,8 @@ pub async fn start_network_worker(
                 }
             }
 
-            ClientRequest::GetRecentlyPlayed { limit } => {
-                match client.get_recently_played_tracks(limit).await { 
+            ClientRequest::GetRecentlyPlayed { limit, offset } => {
+                match client.get_recently_played_tracks(limit, offset).await { 
                     Ok(tracks) => {
                         if let Ok(mut state) = shared_state.lock() {
                             state.recent_tracks = tracks;
@@ -79,8 +79,8 @@ pub async fn start_network_worker(
                 }
             }
 
-            ClientRequest::SearchItems { query, search_types, limit } => {
-                match client.search_items(&query, search_types, limit).await {
+            ClientRequest::SearchItems { query, search_types, limit, offset } => {
+                match client.search_items(&query, search_types, limit, offset).await {
                     Ok(results) => {
                         let debug_info = format!(" SEARCH QUERY: {} \n{:#?}", query, results);
                         let _ = std::fs::write("debug_search.txt", debug_info);

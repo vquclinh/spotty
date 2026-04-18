@@ -63,7 +63,7 @@ pub fn handle_key_events(key: KeyEvent, app: &mut App) {
                     KeyCode::Char('2') => home_state.active_tab = HomeTab::TopArtists,
                     KeyCode::Char('3') => {
                         home_state.active_tab = HomeTab::RecentlyPlayed;
-                        let _ = app.network_tx.send(ClientRequest::GetRecentlyPlayed { limit: 50 });
+                        let _ = app.network_tx.send(ClientRequest::GetRecentlyPlayed { limit: 50, offset: 0 });
                     }
 
                     KeyCode::Right | KeyCode::Char('l') => {
@@ -74,7 +74,7 @@ pub fn handle_key_events(key: KeyEvent, app: &mut App) {
                         };
                         match home_state.active_tab {
                             HomeTab::RecentlyPlayed => {
-                                let _ = app.network_tx.send(ClientRequest::GetRecentlyPlayed { limit: 50 });
+                                let _ = app.network_tx.send(ClientRequest::GetRecentlyPlayed { limit: 50, offset: 0 });
                             }
                             _ => {}
                         }
@@ -89,7 +89,7 @@ pub fn handle_key_events(key: KeyEvent, app: &mut App) {
 
                         match home_state.active_tab {
                             HomeTab::RecentlyPlayed => {
-                                let _ = app.network_tx.send(ClientRequest::GetRecentlyPlayed { limit: 50 });
+                                let _ = app.network_tx.send(ClientRequest::GetRecentlyPlayed { limit: 50, offset: 0 });
                             }
                             _ => {}
                         }

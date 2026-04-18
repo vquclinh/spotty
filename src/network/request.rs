@@ -36,11 +36,13 @@ pub enum ClientRequest {
 
     GetRecentlyPlayed {
         limit: u32,
+        offset: u32,
     },
 
     SearchItems {
         query: String,
         search_types: Vec<SearchType>,
         limit: u32,
+        offset: u32
     },
 }

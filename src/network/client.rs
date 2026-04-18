@@ -158,10 +158,12 @@ impl WebApiClient {
         Ok(artists)
     }
 
-    pub async fn get_recently_played_tracks(&self, limit: u32) -> Result<Vec<Track>> {
+    pub async fn get_recently_played_tracks(&self, limit: u32, offset: u32) -> Result<Vec<Track>> {
         let mut params = HashMap::new();
         let limit_str = limit.to_string();
+        let offset_str = offset.to_string();
         params.insert("limit", limit_str.as_str());
+        params.insert("offset", offset_str.as_str());
 
         let res: Value = helper::get(&self.client, "me/player/recently-played", &params).await?;
 
@@ -198,20 +200,29 @@ impl WebApiClient {
         &self,
         query: &str,
         search_types: impl IntoIterator<Item = SearchType>,
-        limit: u32
+        limit: u32,
+        offset: u32
     ) -> Result<SearchResult> {
         let mut params = HashMap::new();
         let limit_str = limit.to_string();
+        let offset_str = offset.to_string();
 
         // Join search_types into a comma-separated string (e.g., "track,artist")
         let type_str = search_types.into_iter()
-            .map(|t| format!("{:?}", t).to_lowercase())
-            .collect::<Vec<_>>()
+            .map(|t| match t {
+                SearchType::Track => "track",
+                SearchType::Artist => "artist",
+                SearchType::Album => "album",
+                SearchType::Playlist => "playlist",
+                SearchType::Episode => "episode",
+            })
+        .collect::<Vec<_>>()
             .join(",");
 
         params.insert("q", query);
         params.insert("type", type_str.as_str());
         params.insert("limit", limit_str.as_str());
+        params.insert("offset", offset_str.as_str());
 
         helper::get(&self.client, "search", &params).await
     }

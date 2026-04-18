@@ -11,10 +11,10 @@ pub fn handle_search_events(key: KeyEvent, app: &mut App) {
     let (tracks_len, artists_len, albums_len, playlists_len) = {
         let state_lock = app.shared_state.lock().unwrap();
         (
-            state_lock.search_results.tracks.as_ref().map_or(0, |t| t.len()),
-            state_lock.search_results.artists.as_ref().map_or(0, |t| t.len()),
-            state_lock.search_results.albums.as_ref().map_or(0, |t| t.len()),
-            state_lock.search_results.playlists.as_ref().map_or(0, |t| t.len()),
+            state_lock.search_results.tracks.as_ref().map_or(0, |t| t.items.len()),
+            state_lock.search_results.artists.as_ref().map_or(0, |t| t.items.len()),
+            state_lock.search_results.albums.as_ref().map_or(0, |t| t.items.len()),
+            state_lock.search_results.playlists.as_ref().map_or(0, |t| t.items.len()),
         )
     };
 
@@ -92,7 +92,8 @@ pub fn handle_search_events(key: KeyEvent, app: &mut App) {
         let _ = app.network_tx.send(ClientRequest::SearchItems { 
             query, 
             search_types: types,
-            limit: 20 
+            limit: 10,
+            offset: 0
         });
     }
 }

@@ -18,7 +18,7 @@ pub fn handle_home_events(key: KeyEvent, app: &mut App) {
             },
             KeyCode::Char('3') => {
                 home_state.active_tab = HomeTab::RecentlyPlayed;
-                let _ = network_tx.send(ClientRequest::GetRecentlyPlayed { limit: 15 });
+                let _ = network_tx.send(ClientRequest::GetRecentlyPlayed { limit: 15, offset: 0 });
             },
             
             KeyCode::Right | KeyCode::Char('l') => {
@@ -29,7 +29,7 @@ pub fn handle_home_events(key: KeyEvent, app: &mut App) {
                 };
                 match home_state.active_tab {
                     HomeTab::TopTracks => { let _ = network_tx.send(ClientRequest::GetUserTopTracks { time_range: TimeRange::ShortTerm, limit: 15, offset: 0 }); }
-                    HomeTab::RecentlyPlayed => { let _ = network_tx.send(ClientRequest::GetRecentlyPlayed { limit: 15 }); }
+                    HomeTab::RecentlyPlayed => { let _ = network_tx.send(ClientRequest::GetRecentlyPlayed { limit: 15, offset: 0 }); }
                     HomeTab::TopArtists => { let _ = network_tx.send(ClientRequest::GetUserTopArtists { time_range: TimeRange::ShortTerm, limit: 15, offset: 0 }); }
                 }
             }
@@ -42,7 +42,7 @@ pub fn handle_home_events(key: KeyEvent, app: &mut App) {
                 };
                 match home_state.active_tab {
                     HomeTab::TopTracks => { let _ = network_tx.send(ClientRequest::GetUserTopTracks { time_range: TimeRange::ShortTerm, limit: 15, offset: 0 }); }
-                    HomeTab::RecentlyPlayed => { let _ = network_tx.send(ClientRequest::GetRecentlyPlayed { limit: 15 }); }
+                    HomeTab::RecentlyPlayed => { let _ = network_tx.send(ClientRequest::GetRecentlyPlayed { limit: 15, offset: 0 }); }
                     HomeTab::TopArtists => { let _ = network_tx.send(ClientRequest::GetUserTopArtists { time_range: TimeRange::ShortTerm, limit: 15, offset: 0 }); }
                 }
             }

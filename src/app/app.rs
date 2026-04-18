@@ -69,7 +69,7 @@ impl App {
             Route::Home(state) => {
                 match state.active_tab {
                     HomeTab::RecentlyPlayed => {
-                        let _ = self.network_tx.send(ClientRequest::GetRecentlyPlayed { limit: 15 });
+                        let _ = self.network_tx.send(ClientRequest::GetRecentlyPlayed { limit: 15, offset: 0 });
                     }
                     HomeTab::TopTracks => {
                         let _ = self.network_tx.send(ClientRequest::GetUserTopTracks { time_range: TimeRange::ShortTerm, limit: 15, offset: 0 });
@@ -129,8 +129,8 @@ impl App {
                 }
 
                 Route::Search(search_state) => {
-                    let has_tracks = shared_state.search_results.tracks.as_ref().is_some_and(|t| !t.is_empty());
-                    let has_artists = shared_state.search_results.artists.as_ref().is_some_and(|a| !a.is_empty());
+                    let has_tracks = shared_state.search_results.tracks.as_ref().is_some_and(|t| !t.items.is_empty());
+                    let has_artists = shared_state.search_results.artists.as_ref().is_some_and(|a| !a.items.is_empty());
 
                     if has_tracks || has_artists {
                         search_state.results = std::mem::take(&mut shared_state.search_results);

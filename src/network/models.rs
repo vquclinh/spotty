@@ -1,4 +1,5 @@
-use serde::Deserialize;
+use serde::{Deserialize, Deserializer, de::DeserializeOwned};
+use serde_json::Value;
 use std::time::Duration;
 
 mod duration_ms {
@@ -27,8 +28,7 @@ pub struct Album {
     pub name: String,
     pub artists: Vec<Artist>,
     pub release_date: Option<String>,
-    #[serde(default)]
-    pub tracks: Vec<Track>,
+    pub tracks: Option<Page<Track>>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -65,9 +65,8 @@ pub struct Playlist {
     pub name: String,
     #[serde(default)]
     pub owner: User,
-    pub description: String,
-    #[serde(default)]
-    pub items: Vec<PlayableItem>,
+    pub description: Option<String>,
+    pub items: Option<Page<PlayableItem>>,
 }
 
 #[derive(Debug, Deserialize, Clone, Copy, PartialEq, Eq)]
@@ -168,11 +167,11 @@ pub enum SearchItem {
 
 #[derive(Debug, Deserialize, Clone, Default)]
 pub struct SearchResult {
-    pub playlists: Option<Vec<Playlist>>,
-    pub albums: Option<Vec<Album>>,
-    pub artists: Option<Vec<Artist>>,
-    pub tracks: Option<Vec<Track>>,
-    pub episodes: Option<Vec<Episode>>,
+    pub playlists: Option<Page<Playlist>>,
+    pub albums: Option<Page<Album>>,
+    pub artists: Option<Page<Artist>>,
+    pub tracks: Option<Page<Track>>,
+    pub episodes: Option<Page<Episode>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -189,5 +188,53 @@ impl TimeRange {
             Self::MediumTerm => "medium_term",
             Self::LongTerm => "long_term"
         }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Page<T> {
+    pub items: Vec<T>,
+    pub total: u32,
+    pub offset: u32,
+    pub limit: u32,
+    pub next: Option<String>,
+}
+
+impl<T> Default for Page<T> {
+    fn default() -> Self {
+        Self {
+            items: Vec::new(),
+            total: 0,
+            offset: 0,
+            limit: 10,
+            next: None,
+        }
+    }
+}
+
+impl<'de, T: DeserializeOwned> Deserialize<'de> for Page<T> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let val = Value::deserialize(deserializer)?;
+
+        // Safely extract the array. filter_map silently discards any `null` elements
+        let items = val.get("items")
+            .and_then(Value::as_array)
+            .map(|arr| {
+                arr.iter()
+                    .filter_map(|item| serde_json::from_value(item.clone()).ok())
+                    .collect()
+            })
+            .unwrap_or_default();
+
+        Ok(Page {
+            items,
+            total: val.get("total").and_then(Value::as_u64).unwrap_or(0) as u32,
+            offset: val.get("offset").and_then(Value::as_u64).unwrap_or(0) as u32,
+            limit: val.get("limit").and_then(Value::as_u64).unwrap_or(0) as u32,
+            next: val.get("next").and_then(Value::as_str).map(String::from),
+        })
     }
 }
