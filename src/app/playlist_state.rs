@@ -1,10 +1,10 @@
-use crate::network::models::{Playlist, Track};
+use crate::network::models::*;
 use crate::app::types::StatefulTable;
 
 #[derive(Clone)]
 pub struct PlaylistState {
     pub playlist: Playlist,
-    pub tracks: StatefulTable<Track>,
+    pub tracks: StatefulTable<PlayableItem>,
 }
 
 impl PlaylistState {

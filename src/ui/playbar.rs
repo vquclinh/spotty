@@ -1,4 +1,5 @@
 use crate::app::{App, ActiveBlock};
+use crate::network::models::PlayableItem;
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect, Alignment},
@@ -16,7 +17,7 @@ pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
         
         let progress = playback.progress.as_millis() as u32; 
 
-        if let Some(crate::network::models::Playable::Track(track)) = &playback.item {
+        if let Some(PlayableItem::Track(track)) = &playback.item {
             let artist = track.artists.first()
                 .map(|a| a.name.clone())
                 .unwrap_or_else(|| "Unknown".to_string());

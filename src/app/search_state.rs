@@ -1,5 +1,5 @@
 use ratatui::widgets::ListState;
-use crate::network::models::SearchResults;
+use crate::network::models::*;
 
 #[derive(Clone, PartialEq, Default)]
 pub enum SearchHoveredPane {
@@ -15,7 +15,7 @@ pub enum SearchHoveredPane {
 pub struct SearchState {
     pub input: String,
     
-    pub results: SearchResults,
+    pub results: SearchResult,
 
     pub tracks_state: ListState,
     pub artists_state: ListState,
@@ -30,7 +30,7 @@ impl SearchState {
         Self {
             input: String::new(),
 
-            results: SearchResults::default(),
+            results: SearchResult::default(),
 
             tracks_state: ListState::default(),
             artists_state: ListState::default(),

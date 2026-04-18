@@ -6,7 +6,7 @@ use ratatui::{
     widgets::{Block, Borders, Paragraph},
 };
 
-use crate::network::models::Playable::Track;
+use crate::network::models::PlayableItem;
 
 pub fn draw_text(f: &mut Frame, app: &mut App, area: Rect) {
     let border_color = if app.active_block == ActiveBlock::LyricsText { Color::Green } else { Color:: White };
@@ -26,7 +26,7 @@ pub fn draw_info(f: &mut Frame, app: &mut App, area: Rect) {
 
     let info = if let Some(playback) = &app.playback {
         
-        if let Some(Track(track)) = &playback.item {
+        if let Some(PlayableItem::Track(track)) = &playback.item {
             let artist_name = track.artists.first()
                 .map(|a| a.name.clone())
                 .unwrap_or_else(|| "Unknown".to_string());

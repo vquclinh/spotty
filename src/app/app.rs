@@ -8,7 +8,7 @@ use crate::app::route::Route;
 use crate::app::state::SharedState;
 use crate::app::playbar_state::PlaybarState;
 
-use crate::network::models::{Playlist, PlaybackState};
+use crate::network::models::*;
 use crate::network::request::ClientRequest;
 
 pub struct App {
@@ -19,7 +19,7 @@ pub struct App {
     pub network_tx: mpsc::UnboundedSender<ClientRequest>, // the bridge between UI and Network
     pub shared_state: SharedState,
 
-    pub playback: Option<PlaybackState>,
+    pub playback: Option<Playback>,
     pub liked_songs: usize,
     pub playlists: StatefulTable<Playlist>,
     pub playbar_state: PlaybarState,
@@ -69,13 +69,13 @@ impl App {
             Route::Home(state) => {
                 match state.active_tab {
                     HomeTab::RecentlyPlayed => {
-                        let _ = self.network_tx.send(ClientRequest::GetRecentlyPlayed { limit: 15 });
+                        let _ = self.network_tx.send(ClientRequest::GetRecentlyPlayed { limit: 15, offset: 0 });
                     }
                     HomeTab::TopTracks => {
-                        let _ = self.network_tx.send(ClientRequest::GetTopTracks { limit: 15 });
+                        let _ = self.network_tx.send(ClientRequest::GetUserTopTracks { time_range: TimeRange::ShortTerm, limit: 15, offset: 0 });
                     }
                     HomeTab::TopArtists => {
-                        let _ = self.network_tx.send(ClientRequest::GetTopArtists { limit: 15 });
+                        let _ = self.network_tx.send(ClientRequest::GetUserTopArtists { time_range: TimeRange::ShortTerm, limit: 15, offset: 0 });
                     }
                 }
             }
@@ -123,15 +123,16 @@ impl App {
                 }
 
                 Route::PlaylistDetail(playlist_state) => {
-                    if !shared_state.playlist_tracks.is_empty() {
-                        playlist_state.tracks.items = shared_state.playlist_tracks.drain(..).collect();
+                    if !shared_state.playlist_items.is_empty() {
+                        playlist_state.tracks.items = shared_state.playlist_items.drain(..).collect();
                     }
                 }
 
                 Route::Search(search_state) => {
-                    if !shared_state.search_results.tracks.is_empty() 
-                        || !shared_state.search_results.artists.is_empty() 
-                    {
+                    let has_tracks = shared_state.search_results.tracks.as_ref().is_some_and(|t| !t.items.is_empty());
+                    let has_artists = shared_state.search_results.artists.as_ref().is_some_and(|a| !a.items.is_empty());
+
+                    if has_tracks || has_artists {
                         search_state.results = std::mem::take(&mut shared_state.search_results);
                     }
                 }

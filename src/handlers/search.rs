@@ -3,6 +3,7 @@ use ratatui::widgets::ListState;
 use crate::app::{ActiveBlock, App, route::Route};
 use crate::app::search_state::SearchHoveredPane;
 use crate::network::request::ClientRequest;
+use crate::network::models::*;
 
 pub fn handle_search_events(key: KeyEvent, app: &mut App) {
     let mut query_to_send = None;
@@ -10,10 +11,10 @@ pub fn handle_search_events(key: KeyEvent, app: &mut App) {
     let (tracks_len, artists_len, albums_len, playlists_len) = {
         let state_lock = app.shared_state.lock().unwrap();
         (
-            state_lock.search_results.tracks.len(),
-            state_lock.search_results.artists.len(),
-            state_lock.search_results.albums.len(),
-            state_lock.search_results.playlists.len(),
+            state_lock.search_results.tracks.as_ref().map_or(0, |t| t.items.len()),
+            state_lock.search_results.artists.as_ref().map_or(0, |t| t.items.len()),
+            state_lock.search_results.albums.as_ref().map_or(0, |t| t.items.len()),
+            state_lock.search_results.playlists.as_ref().map_or(0, |t| t.items.len()),
         )
     };
 
@@ -87,9 +88,12 @@ pub fn handle_search_events(key: KeyEvent, app: &mut App) {
     }
 
     if let Some(query) = query_to_send {
-        let _ = app.network_tx.send(ClientRequest::SearchAll { 
+        let types = vec![SearchType::Track, SearchType::Artist, SearchType::Album, SearchType::Playlist];
+        let _ = app.network_tx.send(ClientRequest::SearchItems { 
             query, 
-            limit: 20 
+            search_types: types,
+            limit: 10,
+            offset: 0
         });
     }
 }

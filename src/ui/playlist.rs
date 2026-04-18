@@ -6,6 +6,7 @@ use ratatui::{
     style::{Color, Modifier, Style},
     widgets::{Block, Borders, Table, Row, HighlightSpacing},
 };
+use crate::network::models::*;
 
 pub fn draw(f: &mut Frame, state: &mut PlaylistState, active_block: &ActiveBlock, area: Rect) {
     let is_focused = *active_block == ActiveBlock::PlaylistTracks;
@@ -34,14 +35,13 @@ pub fn draw(f: &mut Frame, state: &mut PlaylistState, active_block: &ActiveBlock
 
     // get data
     let rows: Vec<Row> = state.tracks.items.iter().map(|t| {
-        let trunc_title = truncate(&t.name, title_max);
+        let trunc_title = truncate(t.name(), title_max);
+        let trunc_artist = truncate(t.artists().as_str(), artist_max);
         
-        let artist_raw = t.artists.first()
-            .map(|a| a.name.clone())
-            .unwrap_or_else(|| "Unknown".to_string());
-        let trunc_artist = truncate(&artist_raw, artist_max);
-        
-        let duration_secs = t.duration.as_secs();
+        let duration_secs = match t {
+            PlayableItem::Track(i) => i.duration.as_secs(),
+            PlayableItem::Episode(i) => i.duration.as_secs(),
+        };
         let duration_str = format!("{}:{:02}", duration_secs / 60, duration_secs % 60);
 
         Row::new(vec![

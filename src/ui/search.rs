@@ -74,38 +74,72 @@ pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
     let highlight_style = Style::default().bg(Color::DarkGray).add_modifier(ratatui::style::Modifier::BOLD);
 
     // tracks
-    let tracks_items: Vec<ListItem> = results.tracks.iter()
-        .map(|t| ListItem::new(format!("{} - {}", t.name, t.artists.first().map(|a| a.name.as_str()).unwrap_or("Unknown"))))
-        .collect();
+    let tracks_items: Vec<ListItem> = results.tracks
+        .iter()
+        .flat_map(|p| &p.items)
+        .map(|t| {
+            let artist_names = t.artists.iter()
+                .map(|a| a.name.as_str())
+                .collect::<Vec<_>>()
+                .join(", ");
+
+            ListItem::new(format!("{} - {}", t.name, artist_names))
+        })
+    .collect();
+
     let tracks_list = List::new(tracks_items)
-        .block(Block::default().title(" Tracks ").borders(Borders::ALL).border_style(Style::default().fg(get_color(SearchHoveredPane::Tracks))))
+        .block(Block::default()
+            .title(" Tracks ")
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(get_color(SearchHoveredPane::Tracks))))
         .highlight_style(highlight_style)
         .highlight_symbol("▶ ");
 
     // artists
-    let artists_items: Vec<ListItem> = results.artists.iter()
+    let artists_items: Vec<ListItem> = results.artists
+        .iter()
+        .flat_map(|p| &p.items)
         .map(|a| ListItem::new(a.name.clone()))
         .collect();
+
     let artists_list = List::new(artists_items)
-        .block(Block::default().title(" Artists ").borders(Borders::ALL).border_style(Style::default().fg(get_color(SearchHoveredPane::Artists))))
+        .block(Block::default()
+            .title(" Artists ")
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(get_color(SearchHoveredPane::Artists))))
         .highlight_style(highlight_style)
         .highlight_symbol("▶ ");
-    
+
     // albums
-    let albums_items: Vec<ListItem> = results.albums.iter()
-        .map(|a| ListItem::new(format!("{} ({})", a.name, a.release_date)))
-        .collect();
+    let albums_items: Vec<ListItem> = results.albums
+        .iter()
+        .flat_map(|p| &p.items)
+        .map(|a| {
+            let date = a.release_date.as_deref().unwrap_or("Unknown");
+            ListItem::new(format!("{} ({})", a.name, date))
+        })
+    .collect();
+
     let albums_list = List::new(albums_items)
-        .block(Block::default().title(" Albums ").borders(Borders::ALL).border_style(Style::default().fg(get_color(SearchHoveredPane::Albums))))
+        .block(Block::default()
+            .title(" Albums ")
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(get_color(SearchHoveredPane::Albums))))
         .highlight_style(highlight_style)
         .highlight_symbol("▶ ");
 
     // playlists
-    let playlists_items: Vec<ListItem> = results.playlists.iter()
-        .map(|p| ListItem::new(format!("{} by {}", p.name, p.owner)))
+    let playlists_items: Vec<ListItem> = results.playlists
+        .iter()
+        .flat_map(|p| &p.items)
+        .map(|p| ListItem::new(format!("{} by {}", p.name, p.owner.display_name)))
         .collect();
+
     let playlists_list = List::new(playlists_items)
-        .block(Block::default().title(" Playlists ").borders(Borders::ALL).border_style(Style::default().fg(get_color(SearchHoveredPane::Playlists))))
+        .block(Block::default()
+            .title(" Playlists ")
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(get_color(SearchHoveredPane::Playlists))))
         .highlight_style(highlight_style)
         .highlight_symbol("▶ ");
 

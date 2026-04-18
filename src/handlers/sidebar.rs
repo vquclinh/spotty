@@ -15,10 +15,10 @@ pub fn handle_sidebar_events(key: KeyEvent, app: &mut App) {
                     *route = Route::PlaylistDetail(PlaylistState::new(playlist.clone()));
                     *active_block = ActiveBlock::PlaylistTracks; 
                     
-                    let _ = network_tx.send(ClientRequest::GetPlaylistTracks { 
+                    let _ = network_tx.send(ClientRequest::GetPlaylistItems { 
                         playlist_id: playlist.id,
-                        limit: Some(50), 
-                        offset: None 
+                        limit: 50, 
+                        offset: 0 
                     });
                 }
             }
