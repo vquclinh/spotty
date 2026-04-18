@@ -24,7 +24,7 @@ pub async fn start_network_worker(
             }
 
             ClientRequest::GetRecentlyPlayed { limit } => {
-                match client.get_recently_played(limit).await { 
+                match client.get_recently_played_tracks(limit).await { 
                     Ok(tracks) => {
                         if let Ok(mut state) = shared_state.lock() {
                             state.recent_tracks = tracks;
@@ -34,8 +34,8 @@ pub async fn start_network_worker(
                 }
             }
 
-            ClientRequest::GetTopTracks { limit } => {
-                match client.get_user_top_tracks(limit).await {
+            ClientRequest::GetUserTopTracks { time_range, limit, offset } => {
+                match client.get_user_top_tracks(time_range, limit, offset).await {
                     Ok(tracks) => {
                         if let Ok(mut state) = shared_state.lock() {
                             state.top_tracks = tracks; 
@@ -45,8 +45,8 @@ pub async fn start_network_worker(
                 }
             }
 
-            ClientRequest::GetTopArtists { limit } => {
-                match client.get_user_top_artists(limit).await {
+            ClientRequest::GetUserTopArtists { time_range, limit, offset } => {
+                match client.get_user_top_artists(time_range, limit, offset).await {
                     Ok(artists) => {
                         if let Ok(mut state) = shared_state.lock() {
                             state.top_artists = artists;
@@ -56,11 +56,11 @@ pub async fn start_network_worker(
                 }
             }
 
-            ClientRequest::GetPlaylistTracks { playlist_id, limit, offset } => {
-                match client.get_playlist_tracks(&playlist_id, limit, offset).await {
-                    Ok(tracks) => {
+            ClientRequest::GetPlaylistItems { playlist_id, limit, offset } => {
+                match client.get_playlist_items(&playlist_id, limit, offset).await {
+                    Ok(items) => {
                         if let Ok(mut state) = shared_state.lock() {
-                            state.playlist_tracks = tracks; 
+                            state.playlist_items = items; 
                         }
                     }
                     Err(_e) => {}
@@ -68,7 +68,7 @@ pub async fn start_network_worker(
             }
 
             ClientRequest::GetCurrentPlayback => {
-                match client.get_playback_state().await {
+                match client.get_current_playback().await {
                     Ok(playback) => {
                         if let Ok(mut state) = shared_state.lock() {
                             state.playback = playback; 

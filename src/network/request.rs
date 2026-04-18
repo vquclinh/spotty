@@ -1,3 +1,7 @@
+use crate::network::models::{
+    TimeRange, SearchType
+};
+
 #[derive(Clone, Debug)]
 pub enum PlayerRequest {
     TogglePlayback(bool),
@@ -10,25 +14,35 @@ pub enum ClientRequest {
     GetCurrentUser,
     GetCurrentPlayback,
     GetUserPlaylists,
-    GetCurrentUserQueue,
+    GetQueue,
 
-    GetPlaylistTracks {
+    GetPlaylistItems {
         playlist_id: String,
-        limit: Option<u32>,
-        offset: Option<u32>,
+        limit: u32,
+        offset: u32,
+    },
+
+    GetUserTopTracks {
+        time_range: TimeRange,
+        limit: u32,
+        offset: u32,
+    },
+
+    GetUserTopArtists {
+        time_range: TimeRange,
+        limit: u32,
+        offset: u32,
     },
 
     GetRecentlyPlayed {
         limit: u32,
     },
 
-    GetTopTracks {
+    Search {
+        query: String,
+        search_types: Vec<SearchType>,
         limit: u32,
     },
-    
-    GetTopArtists {
-        limit: u32,
-    },
-    
+
     Player(PlayerRequest),
 }
