@@ -212,6 +212,7 @@ impl<T> Default for Page<T> {
     }
 }
 
+// Custom deserialization logic to handle spotify's edge cases
 impl<'de, T: DeserializeOwned> Deserialize<'de> for Page<T> {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
