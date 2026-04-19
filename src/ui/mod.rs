@@ -7,6 +7,6 @@ pub mod search;
 pub mod sidebar;
 pub mod playlist;
 pub mod splash;
-pub mod help;
+pub mod popups;
 
 pub use layout::draw;

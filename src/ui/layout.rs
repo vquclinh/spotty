@@ -4,7 +4,7 @@ use ratatui::{
     layout::{Constraint, Direction, Layout},
 };
 
-use super::{splash, lyrics, playbar, queue, search, sidebar, playlist, help};
+use super::{splash, lyrics, playbar, queue, search, sidebar, playlist, popups};
 
 pub fn draw(f: &mut Frame, app: &mut App) {
     // splash
@@ -54,6 +54,6 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     }
 
     if app.show_help {
-        help::draw(f, f.area());
+        popups::draw(f, f.area());
     }
 }

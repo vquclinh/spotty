@@ -31,7 +31,11 @@ pub fn draw_info(f: &mut Frame, app: &mut App, area: Rect) {
                 .map(|a| a.name.clone())
                 .unwrap_or_else(|| "Unknown".to_string());
 
-            format!("\n Song: {}\n Artist: {}\n Album: {}", track.name, artist_name, track.album_name)
+            let album_name = track.album.as_ref()
+                .map(|a| a.name.as_str())
+                .unwrap_or("None");
+
+            format!("\n Song: {}\n Artist: {}\n Album: {}", track.name, artist_name, album_name)
         } else {
             "\n No track info available.".to_string()
         }
