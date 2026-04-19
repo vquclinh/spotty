@@ -1,4 +1,5 @@
 use ratatui::widgets::TableState;
+use ratatui::widgets::ListState;
 
 #[derive(Clone, PartialEq, Debug)]
 pub enum ActiveBlock {
@@ -12,6 +13,37 @@ pub enum ActiveBlock {
     LyricsText,
     LyricsInfo,
     Playbar,
+}
+
+#[derive(Clone, Default)]
+pub struct StatefulList {
+    pub state: ListState,
+}
+
+impl StatefulList {
+    pub fn new() -> Self {
+        Self {
+            state: ListState::default(),
+        }
+    }
+
+    pub fn next(&mut self, len: usize) {
+        if len == 0 { return; }
+        let i = match self.state.selected() {
+            Some(i) => if i >= len - 1 { 0 } else { i + 1 },
+            None => 0,
+        };
+        self.state.select(Some(i));
+    }
+
+    pub fn previous(&mut self, len: usize) {
+        if len == 0 { return; }
+        let i = match self.state.selected() {
+            Some(i) => if i == 0 { len - 1 } else { i - 1 },
+            None => 0,
+        };
+        self.state.select(Some(i));
+    }
 }
 
 #[derive(Clone, Default)]

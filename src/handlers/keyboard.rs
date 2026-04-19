@@ -21,15 +21,18 @@ pub fn handle_key_events(key: KeyEvent, app: &mut App) {
 
     // Tab focus cycling
     if key.code == KeyCode::Tab && !key.modifiers.contains(KeyModifiers::CONTROL) {
-        app.active_block = match app.active_block {
-            ActiveBlock::LibraryMenu => ActiveBlock::PlaylistsMenu,
-            ActiveBlock::PlaylistsMenu => ActiveBlock::HomeBlock,
-            ActiveBlock::HomeBlock => ActiveBlock::QueueBlock,
-            ActiveBlock::QueueBlock => ActiveBlock::LibraryMenu,
-            _ => ActiveBlock::LibraryMenu,
-        };
-
-        return;
+        if app.active_block == ActiveBlock::SearchResults {
+            // TODO
+        } else {
+            app.active_block = match app.active_block {
+                ActiveBlock::LibraryMenu => ActiveBlock::PlaylistsMenu,
+                ActiveBlock::PlaylistsMenu => ActiveBlock::HomeBlock,
+                ActiveBlock::HomeBlock => ActiveBlock::QueueBlock,
+                ActiveBlock::QueueBlock => ActiveBlock::LibraryMenu,
+                _ => ActiveBlock::LibraryMenu,
+            };
+            return;
+        }
     }
 
     // each active_block
