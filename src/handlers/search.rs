@@ -1,5 +1,4 @@
 use crossterm::event::{KeyCode, KeyEvent};
-use ratatui::widgets::ListState;
 use crate::app::{ActiveBlock, App, route::Route};
 use crate::app::search_state::SearchHoveredPane;
 use crate::network::request::ClientRequest;
@@ -8,17 +7,12 @@ use crate::network::models::*;
 pub fn handle_search_events(key: KeyEvent, app: &mut App) {
     let mut query_to_send = None;
 
-    let (tracks_len, artists_len, albums_len, playlists_len) = {
-        let state_lock = app.shared_state.lock().unwrap();
-        (
-            state_lock.search_results.tracks.as_ref().map_or(0, |t| t.items.len()),
-            state_lock.search_results.artists.as_ref().map_or(0, |t| t.items.len()),
-            state_lock.search_results.albums.as_ref().map_or(0, |t| t.items.len()),
-            state_lock.search_results.playlists.as_ref().map_or(0, |t| t.items.len()),
-        )
-    };
-
     if let Route::Search(search_state) = &mut app.route {
+        let tracks_len = search_state.results.tracks.as_ref().map_or(0, |t| t.items.len());
+        let artists_len = search_state.results.artists.as_ref().map_or(0, |t| t.items.len());
+        let albums_len = search_state.results.albums.as_ref().map_or(0, |t| t.items.len());
+        let playlists_len = search_state.results.playlists.as_ref().map_or(0, |t| t.items.len());
+
         match app.active_block {
             ActiveBlock::SearchInput => {
                 match key.code {
@@ -57,21 +51,22 @@ pub fn handle_search_events(key: KeyEvent, app: &mut App) {
                         }
                     }
 
-                    KeyCode::Down => {
+                    KeyCode::Down | KeyCode::Char('j') => {
                         match search_state.hovered_pane {
-                            SearchHoveredPane::Tracks => next_item(&mut search_state.tracks_state, tracks_len),
-                            SearchHoveredPane::Artists => next_item(&mut search_state.artists_state, artists_len),
-                            SearchHoveredPane::Albums => next_item(&mut search_state.albums_state, albums_len),
-                            SearchHoveredPane::Playlists => next_item(&mut search_state.playlists_state, playlists_len),
+                            SearchHoveredPane::Tracks => search_state.tracks_state.next(tracks_len),
+                            SearchHoveredPane::Artists => search_state.artists_state.next(artists_len),
+                            SearchHoveredPane::Albums => search_state.albums_state.next(albums_len),
+                            SearchHoveredPane::Playlists => search_state.playlists_state.next(playlists_len),
                             _ => {}
                         }
                     }
-                    KeyCode::Up => {
+                    
+                    KeyCode::Up | KeyCode::Char('k') => {
                         match search_state.hovered_pane {
-                            SearchHoveredPane::Tracks => prev_item(&mut search_state.tracks_state, tracks_len),
-                            SearchHoveredPane::Artists => prev_item(&mut search_state.artists_state, artists_len),
-                            SearchHoveredPane::Albums => prev_item(&mut search_state.albums_state, albums_len),
-                            SearchHoveredPane::Playlists => prev_item(&mut search_state.playlists_state, playlists_len),
+                            SearchHoveredPane::Tracks => search_state.tracks_state.previous(tracks_len),
+                            SearchHoveredPane::Artists => search_state.artists_state.previous(artists_len),
+                            SearchHoveredPane::Albums => search_state.albums_state.previous(albums_len),
+                            SearchHoveredPane::Playlists => search_state.playlists_state.previous(playlists_len),
                             _ => {}
                         }
                     }
@@ -82,7 +77,6 @@ pub fn handle_search_events(key: KeyEvent, app: &mut App) {
                     _ => {}
                 }
             }
-
             _ => {}
         }
     }
@@ -96,22 +90,4 @@ pub fn handle_search_events(key: KeyEvent, app: &mut App) {
             offset: 0
         });
     }
-}
-
-fn next_item(state: &mut ListState, len: usize) {
-    if len == 0 { return; }
-    let i = match state.selected() {
-        Some(i) => if i >= len - 1 { 0 } else { i + 1 },
-        None => 0,
-    };
-    state.select(Some(i));
-}
-
-fn prev_item(state: &mut ListState, len: usize) {
-    if len == 0 { return; }
-    let i = match state.selected() {
-        Some(i) => if i == 0 { len - 1 } else { i - 1 },
-        None => 0,
-    };
-    state.select(Some(i));
 }

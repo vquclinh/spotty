@@ -3,8 +3,8 @@ use crate::app::search_state::SearchHoveredPane;
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
-    style::{Color, Style},
-    widgets::{Block, Borders, Paragraph, List, ListItem},
+    style::{Color, Modifier, Style},
+    widgets::{Block, Borders, BorderType, Paragraph, List, ListItem, Padding, HighlightSpacing},
 };
 
 pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
@@ -29,32 +29,71 @@ pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
         Block::default()
             .title(" 🔍 Search ")
             .borders(Borders::ALL)
-            .border_style(Style::default().fg(input_color)),
+            .border_type(BorderType::Rounded)
+            .border_style(Style::default().fg(input_color))
+            .padding(Padding::horizontal(1)),
     );
     f.render_widget(input_widget, main_chunks[0]);
 
     if is_input_active {
         f.set_cursor_position((
-            main_chunks[0].x + 1 + input_text.chars().count() as u16,
+            main_chunks[0].x + 2 + input_text.chars().count() as u16,
             main_chunks[0].y + 1,
         ));
     }
 
     // grid
-    let result_rows = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+    let results_chunks = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Percentage(50), Constraint::Min(0)])
         .split(main_chunks[1]);
 
-    let top_cols = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
-        .split(result_rows[0]);
+    let mut right_area = results_chunks[1];
+    right_area.x = right_area.x.saturating_sub(1);
+    right_area.width += 1;
 
-    let bottom_cols = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
-        .split(result_rows[1]);
+    let mut queue_chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Ratio(1, 3), 
+            Constraint::Ratio(1, 3), 
+            Constraint::Min(0),
+        ])
+        .split(right_area)
+        .to_vec();
+
+    queue_chunks[1].y = queue_chunks[1].y.saturating_sub(1);
+    queue_chunks[1].height += 1;
+
+    queue_chunks[2].y = queue_chunks[2].y.saturating_sub(1);
+    queue_chunks[2].height += 1;
+
+    let (tracks_area, artists_area, albums_area, playlists_area) = match hovered_pane {
+        SearchHoveredPane::Artists => (
+            queue_chunks[2],   
+            results_chunks[0], 
+            queue_chunks[0],   
+            queue_chunks[1],   
+        ),
+        SearchHoveredPane::Albums => (
+            queue_chunks[1],   
+            queue_chunks[2],   
+            results_chunks[0], 
+            queue_chunks[0],   
+        ),
+        SearchHoveredPane::Playlists => (
+            queue_chunks[0],   
+            queue_chunks[1],   
+            queue_chunks[2],   
+            results_chunks[0], 
+        ),
+        _ => ( 
+            results_chunks[0], 
+            queue_chunks[0],   
+            queue_chunks[1],   
+            queue_chunks[2],   
+        ),
+    };
 
     // get data
     let results = if let Route::Search(ref s) = app.route {
@@ -71,9 +110,32 @@ pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
         }
     };
 
-    let highlight_style = Style::default().bg(Color::DarkGray).add_modifier(ratatui::style::Modifier::BOLD);
+    let get_highlight_style = |pane: SearchHoveredPane| {
+        if is_results_active && hovered_pane == pane {
+            Style::default().fg(Color::LightMagenta).add_modifier(Modifier::BOLD)
+        } else {
+            Style::default()
+        }
+    };
+
+    let get_highlight_symbol = |pane: SearchHoveredPane| {
+        if is_results_active && hovered_pane == pane {
+            "▶ "
+        } else {
+            "  "
+        }
+    };
+
+    let build_block = |title: &str, pane: SearchHoveredPane| {
+        Block::default()
+            .title(format!(" {} ", title))
+            .borders(Borders::ALL)
+            .border_type(BorderType::Plain) 
+            .border_style(Style::default().fg(get_color(pane)))
+    };
 
     // tracks
+    let track_max_width = tracks_area.width.saturating_sub(6);
     let tracks_items: Vec<ListItem> = results.tracks
         .iter()
         .flat_map(|p| &p.items)
@@ -82,71 +144,94 @@ pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
                 .map(|a| a.name.as_str())
                 .collect::<Vec<_>>()
                 .join(", ");
-
-            ListItem::new(format!("{} - {}", t.name, artist_names))
+            
+            let full_text = format!("{} - {}", t.name, artist_names);
+            ListItem::new(format!("  {}", truncate_text(&full_text, track_max_width)))
         })
     .collect();
 
     let tracks_list = List::new(tracks_items)
-        .block(Block::default()
-            .title(" Tracks ")
-            .borders(Borders::ALL)
-            .border_style(Style::default().fg(get_color(SearchHoveredPane::Tracks))))
-        .highlight_style(highlight_style)
-        .highlight_symbol("▶ ");
+        .block(build_block("Tracks", SearchHoveredPane::Tracks))
+        .highlight_style(get_highlight_style(SearchHoveredPane::Tracks))
+        .highlight_symbol(get_highlight_symbol(SearchHoveredPane::Tracks))
+        .highlight_spacing(HighlightSpacing::Always);
 
     // artists
+    let artist_max_width = artists_area.width.saturating_sub(6);
     let artists_items: Vec<ListItem> = results.artists
         .iter()
         .flat_map(|p| &p.items)
-        .map(|a| ListItem::new(a.name.clone()))
+        .map(|a| ListItem::new(format!("  {}", truncate_text(&a.name, artist_max_width))))
         .collect();
 
     let artists_list = List::new(artists_items)
-        .block(Block::default()
-            .title(" Artists ")
-            .borders(Borders::ALL)
-            .border_style(Style::default().fg(get_color(SearchHoveredPane::Artists))))
-        .highlight_style(highlight_style)
-        .highlight_symbol("▶ ");
+        .block(build_block("Artists", SearchHoveredPane::Artists))
+        .highlight_style(get_highlight_style(SearchHoveredPane::Artists))
+        .highlight_symbol(get_highlight_symbol(SearchHoveredPane::Artists))
+        .highlight_spacing(HighlightSpacing::Always);
 
     // albums
+    let album_max_width = albums_area.width.saturating_sub(6);
     let albums_items: Vec<ListItem> = results.albums
         .iter()
         .flat_map(|p| &p.items)
         .map(|a| {
             let date = a.release_date.as_deref().unwrap_or("Unknown");
-            ListItem::new(format!("{} ({})", a.name, date))
+            let full_text = format!("{} ({})", a.name, date);
+            ListItem::new(format!("  {}", truncate_text(&full_text, album_max_width)))
         })
     .collect();
 
     let albums_list = List::new(albums_items)
-        .block(Block::default()
-            .title(" Albums ")
-            .borders(Borders::ALL)
-            .border_style(Style::default().fg(get_color(SearchHoveredPane::Albums))))
-        .highlight_style(highlight_style)
-        .highlight_symbol("▶ ");
+        .block(build_block("Albums", SearchHoveredPane::Albums))
+        .highlight_style(get_highlight_style(SearchHoveredPane::Albums))
+        .highlight_symbol(get_highlight_symbol(SearchHoveredPane::Albums))
+        .highlight_spacing(HighlightSpacing::Always);
 
     // playlists
+    let playlist_max_width = playlists_area.width.saturating_sub(6);
     let playlists_items: Vec<ListItem> = results.playlists
         .iter()
         .flat_map(|p| &p.items)
-        .map(|p| ListItem::new(format!("{} by {}", p.name, p.owner.display_name)))
+        .map(|p|{
+            let full_text = format!("{} by {}", p.name, p.owner.display_name);
+            ListItem::new(format!("  {}", truncate_text(&full_text, playlist_max_width)))
+        })
         .collect();
 
     let playlists_list = List::new(playlists_items)
-        .block(Block::default()
-            .title(" Playlists ")
-            .borders(Borders::ALL)
-            .border_style(Style::default().fg(get_color(SearchHoveredPane::Playlists))))
-        .highlight_style(highlight_style)
-        .highlight_symbol("▶ ");
+        .block(build_block("Playlists", SearchHoveredPane::Playlists))
+        .highlight_style(get_highlight_style(SearchHoveredPane::Playlists))
+        .highlight_symbol(get_highlight_symbol(SearchHoveredPane::Playlists))
+        .highlight_spacing(HighlightSpacing::Always);
 
     if let Route::Search(ref mut search_state) = app.route {
-        f.render_stateful_widget(tracks_list, top_cols[0], &mut search_state.tracks_state);
-        f.render_stateful_widget(artists_list, top_cols[1], &mut search_state.artists_state);
-        f.render_stateful_widget(albums_list, bottom_cols[0], &mut search_state.albums_state);
-        f.render_stateful_widget(playlists_list, bottom_cols[1], &mut search_state.playlists_state);
+        let mut lists = (Some(tracks_list), Some(artists_list), Some(albums_list), Some(playlists_list));
+
+        if tracks_area != results_chunks[0] { f.render_stateful_widget(lists.0.take().unwrap(), tracks_area, &mut search_state.tracks_state.state); }
+        if artists_area != results_chunks[0] { f.render_stateful_widget(lists.1.take().unwrap(), artists_area, &mut search_state.artists_state.state); }
+        if albums_area != results_chunks[0] { f.render_stateful_widget(lists.2.take().unwrap(), albums_area, &mut search_state.albums_state.state); }
+        if playlists_area != results_chunks[0] { f.render_stateful_widget(lists.3.take().unwrap(), playlists_area, &mut search_state.playlists_state.state); }
+        
+        if let Some(w) = lists.0.take() { f.render_stateful_widget(w, tracks_area, &mut search_state.tracks_state.state); }
+        if let Some(w) = lists.1.take() { f.render_stateful_widget(w, artists_area, &mut search_state.artists_state.state); }
+        if let Some(w) = lists.2.take() { f.render_stateful_widget(w, albums_area, &mut search_state.albums_state.state); }
+        if let Some(w) = lists.3.take() { f.render_stateful_widget(w, playlists_area, &mut search_state.playlists_state.state); }
+    }
+}
+
+fn truncate_text(text: &str, max_width: u16) -> String {
+    let max_chars = max_width as usize;
+    let char_count = text.chars().count();
+    
+    if char_count > max_chars {
+        if max_chars <= 3 {
+            return text.chars().take(max_chars).collect();
+        }
+        
+        let truncated: String = text.chars().take(max_chars - 3).collect();
+        format!("{}...", truncated)
+    } else {
+        text.to_string()
     }
 }
