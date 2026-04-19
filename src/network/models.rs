@@ -16,6 +16,13 @@ mod duration_ms {
 }
 
 #[derive(Debug, Deserialize, Clone)]
+pub struct SimplifiedAlbum {
+    pub id: String,
+    pub name: String,
+    pub album_type: String,
+}
+
+#[derive(Debug, Deserialize, Clone)]
 pub struct Artist {
     pub id: String,
     pub name: String,
@@ -37,7 +44,7 @@ pub struct Track {
     pub name: String,
     pub artists: Vec<Artist>,
     #[serde(default)]
-    pub album_name: String, 
+    pub album: Option<SimplifiedAlbum>, 
     #[serde(with = "duration_ms", rename = "duration_ms")]
     pub duration: Duration,
     pub explicit: bool,
