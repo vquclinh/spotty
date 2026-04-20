@@ -1,4 +1,5 @@
 use crate::{app::types::StatefulList, network::models::*};
+use ratatui::layout::Rect;
 
 #[derive(Clone, PartialEq, Default)]
 pub enum SearchHoveredPane {
@@ -22,6 +23,8 @@ pub struct SearchState {
     pub playlists_state: StatefulList,
 
     pub hovered_pane: SearchHoveredPane,
+
+    pub last_area: Rect,
 }
 
 impl SearchState {
@@ -36,6 +39,8 @@ impl SearchState {
             albums_state: StatefulList::default(),
             playlists_state: StatefulList::default(),
             hovered_pane: SearchHoveredPane::Input,
+
+            last_area: Rect::default(),
         }
     }
 }

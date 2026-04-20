@@ -3,8 +3,10 @@ use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout},
 };
+use crate::app::home_state::*;
+use crate::app::search_state::*;
 
-use super::{splash, lyrics, playbar, queue, search, sidebar, playlist, help};
+use super::{splash, lyrics, playbar, queue, search, sidebar, playlist, popups};
 
 pub fn draw(f: &mut Frame, app: &mut App) {
     // splash
@@ -54,6 +56,33 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     }
 
     if app.show_help {
-        help::draw(f, f.area());
+        popups::draw_help(f, f.area());
+    } else if app.action_menu.is_open {
+        let (area, selected, offset) = match &app.route {
+            Route::Home(h) => {
+                let (idx, off) = match h.active_tab {
+                    HomeTab::TopTracks => (h.top_tracks.state.selected(), h.top_tracks.state.offset()),
+                    HomeTab::RecentlyPlayed => (h.recent_tracks.state.selected(), h.recent_tracks.state.offset()),
+                    HomeTab::TopArtists => (h.top_artists.state.selected(), h.top_artists.state.offset()),
+                };
+                (h.last_area, idx.unwrap_or(0), off)
+            }
+            Route::PlaylistDetail(p) => {
+                (p.last_area, p.tracks.state.selected().unwrap_or(0), p.tracks.state.offset())
+            }
+            Route::Search(s) => {
+                let (idx, off) = match s.hovered_pane {
+                    SearchHoveredPane::Tracks => (s.tracks_state.state.selected(), s.tracks_state.state.offset()),
+                    SearchHoveredPane::Artists => (s.artists_state.state.selected(), s.artists_state.state.offset()),
+                    SearchHoveredPane::Albums => (s.albums_state.state.selected(), s.albums_state.state.offset()),
+                    SearchHoveredPane::Playlists => (s.playlists_state.state.selected(), s.playlists_state.state.offset()),
+                    _ => (None, 0),
+                };
+                (s.last_area, idx.unwrap_or(0), off)
+            }
+            _ => (f.area(), 0, 0),
+        };
+
+        popups::draw_action_menu(f, app, area, selected, offset);
     }
 }

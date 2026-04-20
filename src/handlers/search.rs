@@ -6,6 +6,7 @@ use crate::network::models::*;
 
 pub fn handle_search_events(key: KeyEvent, app: &mut App) {
     let mut query_to_send = None;
+    let mut target_to_open = None;
 
     if let Route::Search(search_state) = &mut app.route {
         let tracks_len = search_state.results.tracks.as_ref().map_or(0, |t| t.items.len());
@@ -71,6 +72,48 @@ pub fn handle_search_events(key: KeyEvent, app: &mut App) {
                         }
                     }
 
+                    KeyCode::Char('t') => {
+                        target_to_open = match search_state.hovered_pane {
+                            SearchHoveredPane::Tracks => {
+                                search_state.tracks_state.state.selected()
+                                    .and_then(|idx| {
+                                        search_state.results.tracks.as_ref()
+                                            .and_then(|page| page.items.get(idx))
+                                    })
+                                    .map(|track| MenuTarget::Track(track.clone()))
+                            }
+                            
+                            SearchHoveredPane::Artists => {
+                                search_state.artists_state.state.selected()
+                                    .and_then(|idx| {
+                                        search_state.results.artists.as_ref()
+                                            .and_then(|page| page.items.get(idx))
+                                    })
+                                    .map(|artist| MenuTarget::Artist(artist.clone()))
+                            }
+                            
+                            SearchHoveredPane::Albums => {
+                                search_state.albums_state.state.selected()
+                                    .and_then(|idx| {
+                                        search_state.results.albums.as_ref()
+                                            .and_then(|page| page.items.get(idx))
+                                    })
+                                    .map(|album| MenuTarget::Album(album.clone()))
+                            }
+                            
+                            SearchHoveredPane::Playlists => {
+                                search_state.playlists_state.state.selected()
+                                    .and_then(|idx| {
+                                        search_state.results.playlists.as_ref()
+                                            .and_then(|page| page.items.get(idx))
+                                    })
+                                    .map(|playlist| MenuTarget::Playlist(playlist.clone()))
+                            }
+                            
+                            _ => None,
+                        };
+                    }
+
                     KeyCode::Esc => {
                         app.active_block = ActiveBlock::SearchInput;
                     }
@@ -79,6 +122,10 @@ pub fn handle_search_events(key: KeyEvent, app: &mut App) {
             }
             _ => {}
         }
+    }
+
+    if let Some(target) = target_to_open {
+        app.action_menu.open(target);
     }
 
     if let Some(query) = query_to_send {

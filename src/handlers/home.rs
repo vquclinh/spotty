@@ -4,7 +4,7 @@ use crate::ClientRequest;
 use crate::network::models::*;
 
 pub fn handle_home_events(key: KeyEvent, app: &mut App) {
-    let App { route, network_tx, .. } = app;
+    let App { route, network_tx, action_menu, .. } = app;
 
     if let Route::Home(home_state) = route {
         match key.code {
@@ -59,6 +59,23 @@ pub fn handle_home_events(key: KeyEvent, app: &mut App) {
                     HomeTab::TopTracks => home_state.top_tracks.previous(),
                     HomeTab::TopArtists => home_state.top_artists.previous(),
                     HomeTab::RecentlyPlayed => home_state.recent_tracks.previous(),
+                }
+            }
+            KeyCode::Char('t') => {
+                let target = match home_state.active_tab {
+                    HomeTab::TopTracks => home_state.top_tracks.state.selected()
+                        .and_then(|idx| home_state.top_tracks.items.get(idx))
+                        .map(|t| MenuTarget::Track(t.clone())),
+                    HomeTab::RecentlyPlayed => home_state.recent_tracks.state.selected()
+                        .and_then(|idx| home_state.recent_tracks.items.get(idx))
+                        .map(|t| MenuTarget::Track(t.clone())),
+                    HomeTab::TopArtists => home_state.top_artists.state.selected()
+                        .and_then(|idx| home_state.top_artists.items.get(idx))
+                        .map(|a| MenuTarget::Artist(a.clone())),
+                };
+
+                if let Some(t) = target {
+                    action_menu.open(t);
                 }
             }
             _ => {}
