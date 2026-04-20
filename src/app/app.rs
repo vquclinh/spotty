@@ -3,7 +3,7 @@ use tokio::sync::mpsc;
 
 use crate::app::home_state::HomeTab;
 use crate::app::splash_state::SplashState;
-use crate::app::types::{ActiveBlock, StatefulTable};
+use crate::app::types::{ActionMenu, ActiveBlock, StatefulTable};
 use crate::app::route::Route;
 use crate::app::state::SharedState;
 use crate::app::playbar_state::PlaybarState;
@@ -30,6 +30,7 @@ pub struct App {
 
     pub should_quit: bool, // Signal to quit main loop
     pub show_help: bool, // Signal to turn on pop-up help
+    pub action_menu: ActionMenu,
 }
 
 impl App {
@@ -58,6 +59,8 @@ impl App {
             library_state: ListState::default(),
             playlists_state: ListState::default(),
             playbar_state: PlaybarState::default(),
+
+            action_menu: ActionMenu::new(),
         }
     }
 

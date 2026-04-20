@@ -19,6 +19,9 @@ pub fn draw(f: &mut Frame, state: &mut PlaylistState, active_block: &ActiveBlock
         .border_style(Style::default().fg(border_color));
 
     let inner_area = outer_block.inner(area);
+    
+    state.last_area = inner_area;
+
     f.render_widget(outer_block, area);
 
     let table_width = inner_area.width;
@@ -45,7 +48,7 @@ pub fn draw(f: &mut Frame, state: &mut PlaylistState, active_block: &ActiveBlock
         let duration_str = format!("{}:{:02}", duration_secs / 60, duration_secs % 60);
 
         Row::new(vec![
-            format!("  {}", trunc_title), 
+            format!("  {}", trunc_title),
             trunc_artist, 
             duration_str
         ])

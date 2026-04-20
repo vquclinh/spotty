@@ -55,6 +55,7 @@ pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, ar
     let highlight_style = Style::default().fg(Color::LightMagenta).add_modifier(Modifier::BOLD);
     let header_style = Style::default().fg(Color::DarkGray).add_modifier(Modifier::BOLD);
 
+    state.last_area = chunks[1];
     match state.active_tab {
         HomeTab::TopTracks | HomeTab::RecentlyPlayed => {
             // if width > 60, we show 3 columns

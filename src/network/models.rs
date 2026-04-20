@@ -15,6 +15,21 @@ mod duration_ms {
     }
 }
 
+// ------------------------------------------- User -------------------------------------
+#[derive(Debug, Deserialize, Clone)]
+pub struct User {
+    pub id: String,
+    pub display_name: String,
+
+}
+
+impl Default for User {
+    fn default() -> Self {
+        Self { id: String::new(), display_name: String::from("User") }
+    }
+}
+
+// ---------------------------------- Simplified Album -------------------------------------
 #[derive(Debug, Deserialize, Clone)]
 pub struct SimplifiedAlbum {
     pub id: String,
@@ -22,6 +37,7 @@ pub struct SimplifiedAlbum {
     pub album_type: String,
 }
 
+// ----------------------------------------- Item ------------------------------------------
 #[derive(Debug, Deserialize, Clone)]
 pub struct Artist {
     pub id: String,
@@ -76,6 +92,7 @@ pub struct Playlist {
     pub items: Option<Page<PlayableItem>>,
 }
 
+// ------------------------------------- Playback -----------------------------------
 #[derive(Debug, Deserialize, Clone, Copy, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum RepeatState {
@@ -96,19 +113,7 @@ pub struct Playback {
     pub shuffle_state: bool,
 }
 
-#[derive(Debug, Deserialize, Clone)]
-pub struct User {
-    pub id: String,
-    pub display_name: String,
-
-}
-
-impl Default for User {
-    fn default() -> Self {
-        Self { id: String::new(), display_name: String::from("User") }
-    }
-}
-
+// -------------------------------------- Playable Item ------------------------------
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PlayableType {
     Track,
@@ -154,6 +159,7 @@ impl PlayableItem {
     }
 }
 
+// ----------------------------------------- Search Item --------------------------------
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SearchType {
     Track,
@@ -179,6 +185,16 @@ pub enum TimeRange {
     LongTerm
 }
 
+// ------------------------------------- Action Menu Target ------------------------------
+#[derive(Clone, Debug)]
+pub enum MenuTarget {
+    Track(Track),
+    Artist(Artist),
+    Album(Album),
+    Playlist(Playlist),
+    Episode(Episode),
+}
+
 impl TimeRange {
     pub fn as_str(&self) -> &'static str {
         match self {
@@ -189,6 +205,7 @@ impl TimeRange {
     }
 }
 
+// -------------------------------------------- Page --------------------------------------
 #[derive(Debug, Clone)]
 pub struct Page<T> {
     pub items: Vec<T>,
