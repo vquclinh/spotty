@@ -1,5 +1,5 @@
 use crate::network::models::{
-    TimeRange, SearchType
+    TimeRange, SearchType, RepeatState
 };
 
 #[derive(Clone, Debug)]
@@ -7,6 +7,11 @@ pub enum PlayerRequest {
     TogglePlayback(bool),
     NextTrack,
     PreviousTrack,
+    SetRepeatMode(RepeatState),
+    SeekToPosition(u32),
+    SetVolume(u8),
+    ToggleShuffle(bool),
+    AddItemToQueue(String),
 }
 
 #[derive(Clone, Debug)]
@@ -43,6 +48,20 @@ pub enum ClientRequest {
         query: String,
         search_types: Vec<SearchType>,
         limit: u32,
-        offset: u32
+        offset: u32,
     },
+
+    AddItemsToPlaylist {
+        playlist_id: String,
+        uris: Vec<String>,
+    },
+
+    RemoveItemsFromPlaylist {
+        playlist_id: String,
+        uris: Vec<String>,
+    },
+
+    SaveItemsToLibrary(Vec<String>),
+
+    RemoveItemsFromLibrary(Vec<String>),
 }
