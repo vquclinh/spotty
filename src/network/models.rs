@@ -18,6 +18,7 @@ mod duration_ms {
 #[derive(Debug, Deserialize, Clone)]
 pub struct Artist {
     pub id: String,
+    pub uri: String,
     pub name: String,
     pub genres: Option<Vec<String>>,
 }
@@ -25,6 +26,7 @@ pub struct Artist {
 #[derive(Debug, Deserialize, Clone)]
 pub struct Album {
     pub id: String,
+    pub uri: String,
     pub name: String,
     pub artists: Vec<Artist>,
     pub release_date: Option<String>,
@@ -34,6 +36,7 @@ pub struct Album {
 #[derive(Debug, Deserialize, Clone)]
 pub struct Track {
     pub id: String,
+    pub uri: String,
     pub name: String,
     pub artists: Vec<Artist>,
     #[serde(default)]
@@ -46,6 +49,7 @@ pub struct Track {
 #[derive(Debug, Deserialize, Clone)]
 pub struct Episode {
     pub id: String,
+    pub uri: String,
     pub name: String,
     pub description: String,
     #[serde(default)]
@@ -62,6 +66,7 @@ pub struct Episode {
 #[derive(Debug, Deserialize, Clone)]
 pub struct Playlist {
     pub id: String,
+    pub uri: String,
     pub name: String,
     #[serde(default)]
     pub owner: User,
@@ -77,6 +82,16 @@ pub enum RepeatState {
     Context
 }
 
+impl RepeatState {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Off => "off",
+            Self::Track => "track",
+            Self::Context => "context"
+        }
+    }
+}
+
 #[derive(Debug, Deserialize, Clone)]
 pub struct Playback {
     pub item: Option<PlayableItem>,
@@ -87,18 +102,20 @@ pub struct Playback {
     pub device_name: String,
     pub repeat_state: RepeatState,
     pub shuffle_state: bool,
+    // TODO: add volume
 }
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct User {
     pub id: String,
+    pub uri: String,
     pub display_name: String,
 
 }
 
 impl Default for User {
     fn default() -> Self {
-        Self { id: String::new(), display_name: String::from("User") }
+        Self { id: String::new(), uri: String::new(), display_name: String::from("User") }
     }
 }
 

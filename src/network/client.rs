@@ -2,7 +2,6 @@ use super::auth;
 use super::models::*;
 use super::helper;
 use rspotify::{
-    prelude::*,
     AuthCodePkceSpotify,
 };
 use anyhow::{Result, Context};
@@ -71,18 +70,11 @@ impl WebApiClient {
     }
 
     pub async fn get_current_playback(&self) -> Result<Option<Playback>> {
-        let mut params = HashMap::new();
-        params.insert("additional_types", "track,episode");
+        let params = HashMap::from([
+            ("additional_types", "track,episode")
+        ]);
 
-        // get<T> will fail on 204 No Content (empty string). 
-        // We handle this by checking the raw response 
-        match self.client.api_get("me/player", &params).await {
-            Ok(json_str) if !json_str.is_empty() => {
-                let state: Playback = serde_json::from_str(&json_str)?;
-                Ok(Some(state))
-            }
-            _ => Ok(None),
-        }
+        helper::get_opt(&self.client, "me/player", &params).await
     }
 
     pub async fn get_user_playlists(&self) -> Result<Vec<Playlist>> {
@@ -106,11 +98,12 @@ impl WebApiClient {
 
     pub async fn get_playlist_items(&self, id: &str, limit: u32, offset: u32) -> Result<Vec<PlayableItem>> {
         let endpoint = format!("playlists/{}/items", id);
-        let mut params = HashMap::new();
-        let limit_str = limit.to_string();
-        let offset_str = offset.to_string();
-        params.insert("limit", limit_str.as_str());
-        params.insert("offset", offset_str.as_str());
+        let limit = limit.to_string();
+        let offset = offset.to_string();
+        let params = HashMap::from([
+            ("limit", limit.as_str()),
+            ("offset", offset.as_str())
+        ]);
 
         let res: Value = helper::get(&self.client, &endpoint, &params).await?;
 
@@ -131,12 +124,13 @@ impl WebApiClient {
     }
 
     pub async fn get_user_top_tracks(&self, time_range: TimeRange, limit: u32, offset: u32) -> Result<Vec<Track>> {
-        let mut params = HashMap::new();
-        let limit_str = limit.to_string();
-        let offset_str = offset.to_string();
-        params.insert("limit", limit_str.as_str());
-        params.insert("offset", offset_str.as_str());
-        params.insert("time_range", time_range.as_str());
+        let limit = limit.to_string();
+        let offset = offset.to_string();
+        let params = HashMap::<&str, &str>::from([
+            ("limit", limit.as_str()),
+            ("offset", offset.as_str()),
+            ("time_range", time_range.as_str())
+        ]);
 
         let res: Value = helper::get(&self.client, "me/top/tracks", &params).await?;
         let tracks = serde_json::from_value(res["items"].clone())?;
@@ -145,12 +139,13 @@ impl WebApiClient {
 
     // TODO: clamp the arguments
     pub async fn get_user_top_artists(&self, time_range: TimeRange, limit: u32, offset: u32) -> Result<Vec<Artist>> {
-        let mut params = HashMap::new();
-        let limit_str = limit.to_string();
-        let offset_str = offset.to_string();
-        params.insert("limit", limit_str.as_str());
-        params.insert("offset", offset_str.as_str());
-        params.insert("time_range", time_range.as_str());
+        let limit = limit.to_string();
+        let offset = offset.to_string();
+        let params = HashMap::<&str, &str>::from([
+            ("limit", limit.as_str()),
+            ("offset", offset.as_str()),
+            ("time_range", time_range.as_str())
+        ]);
 
         let res: Value = helper::get(&self.client, "me/top/artists", &params).await?;
         let artists = serde_json::from_value(res["items"].clone())?;
@@ -158,11 +153,12 @@ impl WebApiClient {
     }
 
     pub async fn get_recently_played_tracks(&self, limit: u32, offset: u32) -> Result<Vec<Track>> {
-        let mut params = HashMap::new();
-        let limit_str = limit.to_string();
-        let offset_str = offset.to_string();
-        params.insert("limit", limit_str.as_str());
-        params.insert("offset", offset_str.as_str());
+        let limit = limit.to_string();
+        let offset = offset.to_string();
+        let params = HashMap::<&str, &str>::from([
+            ("limit", limit.as_str()),
+            ("offset", offset.as_str())
+        ]);
 
         let res: Value = helper::get(&self.client, "me/player/recently-played", &params).await?;
 
@@ -179,19 +175,16 @@ impl WebApiClient {
 
     pub async fn toggle_playback(&self, playing: bool) -> Result<()> {
         let endpoint = if playing { "me/player/pause" } else { "me/player/play" };
-        // Use empty json! object for PUT requests with no body
-        helper::put::<Value, _>(&self.client, endpoint, &json!({})).await?;
-
-        Ok(())
+        helper::put(&self.client, endpoint, &HashMap::<&str, &str>::new()).await
     }
 
     pub async fn next_track(&self) -> Result<()> {
-        helper::post::<Value, _>(&self.client, "me/player/next", &json!({})).await?;
+        helper::post::<Value, _>(&self.client, "me/player/next", &HashMap::<&str, &str>::new()).await?;
         Ok(())
     }
 
     pub async fn prev_track(&self) -> Result<()> {
-        helper::post::<Value, _>(&self.client, "me/player/previous", &json!({})).await?;
+        helper::post::<Value, _>(&self.client, "me/player/previous", &HashMap::<&str, &str>::new()).await?;
         Ok(())
     }
 
@@ -202,12 +195,10 @@ impl WebApiClient {
         limit: u32,
         offset: u32
     ) -> Result<SearchResult> {
-        let mut params = HashMap::new();
-        let limit_str = limit.to_string();
-        let offset_str = offset.to_string();
-
+        let limit = limit.to_string();
+        let offset = offset.to_string();
         // Join search_types into a comma-separated string (e.g., "track,artist")
-        let type_str = search_types.into_iter()
+        let kind = search_types.into_iter()
             .map(|t| match t {
                 SearchType::Track => "track",
                 SearchType::Artist => "artist",
@@ -216,13 +207,87 @@ impl WebApiClient {
                 SearchType::Episode => "episode",
             })
         .collect::<Vec<_>>()
-            .join(",");
+        .join(",");
 
-        params.insert("q", query);
-        params.insert("type", type_str.as_str());
-        params.insert("limit", limit_str.as_str());
-        params.insert("offset", offset_str.as_str());
+        let params = HashMap::<&str, &str>::from([
+            ("q", query),
+            ("type", kind.as_str()),
+            ("limit", limit.as_str()),
+            ("offset", offset.as_str()),
+        ]);
 
         helper::get(&self.client, "search", &params).await
+    }
+
+    pub async fn set_repeat_mode(&self, state: RepeatState) -> Result<()> {
+        let url = format!("me/player/repeat?state={}", state.as_str());
+
+        helper::put(&self.client, &url, &HashMap::<&str, &str>::new()).await
+    }
+
+    pub async fn seek_to_position(&self, position_ms: u32) -> Result<()> {
+        let url = format!("me/player/seek?position_ms={}", position_ms);
+
+        helper::put(&self.client, &url, &HashMap::<&str, &str>::new()).await
+    }
+
+    pub async fn set_volume(&self, volume_percent: u8) -> Result<()> {
+        let url = format!("me/player/volume?volume_percent={}", volume_percent);
+
+        helper::put(&self.client, &url, &HashMap::<&str, &str>::new()).await
+    }
+
+    pub async fn toggle_shuffle(&self, shuffling: bool) -> Result<()> {
+        let url = format!("me/player/shuffle?state={}", !shuffling);
+
+        helper::put(&self.client, &url, &HashMap::<&str, &str>::new()).await
+    }
+
+    pub async fn add_item_to_queue(&self, uri: &str) -> Result<()> {
+        let url = format!("me/player/queue?uri={}", uri);
+
+        helper::post::<Value, _>(&self.client, &url, &HashMap::<&str, &str>::new()).await?;
+        Ok(())
+    }
+
+
+    pub async fn add_items_to_playlist(&self, playlist_id: &str, uris: impl IntoIterator<Item = &str>) -> Result<()> {
+        let endpoint = format!("playlists/{}/items", playlist_id);
+        let uris: Vec<&str> = uris.into_iter().collect();
+        let params = HashMap::from([
+            ("uris", uris)
+        ]);
+
+        helper::post::<Value, _>(&self.client, &endpoint, &params).await?;
+        Ok(())
+    }
+
+    pub async fn remove_items_from_playlist(&self, playlist_id: &str, uris: impl IntoIterator<Item = &str>) -> Result<()> {
+        let endpoint = format!("playlists/{}/items", playlist_id);
+
+        // Map each &str to a json object
+        let items: Vec<Value> = uris
+            .into_iter()
+            .map(|uri| json!({ "uri": uri }))
+            .collect();
+
+        // Let json! convert the array for us
+        helper::delete::<Value, _>(&self.client, &endpoint, &json!({ "items": items })).await?;
+        Ok(())
+    }
+
+    pub async fn save_items_to_library(&self, uris: impl IntoIterator<Item = &str>) -> Result<()> {
+        let uris = uris.into_iter().collect::<Vec<_>>().join(",");
+        let url = format!("me/library?uris={}", uris);
+
+        helper::put(&self.client, &url , &HashMap::<&str, &str>::new()).await
+    }
+
+    pub async fn remove_items_from_library(&self, uris: impl IntoIterator<Item = &str>) -> Result<()> {
+        let uris = uris.into_iter().collect::<Vec<_>>().join(",");
+        let url = format!("me/library?uris={}", uris);
+
+        helper::delete::<Value, _>(&self.client, &url , &HashMap::<&str, &str>::new()).await?;
+        Ok(())
     }
 }
