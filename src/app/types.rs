@@ -1,6 +1,8 @@
 use ratatui::widgets::TableState;
 use ratatui::widgets::ListState;
+use crate::network::models::MenuTarget;
 
+// -------------------------------- Active Block ----------------------------------
 #[derive(Clone, PartialEq, Debug)]
 pub enum ActiveBlock {
     LibraryMenu,
@@ -15,6 +17,123 @@ pub enum ActiveBlock {
     Playbar,
 }
 
+// -------------------------------- Action Menu ------------------------------------
+#[derive(Clone, Debug, PartialEq)]
+pub enum MenuAction {
+    PlayNow,
+    AddToQueue,
+    AddToPlaylist,
+    GoToAlbum,
+    GoToArtist,
+    GoToShow,
+    SaveToLibrary,
+    FollowArtist,
+    ViewDetails,
+}
+
+impl MenuAction {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            MenuAction::PlayNow => "▶ Play Now",
+            MenuAction::AddToQueue => "⏳ Add to Queue",
+            MenuAction::AddToPlaylist => "🎵 Add to Playlist",
+            MenuAction::GoToAlbum => "💿 Go to Album",
+            MenuAction::GoToArtist => "👤 Go to Artist",
+            MenuAction::GoToShow => "🎙️ Go to Podcast Show",
+            MenuAction::SaveToLibrary => "💾 Save to Library",
+            MenuAction::FollowArtist => "➕ Follow Artist",
+            MenuAction::ViewDetails => "🔍 View Details",
+        }
+    }
+}
+#[derive(Default)]
+pub struct ActionMenu {
+    pub is_open: bool,
+    pub target: Option<MenuTarget>,
+    pub actions: Vec<MenuAction>,
+    pub state: ListState,
+}
+
+impl ActionMenu {
+    pub fn new() -> Self {
+        Self {
+            is_open: false,
+            target: None,
+            actions: vec![],
+            state: ListState::default(),
+        }
+    }
+
+    pub fn open(&mut self, target: MenuTarget) {
+        let mut dynamic_actions = Vec::new();
+
+        match &target {
+            MenuTarget::Track(t) => {
+                dynamic_actions.push(MenuAction::PlayNow);
+                dynamic_actions.push(MenuAction::AddToQueue);
+                dynamic_actions.push(MenuAction::AddToPlaylist);
+                if let Some(album) = &t.album && !album.id.is_empty() {
+                    dynamic_actions.push(MenuAction::GoToAlbum);
+                }
+                if !t.artists.is_empty() {
+                    dynamic_actions.push(MenuAction::GoToArtist);
+                }
+            }
+            MenuTarget::Artist(_) => {
+                dynamic_actions.push(MenuAction::PlayNow);
+                dynamic_actions.push(MenuAction::FollowArtist);
+                dynamic_actions.push(MenuAction::ViewDetails);
+            }
+            MenuTarget::Album(a) => {
+                dynamic_actions.push(MenuAction::PlayNow);
+                dynamic_actions.push(MenuAction::SaveToLibrary);
+                if !a.artists.is_empty() {
+                    dynamic_actions.push(MenuAction::GoToArtist);
+                }
+            }
+            MenuTarget::Playlist(_) => {
+                dynamic_actions.push(MenuAction::PlayNow);
+                dynamic_actions.push(MenuAction::SaveToLibrary);
+                dynamic_actions.push(MenuAction::ViewDetails);
+            }
+            MenuTarget::Episode(e) => {
+                dynamic_actions.push(MenuAction::PlayNow);
+                dynamic_actions.push(MenuAction::AddToQueue);
+                if !e.show_name.is_empty() {
+                    dynamic_actions.push(MenuAction::GoToShow);
+                }
+            }
+        }
+
+        self.actions = dynamic_actions;
+        self.target = Some(target);
+        self.state.select(Some(0));
+        self.is_open = true;
+    }
+
+    pub fn close(&mut self) {
+        self.is_open = false;
+        self.target = None;
+    }
+
+    pub fn next(&mut self) {
+        let i = match self.state.selected() {
+            Some(i) => if i >= self.actions.len() - 1 { 0 } else { i + 1 },
+            None => 0,
+        };
+        self.state.select(Some(i));
+    }
+
+    pub fn previous(&mut self) {
+        let i = match self.state.selected() {
+            Some(i) => if i == 0 { self.actions.len() - 1 } else { i - 1 },
+            None => 0,
+        };
+        self.state.select(Some(i));
+    }
+}
+
+// -------------------------------- Stateful List ----------------------------------
 #[derive(Clone, Default)]
 pub struct StatefulList {
     pub state: ListState,
@@ -46,6 +165,7 @@ impl StatefulList {
     }
 }
 
+// -------------------------------- Stable Table ----------------------------------
 #[derive(Clone, Default)]
 pub struct StatefulTable<T> {
     pub items: Vec<T>,
