@@ -34,15 +34,15 @@ pub enum MenuAction {
 impl MenuAction {
     pub fn as_str(&self) -> &'static str {
         match self {
-            MenuAction::PlayNow => "▶ Play Now",
-            MenuAction::AddToQueue => "⏳ Add to Queue",
-            MenuAction::AddToPlaylist => "🎵 Add to Playlist",
-            MenuAction::GoToAlbum => "💿 Go to Album",
-            MenuAction::GoToArtist => "👤 Go to Artist",
-            MenuAction::GoToShow => "🎙️ Go to Podcast Show",
-            MenuAction::SaveToLibrary => "💾 Save to Library",
-            MenuAction::FollowArtist => "➕ Follow Artist",
-            MenuAction::ViewDetails => "🔍 View Details",
+            MenuAction::PlayNow => "Play Now",
+            MenuAction::AddToQueue => "Add to Queue",
+            MenuAction::AddToPlaylist => "Add to Playlist",
+            MenuAction::GoToAlbum => "Go to Album",
+            MenuAction::GoToArtist => "Go to Artist",
+            MenuAction::GoToShow => "Go to Podcast Show",
+            MenuAction::SaveToLibrary => "Save to Library",
+            MenuAction::FollowArtist => "Follow Artist",
+            MenuAction::ViewDetails => "View Details",
         }
     }
 }

@@ -2,11 +2,13 @@ use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect, Alignment},
     style::{Color, Style, Modifier},
-    widgets::{Block, Borders, BorderType, Clear, Table, Row, List, ListItem}, 
+    widgets::{Block, Borders, BorderType, Clear, Table, Row, List, ListItem},
+    text::{Line, Span}, 
 };
 use crate::app::App;
 use crate::network::models::MenuTarget;
 
+// ---------------------------------- Keybind Popup -------------------------------
 pub fn draw_help(f: &mut Frame, area: Rect) {
     let popup_area = centered_rect(35, 75, area);
     f.render_widget(Clear, popup_area);
@@ -49,6 +51,7 @@ pub fn draw_help(f: &mut Frame, area: Rect) {
     f.render_widget(table, popup_area);
 }
 
+// ----------------------------------- Action Menu -------------------------------
 pub fn draw_action_menu(
     f: &mut Frame, 
     app: &mut App, 
@@ -60,11 +63,11 @@ pub fn draw_action_menu(
         return;
     }
 
-    let menu_width = 32;
+    let menu_width = 34;
     let menu_height = (app.action_menu.actions.len() as u16) + 2;
     let relative_idx = selected_idx.saturating_sub(scroll_offset) as u16;
 
-    let mut x = list_area.x + 2;
+    let mut x = list_area.x + 4;
     let mut y = list_area.y + relative_idx + 2;
 
     if x + menu_width > f.area().right() {
@@ -79,32 +82,52 @@ pub fn draw_action_menu(
     f.render_widget(Clear, area);
 
     let title = match &app.action_menu.target {
-        Some(MenuTarget::Track(t)) => format!(" Track: {} ", t.name),
-        Some(MenuTarget::Artist(a)) => format!(" Artist: {} ", a.name),
-        Some(MenuTarget::Album(a)) => format!(" Album: {} ", a.name),
-        Some(MenuTarget::Playlist(p)) => format!(" Playlist: {} ", p.name),
-        Some(MenuTarget::Episode(e)) => format!(" Episode: {} ", e.name),
-        None => " Options ".to_string(),
+        Some(MenuTarget::Track(_)) => " TRACK ",
+        Some(MenuTarget::Artist(_)) => " ARTIST ",
+        Some(MenuTarget::Album(_)) => " ALBUM ",
+        Some(MenuTarget::Playlist(_)) => " PLAYLIST ",
+        Some(MenuTarget::Episode(_)) => " EPISODE ",
+        None => " OPTIONS ",
     };
 
     let block = Block::default()
         .title(title)
         .borders(Borders::ALL)
-        .border_type(BorderType::Thick)
-        .border_style(Style::default().fg(Color::LightMagenta).add_modifier(Modifier::BOLD))
+        .border_type(BorderType::Plain)
+        .border_style(Style::default().fg(Color::LightCyan))
         .style(Style::default().bg(Color::Rgb(28, 28, 28)));
 
     let items: Vec<ListItem> = app.action_menu.actions
         .iter()
-        .map(|action| ListItem::new(format!("  {}", action.as_str())))
+        .enumerate()
+        .map(|(i, action)| {
+            let action_str = action.as_str();
+            let shortcut_str = format!("⌨ {}", i + 1);
+            
+            let inner_width = (menu_width as usize).saturating_sub(4);
+            let text_width = action_str.chars().count() + shortcut_str.chars().count();
+            
+            let spaces_to_add = inner_width.saturating_sub(text_width + 2); 
+            let spaces = " ".repeat(spaces_to_add);
+            
+            let line = Line::from(vec![
+                Span::raw(format!(" {}", action_str)),
+                Span::raw(spaces),
+                Span::styled(
+                    format!("{} ", shortcut_str), 
+                    Style::default().fg(Color::DarkGray)
+                ), 
+            ]);
+
+            ListItem::new(line)
+        })
         .collect();
 
-    let list = List::new(items)
+   let list = List::new(items)
         .block(block)
         .style(Style::default().fg(Color::White))
         .highlight_style(
             Style::default()
-                .bg(Color::Rgb(50, 50, 50))
                 .fg(Color::LightMagenta)
                 .add_modifier(Modifier::BOLD)
         )
