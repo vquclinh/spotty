@@ -206,6 +206,15 @@ pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
         .highlight_spacing(HighlightSpacing::Always);
 
     if let Route::Search(ref mut search_state) = app.route {
+        // store last area
+        search_state.last_area = match search_state.hovered_pane {
+            SearchHoveredPane::Tracks => tracks_area,
+            SearchHoveredPane::Artists => artists_area,
+            SearchHoveredPane::Albums => albums_area,
+            SearchHoveredPane::Playlists => playlists_area,
+            _ => main_chunks[1],
+        };
+
         let mut lists = (Some(tracks_list), Some(artists_list), Some(albums_list), Some(playlists_list));
 
         if tracks_area != results_chunks[0] { f.render_stateful_widget(lists.0.take().unwrap(), tracks_area, &mut search_state.tracks_state.state); }
