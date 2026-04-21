@@ -13,6 +13,27 @@ pub fn handle_key_events(key: KeyEvent, app: &mut App) {
         return;
     }
 
+    if app.playlist_selector.is_open {
+        match key.code {
+            KeyCode::Esc => {
+                app.playlist_selector.close();
+            }
+            KeyCode::Down | KeyCode::Char('j') => {
+                app.playlist_selector.next();
+            }
+            KeyCode::Up | KeyCode::Char('k') => {
+                app.playlist_selector.previous();
+            }
+            KeyCode::Enter => {
+                execute_add_to_playlist(app);
+                app.playlist_selector.close();
+                app.action_menu.close();
+            }
+            _ => {}
+        }
+        return;
+    }
+
     if app.action_menu.is_open {
         match key.code {
             KeyCode::Esc | KeyCode::Char('t') => {
@@ -25,8 +46,9 @@ pub fn handle_key_events(key: KeyEvent, app: &mut App) {
                 app.action_menu.previous();
             }
             KeyCode::Enter => {
-                execute_action_menu_command(app);
-                app.action_menu.close();
+                if execute_action_menu_command(app) {
+                    app.action_menu.close();
+                }
             }
             _ => {}
         }
@@ -68,7 +90,7 @@ pub fn handle_key_events(key: KeyEvent, app: &mut App) {
     }
 }
 
-fn execute_action_menu_command(app: &mut App) {
+fn execute_action_menu_command(app: &mut App) -> bool {
     let selected_action = app.action_menu.state.selected()
         .and_then(|idx| app.action_menu.actions.get(idx));
 
@@ -84,26 +106,57 @@ fn execute_action_menu_command(app: &mut App) {
         match action {
             MenuAction::PlayNow => {
                 // TODO
+                true
             }
             MenuAction::AddToQueue => {
                 if let Some(u) = uri {
                     let _ = app.network_tx.send(ClientRequest::Player(PlayerRequest::AddItemToQueue(u)));
                 }
+                true
             }
             MenuAction::AddToPlaylist => {
-                // TODO
+                app.playlist_selector.playlists = app.playlists.items.clone();
+                app.playlist_selector.is_open = true;
+                app.playlist_selector.state.select(Some(0));
+                false
             }
             MenuAction::GoToAlbum => {
                 // TODO
+                true
             }
             MenuAction::GoToArtist => {
                 // TODO
+                true
             }
             MenuAction::ViewDetails => {
                 // TODO
+                true
             }
             // TODO
-            _ => {}
+            _ => true,
+        }
+    } else {
+        true
+    }
+}
+
+fn execute_add_to_playlist(app: &mut App) {
+    if let (Some(idx), Some(target)) = (
+        app.playlist_selector.state.selected(),
+        &app.action_menu.target
+    ) {
+        let playlist_id = app.playlist_selector.playlists[idx].id.clone();
+        let uri = match target {
+            MenuTarget::Track(t) => Some(t.uri.clone()),
+            MenuTarget::Episode(e) => Some(e.uri.clone()),
+            _ => None,
+        };
+
+        if let Some(u) = uri {
+            let _ = app.network_tx.send(ClientRequest::AddItemsToPlaylist {
+                playlist_id,
+                uris: vec![u],
+            });
         }
     }
 }

@@ -134,8 +134,53 @@ pub fn draw_action_menu(
         .highlight_symbol("▶ ");
 
     f.render_stateful_widget(list, area, &mut app.action_menu.state);
+    
+    if app.playlist_selector.is_open {
+        draw_playlist_selector(f, app, area);
+    }
 }
 
+// -------------------------------------- Playlist Selector -------------------------------
+pub fn draw_playlist_selector(f: &mut Frame, app: &mut App, action_menu_area: Rect) {
+    let selector_width = 30;
+    let selector_height = 10;
+
+    let mut x = action_menu_area.x + action_menu_area.width - 1;
+    if x + selector_width > f.area().right() {
+        x = action_menu_area.x.saturating_sub(selector_width).saturating_add(1);
+    }
+
+    let selector_area = Rect {
+        x,
+        y: action_menu_area.y + 2,
+        width: selector_width,
+        height: selector_height,
+    };
+
+    let items: Vec<ListItem> = app.playlist_selector.playlists
+        .iter()
+        .map(|p| ListItem::new(format!("  {}", p.name)))
+        .collect();
+
+    let list = List::new(items)
+        .block(Block::default()
+            .title(" Add to... ")
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(Color::LightCyan))
+            .style(Style::default().bg(Color::Rgb(28, 28, 28)))) 
+        .highlight_style(
+            Style::default()
+                .bg(Color::Rgb(50, 50, 50))
+                .fg(Color::LightCyan)
+                .add_modifier(Modifier::BOLD)
+        )
+        .highlight_symbol("> ");
+
+    f.render_widget(Clear, selector_area);
+    f.render_stateful_widget(list, selector_area, &mut app.playlist_selector.state);
+}
+
+// ------------------------------------------- Helper ------------------------------------
 fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
     let popup_layout = Layout::default()
         .direction(Direction::Vertical)

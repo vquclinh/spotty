@@ -1,6 +1,7 @@
 use ratatui::widgets::TableState;
 use ratatui::widgets::ListState;
 use crate::network::models::MenuTarget;
+use crate::network::models::*;
 
 // -------------------------------- Active Block ----------------------------------
 #[derive(Clone, PartialEq, Debug)]
@@ -136,6 +137,49 @@ impl ActionMenu {
         self.state.select(Some(i));
     }
 }
+
+// ----------------------------- Playlist Selector ---------------------------------
+#[derive(Default)]
+pub struct PlaylistSelector {
+    pub is_open: bool,
+    pub state: ListState,
+    pub playlists: Vec<Playlist>,
+}
+
+impl PlaylistSelector {
+    pub fn new() -> Self {
+        Self {
+            is_open: false,
+            state: ListState::default(),
+            playlists: vec![],
+        }
+    }
+
+    pub fn close(&mut self) {
+        self.is_open = false;
+        self.playlists.clear();
+        self.state.select(None);
+    }
+
+    pub fn next(&mut self) {
+        if self.playlists.is_empty() { return; }
+        let i = match self.state.selected() {
+            Some(i) => if i >= self.playlists.len() - 1 { 0 } else { i + 1 },
+            None => 0,
+        };
+        self.state.select(Some(i));
+    }
+
+    pub fn previous(&mut self) {
+        if self.playlists.is_empty() { return; }
+        let i = match self.state.selected() {
+            Some(i) => if i == 0 { self.playlists.len() - 1 } else { i - 1 },
+            None => 0,
+        };
+        self.state.select(Some(i));
+    }
+}
+
 
 // -------------------------------- Stateful List ----------------------------------
 #[derive(Clone, Default)]

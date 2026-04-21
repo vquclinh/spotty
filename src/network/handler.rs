@@ -100,6 +100,21 @@ pub async fn start_network_worker(
                 }
             }
 
+            ClientRequest::AddItemsToPlaylist { playlist_id, uris } => {
+                let uris_ref: Vec<&str> = uris.iter().map(|s| s.as_str()).collect();
+
+                match client.add_items_to_playlist(&playlist_id, uris_ref).await {
+                    Ok(_) => {
+                        if let Ok(playlists) = client.get_user_playlists().await
+                            && let Ok(mut state) = shared_state.lock()
+                        {
+                            state.playlists = playlists;
+                        }
+                    }
+                    Err(_e) => {}
+                }
+            }
+
             ClientRequest::Player(player_req) => {
                 match player_req {
                     PlayerRequest::AddItemToQueue(uri) => {
@@ -117,6 +132,7 @@ pub async fn start_network_worker(
                     _ => {}
                 }
             }
+
             _ => {}
         }
     }
