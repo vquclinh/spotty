@@ -2,7 +2,6 @@ use ratatui::widgets::ListState;
 use tokio::sync::mpsc;
 
 use crate::app::home_state::HomeTab;
-use crate::app::queue_state::{self, QueueState};
 use crate::app::splash_state::SplashState;
 use crate::app::types::{ActionMenu, ActiveBlock, StatefulTable};
 use crate::app::route::Route;

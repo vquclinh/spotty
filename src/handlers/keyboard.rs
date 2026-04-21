@@ -1,6 +1,6 @@
 use crate::app::{ActiveBlock, App};
-use crate::handlers::search;
-use crossterm::event::{KeyEvent, KeyCode, KeyModifiers};
+use crate::handlers::{queue, search};
+use crossterm::event::{KeyEvent, KeyCode};
 
 use super::{global, sidebar, home, playlist};
 use crate::app::types::MenuAction;
@@ -40,22 +40,6 @@ pub fn handle_key_events(key: KeyEvent, app: &mut App) {
         return;
     }
 
-    // Tab focus cycling
-    if key.code == KeyCode::Tab && !key.modifiers.contains(KeyModifiers::CONTROL) {
-        if app.active_block == ActiveBlock::SearchResults {
-            // TODO
-        } else {
-            app.active_block = match app.active_block {
-                ActiveBlock::LibraryMenu => ActiveBlock::PlaylistsMenu,
-                ActiveBlock::PlaylistsMenu => ActiveBlock::HomeBlock,
-                ActiveBlock::HomeBlock => ActiveBlock::QueueBlock,
-                ActiveBlock::QueueBlock => ActiveBlock::LibraryMenu,
-                _ => ActiveBlock::LibraryMenu,
-            };
-            return;
-        }
-    }
-
     // each active_block
     match app.active_block {
         ActiveBlock::PlaylistsMenu => {
@@ -74,6 +58,10 @@ pub fn handle_key_events(key: KeyEvent, app: &mut App) {
             search::handle_search_events(key, app);
             return;
         }
+        ActiveBlock::QueueBlock => {
+            queue::handle_queue_events(key, app);
+            return;
+        }
         _ => {}
     }
 }
@@ -82,7 +70,7 @@ fn execute_action_menu_command(app: &mut App) {
     let selected_action = app.action_menu.state.selected()
         .and_then(|idx| app.action_menu.actions.get(idx));
 
-    if let (Some(action), Some(target)) = (selected_action, &app.action_menu.target) {
+    if let (Some(action), Some(_target)) = (selected_action, &app.action_menu.target) {
         match action {
             MenuAction::PlayNow => {
                 // TODO

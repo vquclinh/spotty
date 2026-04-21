@@ -1,6 +1,7 @@
 use crate::app::{ActiveBlock, App, route::Route};
 use crate::app::home_state::HomeState;
 use crate::app::search_state::{SearchState, SearchHoveredPane};
+use crate::app::queue_state::QueueState;
 use crossterm::event::{KeyCode, KeyModifiers, KeyEvent};
 
 pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
@@ -36,6 +37,18 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
         return true;
     }
 
+    // queue
+    if key.code == KeyCode::Char('Q') {
+        if matches!(app.route, Route::Queue(_)) {
+            app.active_block = ActiveBlock::QueueBlock;
+            return true;
+        }
+
+        app.set_current_route(Route::Queue(QueueState::default()));
+        app.active_block = ActiveBlock::QueueBlock;
+        
+        return true;
+    }
     // active block
     if key.code == KeyCode::Tab && !key.modifiers.contains(KeyModifiers::CONTROL) {
         if app.active_block == ActiveBlock::SearchResults {
@@ -47,6 +60,7 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
             ActiveBlock::PlaylistsMenu => match app.route {
                 Route::PlaylistDetail(_) => ActiveBlock::PlaylistTracks,
                 Route::Search(_) => ActiveBlock::SearchInput,
+                Route::Queue(_) => ActiveBlock::QueueBlock,
                 _ => ActiveBlock::HomeBlock,
             },
 

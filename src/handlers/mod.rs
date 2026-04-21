@@ -4,5 +4,6 @@ pub mod home;
 pub mod playlist;
 pub mod sidebar;
 pub mod search;
+pub mod queue;
 
 pub use keyboard::handle_key_events;
