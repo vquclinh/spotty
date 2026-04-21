@@ -72,9 +72,13 @@ impl ActionMenu {
                 dynamic_actions.push(MenuAction::PlayNow);
                 dynamic_actions.push(MenuAction::AddToQueue);
                 dynamic_actions.push(MenuAction::AddToPlaylist);
-                if let Some(album) = &t.album && !album.id.is_empty() {
+                if let Some(album) = &t.album &&
+                    !album.id.is_empty() &&
+                    album.album_type == "album"
+                {
                     dynamic_actions.push(MenuAction::GoToAlbum);
                 }
+                
                 if !t.artists.is_empty() {
                     dynamic_actions.push(MenuAction::GoToArtist);
                 }

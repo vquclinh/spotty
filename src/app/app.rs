@@ -13,7 +13,7 @@ use crate::network::request::ClientRequest;
 
 pub struct App {
     pub route: Route,
-    pub active_block: ActiveBlock, 
+    pub active_block: ActiveBlock,
     pub history: Vec<(Route, ActiveBlock)>, // store history about Route and ActiveBlock
 
     pub network_tx: mpsc::UnboundedSender<ClientRequest>, // the bridge between UI and Network
@@ -41,7 +41,7 @@ impl App {
         // At initialization, send a request to get current playback and playlists
         let _ = network_tx.send(ClientRequest::GetCurrentPlayback);
         let _ = network_tx.send(ClientRequest::GetUserPlaylists);
-        
+
         Self {
             route: Route::Splash(SplashState::new()),
             active_block: ActiveBlock::PlaylistsMenu,
@@ -100,7 +100,7 @@ impl App {
 
     fn sync_data(&mut self) {
         if let Ok(mut shared_state) = self.shared_state.lock() {
-            
+
             if shared_state.playback.is_some() {
                 self.playback = shared_state.playback.take();
             }
@@ -111,7 +111,7 @@ impl App {
 
             match &mut self.route {
                 Route::Home(home_state) => {
-                
+
                     if !shared_state.recent_tracks.is_empty() {
                         home_state.recent_tracks.items = shared_state.recent_tracks.drain(..).collect();
                     }
