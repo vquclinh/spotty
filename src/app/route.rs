@@ -1,4 +1,5 @@
 use crate::app::home_state::HomeState;
+use crate::app::queue_state::QueueState;
 use crate::app::search_state::SearchState;
 use crate::app::splash_state::SplashState;
 use crate::app::playlist_state::PlaylistState;
@@ -10,7 +11,7 @@ pub enum Route {
     Home(HomeState),
     Search(SearchState),
     PlaylistDetail(PlaylistState),
-    Queue,
+    Queue(QueueState),
     Lyrics,
 }
 
@@ -22,6 +23,7 @@ impl Route {
             Route::Search(_) => None,
             Route::Splash(state) => state.update(),
             Route::PlaylistDetail(_) => None,
+            Route::Queue(_) => None,
             _ => None,
         }
     }

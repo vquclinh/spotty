@@ -9,6 +9,7 @@ pub mod home_state;
 pub mod splash_state;
 pub mod playlist_state;
 pub mod playbar_state;
+pub mod queue_state;
 
 pub use types::ActiveBlock;
 pub use search_state::SearchState;

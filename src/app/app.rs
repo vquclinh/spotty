@@ -2,6 +2,7 @@ use ratatui::widgets::ListState;
 use tokio::sync::mpsc;
 
 use crate::app::home_state::HomeTab;
+use crate::app::queue_state::{self, QueueState};
 use crate::app::splash_state::SplashState;
 use crate::app::types::{ActionMenu, ActiveBlock, StatefulTable};
 use crate::app::route::Route;
@@ -82,6 +83,9 @@ impl App {
                     }
                 }
             }
+            Route::Queue(_) => {
+                let _ = self.network_tx.send(ClientRequest::GetQueue);
+            }
             _ => {}
         }
 
@@ -137,6 +141,23 @@ impl App {
 
                     if has_tracks || has_artists {
                         search_state.results = std::mem::take(&mut shared_state.search_results);
+                    }
+                }
+
+                Route::Queue(queue_state) => {
+                    if let Some(pb) = &self.playback && let Some(item) = &pb.item {
+                        queue_state.currently_playing = Some(item.clone());
+                    }
+
+                    if let Some((current, items)) = shared_state.queue_data.take() {
+                        if let Some(c) = current {
+                            queue_state.currently_playing = Some(c);
+                        }
+                        queue_state.queue_items.items = items;
+                        
+                        if queue_state.queue_items.state.selected().is_none() && !queue_state.queue_items.items.is_empty() {
+                            queue_state.queue_items.state.select(Some(0));
+                        }
                     }
                 }
 

@@ -89,6 +89,17 @@ pub async fn start_network_worker(
                 }
             }
 
+            ClientRequest::GetQueue => {
+                match client.get_queue().await {
+                    Ok(queue_res) => {
+                        if let Ok(mut state) = shared_state.lock() {
+                            state.queue_data = Some((queue_res.currently_playing, queue_res.queue));
+                        }
+                    }
+                    Err(_e) => {}
+                }
+            }
+
             _ => {}
         }
     }

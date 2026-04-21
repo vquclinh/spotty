@@ -202,6 +202,13 @@ pub enum TimeRange {
     LongTerm
 }
 
+// ------------------------------------------- Queue Response -----------------------------
+#[derive(Debug, Deserialize, Clone)]
+pub struct QueueResponse {
+    pub currently_playing: Option<PlayableItem>,
+    pub queue: Vec<PlayableItem>,
+}
+
 // ------------------------------------- Action Menu Target ------------------------------
 #[derive(Clone, Debug)]
 pub enum MenuTarget {

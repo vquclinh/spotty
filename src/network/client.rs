@@ -90,14 +90,14 @@ impl WebApiClient {
         Ok(playlists)
     }
 
-    pub async fn get_queue(&self) -> Result<Vec<Track>> {
+    pub async fn get_queue(&self) -> Result<QueueResponse> {
         let data: Value = helper::get(&self.client, "me/player/queue", &HashMap::new())
             .await.map(|r| r.data())?;
 
-        let queue = serde_json::from_value(data["queue"].clone())
-            .context("Failed to parse queue items")?;
+        let queue_res: QueueResponse = serde_json::from_value(data)
+            .context("Failed to parse queue response from Spotify")?;
 
-        Ok(queue)
+        Ok(queue_res)
     }
 
     pub async fn get_playlist_items(&self, id: &str, limit: u32, offset: u32) -> Result<Vec<PlayableItem>> {

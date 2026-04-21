@@ -1,4 +1,4 @@
-use crate::app::{App, Route};
+use crate::app::*;
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout},
@@ -6,7 +6,7 @@ use ratatui::{
 use crate::app::home_state::*;
 use crate::app::search_state::*;
 
-use super::{splash, lyrics, playbar, queue, search, sidebar, playlist, popups};
+use super::{home, splash, lyrics, playbar, queue, search, sidebar, playlist, popups};
 
 pub fn draw(f: &mut Frame, app: &mut App) {
     // splash
@@ -47,8 +47,8 @@ pub fn draw(f: &mut Frame, app: &mut App) {
             sidebar::draw(f, app, content_chunks[0]);
 
             match &mut app.route {
-                Route::Home(home_state) => crate::ui::home::draw(f, home_state, &app.active_block, content_chunks[1]),
-                Route::Queue => queue::draw(f, app, content_chunks[1]),
+                Route::Home(home_state) => home::draw(f, home_state, &app.active_block, content_chunks[1]),
+                Route::Queue(queue_state) => queue::draw(f, queue_state, &app.active_block, content_chunks[1]),
                 Route::PlaylistDetail(playlist_state) => playlist::draw(f, playlist_state, &app.active_block, content_chunks[1]),
                 _ => {}
             }
@@ -67,9 +67,11 @@ pub fn draw(f: &mut Frame, app: &mut App) {
                 };
                 (h.last_area, idx.unwrap_or(0), off)
             }
+            
             Route::PlaylistDetail(p) => {
                 (p.last_area, p.tracks.state.selected().unwrap_or(0), p.tracks.state.offset())
             }
+
             Route::Search(s) => {
                 let (idx, off) = match s.hovered_pane {
                     SearchHoveredPane::Tracks => (s.tracks_state.state.selected(), s.tracks_state.state.offset()),
@@ -79,6 +81,14 @@ pub fn draw(f: &mut Frame, app: &mut App) {
                     _ => (None, 0),
                 };
                 (s.last_area, idx.unwrap_or(0), off)
+            }
+
+            Route::Queue(q) => {
+                (
+                    q.last_area, 
+                    q.queue_items.state.selected().unwrap_or(0),
+                    q.queue_items.state.offset()
+                )
             }
             _ => (f.area(), 0, 0),
         };
