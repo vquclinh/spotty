@@ -302,4 +302,12 @@ impl WebApiClient {
         helper::delete(&self.client, &url , &HashMap::<&str, &str>::new())
             .await.map(|r| r.data())
     }
+
+    pub async fn get_album(&self, id: &str) -> Result<Album> {
+        let endpoint = format!("albums/{}", id);
+
+        helper::get(&self.client, &endpoint, &HashMap::new())
+            .await.map(|r| r.data())
+            .context(format!("Failed to fetch album with id: {}", id))
+    }
 }

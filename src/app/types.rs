@@ -16,6 +16,7 @@ pub enum ActiveBlock {
     LyricsText,
     LyricsInfo,
     Playbar,
+    AlbumBlock,
 }
 
 // -------------------------------- Action Menu ------------------------------------

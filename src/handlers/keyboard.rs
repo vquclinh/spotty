@@ -1,11 +1,13 @@
-use crate::app::{ActiveBlock, App};
-use crate::handlers::{queue, search};
+use crate::app::{ActiveBlock, App, Route};
+use crate::handlers::{album, queue, search};
 use crate::network::models::*;
 use crate::network::request::{PlayerRequest, ClientRequest};
 use crossterm::event::{KeyEvent, KeyCode};
 
 use super::{global, sidebar, home, playlist};
 use crate::app::types::MenuAction;
+
+use crate::app::album_state::AlbumState;
 
 pub fn handle_key_events(key: KeyEvent, app: &mut App) {
     if app.show_help {
@@ -86,6 +88,10 @@ pub fn handle_key_events(key: KeyEvent, app: &mut App) {
             queue::handle_queue_events(key, app);
             return;
         }
+        ActiveBlock::AlbumBlock => {
+            album::handle_album_events(key, app);
+            return;
+        }
         _ => {}
     }
 }
@@ -139,7 +145,17 @@ fn execute_action_menu_command(app: &mut App) -> bool {
                 }
             }
             MenuAction::GoToAlbum => {
-                // TODO
+                let album_id = match target {
+                    MenuTarget::Track(t) => t.album.as_ref().map(|a| a.id.clone()),
+                    MenuTarget::Album(a) => Some(a.id.clone()),
+                    _ => None,
+                };
+
+                if let Some(id) = album_id {
+                    let new_album_state = AlbumState::new(id);
+                    app.set_current_route(Route::AlbumDetail(new_album_state));
+                    app.active_block = ActiveBlock::AlbumBlock;
+                }
                 true
             }
             MenuAction::GoToArtist => {

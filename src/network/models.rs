@@ -31,7 +31,7 @@ impl Default for User {
 }
 
 // ---------------------------------- Simplified Album -------------------------------------
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Default)]
 pub struct SimplifiedAlbum {
     pub id: String,
     pub name: String,
@@ -39,7 +39,7 @@ pub struct SimplifiedAlbum {
 }
 
 // ----------------------------------------- Item ------------------------------------------
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Default)]
 pub struct Artist {
     pub id: String,
     pub uri: String,
@@ -47,7 +47,7 @@ pub struct Artist {
     pub genres: Option<Vec<String>>,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Default)]
 pub struct Album {
     pub id: String,
     pub uri: String,
@@ -57,7 +57,7 @@ pub struct Album {
     pub tracks: Option<Page<Track>>,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Default)]
 pub struct Track {
     pub id: String,
     pub uri: String,

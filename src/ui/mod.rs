@@ -8,5 +8,6 @@ pub mod sidebar;
 pub mod playlist;
 pub mod splash;
 pub mod popups;
+pub mod album;
 
 pub use layout::draw;

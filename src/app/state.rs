@@ -23,6 +23,9 @@ pub struct IoSharedState {
 
     // queue-state
     pub queue_data: Option<(Option<PlayableItem>, Vec<PlayableItem>)>,
+
+    // album-state
+    pub album_detail: Option<Album>,
 }
 
 // SharedState uses Arc and Mutex to ensure thread-safe,

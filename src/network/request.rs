@@ -61,6 +61,10 @@ pub enum ClientRequest {
         uris: Vec<String>,
     },
 
+    GetAlbum {
+        id: String,
+    },
+
     Player(PlayerRequest),
 
     SaveItemsToLibrary(Vec<String>),

@@ -49,6 +49,7 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
         
         return true;
     }
+
     // active block
     if key.code == KeyCode::Tab && !key.modifiers.contains(KeyModifiers::CONTROL) {
         if app.active_block == ActiveBlock::SearchResults {
@@ -61,6 +62,7 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
                 Route::PlaylistDetail(_) => ActiveBlock::PlaylistTracks,
                 Route::Search(_) => ActiveBlock::SearchInput,
                 Route::Queue(_) => ActiveBlock::QueueBlock,
+                Route::AlbumDetail(_) => ActiveBlock::AlbumBlock,
                 _ => ActiveBlock::HomeBlock,
             },
 
@@ -74,7 +76,8 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
             ActiveBlock::HomeBlock 
             | ActiveBlock::PlaylistTracks 
             | ActiveBlock::QueueBlock 
-            | ActiveBlock::LyricsText => {
+            | ActiveBlock::LyricsText
+            | ActiveBlock::AlbumBlock => {
                 ActiveBlock::Playbar
             },
 

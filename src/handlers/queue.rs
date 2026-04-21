@@ -19,19 +19,6 @@ pub fn handle_queue_events(key: KeyEvent, app: &mut App) {
                     });
             }
 
-            // KeyCode::Enter => {
-            //     if let Some(selected_index) = queue_state.queue_items.state.selected() {
-            //         if let Some(item) = queue_state.queue_items.items.get(selected_index) {
-            //             let uri = match item {
-            //                 PlayableItem::Track(t) => t.uri.clone(),
-            //                 PlayableItem::Episode(e) => e.uri.clone(),
-            //             };
-            //             let _ = app.network_tx.send(ClientRequest::AddItemToQueue(uri));
-            //             let _ = app.network_tx.send(ClientRequest::NextTrack);
-            //         }
-            //     }
-            // }
-
             KeyCode::Backspace | KeyCode::Char('b') | KeyCode::Esc => {
                 app.active_block = ActiveBlock::PlaylistsMenu;
             }

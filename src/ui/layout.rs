@@ -6,7 +6,7 @@ use ratatui::{
 use crate::app::home_state::*;
 use crate::app::search_state::*;
 
-use super::{home, splash, lyrics, playbar, queue, search, sidebar, playlist, popups};
+use super::{home, splash, lyrics, playbar, queue, search, sidebar, playlist, album, popups};
 
 pub fn draw(f: &mut Frame, app: &mut App) {
     // splash
@@ -49,6 +49,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
             match &mut app.route {
                 Route::Home(home_state) => home::draw(f, home_state, &app.active_block, content_chunks[1]),
                 Route::Queue(queue_state) => queue::draw(f, queue_state, &app.active_block, content_chunks[1]),
+                Route::AlbumDetail(album_state) => album::draw(f, album_state, &app.active_block, content_chunks[1]),
                 Route::PlaylistDetail(playlist_state) => playlist::draw(f, playlist_state, &app.active_block, content_chunks[1]),
                 _ => {}
             }
@@ -90,6 +91,15 @@ pub fn draw(f: &mut Frame, app: &mut App) {
                     q.queue_items.state.offset()
                 )
             }
+
+            Route::AlbumDetail(a) => {
+                (
+                    a.last_area, 
+                    a.tracks.state.selected().unwrap_or(0), 
+                    a.tracks.state.offset()
+                )
+            }
+
             _ => (f.area(), 0, 0),
         };
 

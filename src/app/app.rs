@@ -92,6 +92,11 @@ impl App {
             Route::Queue(_) => {
                 let _ = self.network_tx.send(ClientRequest::GetQueue);
             }
+            Route::AlbumDetail(state) => {
+                let id = state.album_id.clone();
+                let _ = self.network_tx.send(ClientRequest::GetAlbum { id });
+            }
+            
             _ => {}
         }
 
@@ -167,6 +172,19 @@ impl App {
                         
                         if queue_state.queue_items.state.selected().is_none() && !queue_state.queue_items.items.is_empty() {
                             queue_state.queue_items.state.select(Some(0));
+                        }
+                    }
+                }
+
+                Route::AlbumDetail(album_state) => {
+                    if let Some(album) = shared_state.album_detail.take() {
+                        album_state.album = Some(album.clone());
+
+                        if let Some(page) = album.tracks {
+                            album_state.tracks.items = page.items;
+                            if album_state.tracks.state.selected().is_none() && !album_state.tracks.items.is_empty() {
+                                album_state.tracks.state.select(Some(0));
+                            }
                         }
                     }
                 }

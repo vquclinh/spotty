@@ -128,6 +128,17 @@ pub async fn start_network_worker(
                 }
             }
 
+            ClientRequest::GetAlbum { id } => {
+                match client.get_album(&id).await {
+                    Ok(album) => {
+                        if let Ok(mut state) = shared_state.lock() {
+                            state.album_detail = Some(album);
+                        }
+                    }
+                    Err(_e) => {}
+                }
+            }
+
             ClientRequest::Player(player_req) => {
                 match player_req {
                     PlayerRequest::AddItemToQueue(uri) => {

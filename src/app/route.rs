@@ -3,6 +3,7 @@ use crate::app::queue_state::QueueState;
 use crate::app::search_state::SearchState;
 use crate::app::splash_state::SplashState;
 use crate::app::playlist_state::PlaylistState;
+use crate::app::album_state::AlbumState;
 
 // Route is like state, to know where you are in app
 #[derive(Clone)]
@@ -12,6 +13,7 @@ pub enum Route {
     Search(SearchState),
     PlaylistDetail(PlaylistState),
     Queue(QueueState),
+    AlbumDetail(AlbumState),
     Lyrics,
 }
 
@@ -24,6 +26,7 @@ impl Route {
             Route::Splash(state) => state.update(),
             Route::PlaylistDetail(_) => None,
             Route::Queue(_) => None,
+            Route::AlbumDetail(_) => None,
             _ => None,
         }
     }
