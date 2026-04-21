@@ -62,9 +62,15 @@ pub fn draw(f: &mut Frame, state: &mut QueueState, active_block: &ActiveBlock, a
         .block(Block::default().padding(Padding::new(1, 1, 1, 0)));
     f.render_widget(now_playing_widget, chunks[0]);
 
-    state.last_area = chunks[1];
+    let table_block = Block::default()
+        .title(" Up Next ")
+        .borders(Borders::TOP)
+        .border_style(Style::default().fg(border_color));
 
-    let table_width = chunks[1].width;
+    let table_area = table_block.inner(chunks[1]);
+    state.last_area = table_area;
+
+    let table_width = table_area.width;
     let show_extra_column = table_width > 60;
 
     let header_style = Style::default().fg(Color::DarkGray).add_modifier(Modifier::BOLD);
@@ -72,12 +78,12 @@ pub fn draw(f: &mut Frame, state: &mut QueueState, active_block: &ActiveBlock, a
 
     let (header_cells, widths) = if show_extra_column {
         (
-            vec![" # Title", "Artist / Show", "Length"],
+            vec![" #title", "#artist / show", "#length"],
             vec![Constraint::Percentage(45), Constraint::Percentage(35), Constraint::Percentage(20)]
         )
     } else {
         (
-            vec![" # Title", "Artist / Show"],
+            vec![" #title", "#artist / show"],
             vec![Constraint::Percentage(55), Constraint::Percentage(45)]
         )
     };
@@ -94,7 +100,7 @@ pub fn draw(f: &mut Frame, state: &mut QueueState, active_block: &ActiveBlock, a
         )
     };
 
-    let header = Row::new(header_cells).style(header_style).bottom_margin(1);
+    let header = Row::new(header_cells).style(header_style).bottom_margin(0);
 
     let rows: Vec<Row> = state.queue_items.items.iter().enumerate().map(|(i, item)| {
         let title = truncate(item.name(), title_max);
