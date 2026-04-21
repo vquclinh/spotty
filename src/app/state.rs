@@ -4,6 +4,8 @@ use crate::network::models::*;
 // Stores unified network data
 #[derive(Default)]
 pub struct IoSharedState {
+    pub user: User,
+    
     pub playlists: Vec<Playlist>,
     pub playback: Option<Playback>,
 

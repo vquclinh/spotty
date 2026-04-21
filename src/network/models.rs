@@ -92,6 +92,7 @@ pub struct Playlist {
     pub id: String,
     pub uri: String,
     pub name: String,
+    pub collaborative: bool,
     #[serde(default)]
     pub owner: User,
     pub description: Option<String>,

@@ -12,6 +12,18 @@ pub async fn start_network_worker(
 ) {
     while let Some(request) = rx.recv().await {
         match request {
+            ClientRequest::GetCurrentUser => {
+                match client.get_current_user().await {
+                    Ok(user) => {
+                        if let Ok(mut state) = shared_state.lock() {
+                            state.user = user;
+                        }
+                    }
+
+                    Err(_e) => {}
+                }   
+            }
+
             ClientRequest::GetUserPlaylists => {
                 match client.get_user_playlists().await {
                     Ok(playlists) => {
@@ -105,10 +117,11 @@ pub async fn start_network_worker(
 
                 match client.add_items_to_playlist(&playlist_id, uris_ref).await {
                     Ok(_) => {
-                        if let Ok(playlists) = client.get_user_playlists().await
-                            && let Ok(mut state) = shared_state.lock()
-                        {
-                            state.playlists = playlists;
+                        #[allow(clippy::collapsible_if)]
+                        if let Ok(playlists) = client.get_user_playlists().await {
+                            if let Ok(mut state) = shared_state.lock() {
+                                state.playlists = playlists;
+                            }
                         }
                     }
                     Err(_e) => {}
@@ -120,8 +133,11 @@ pub async fn start_network_worker(
                     PlayerRequest::AddItemToQueue(uri) => {
                         let _ = client.add_item_to_queue(&uri).await;
 
-                        if let Ok(queue_res) = client.get_queue().await && let Ok(mut state) = shared_state.lock() {
-                            state.queue_data = Some((queue_res.currently_playing, queue_res.queue));
+                        #[allow(clippy::collapsible_if)]
+                        if let Ok(queue_res) = client.get_queue().await {
+                            if let Ok(mut state) = shared_state.lock() {
+                                state.queue_data = Some((queue_res.currently_playing, queue_res.queue));
+                            }
                         }
                     }
 

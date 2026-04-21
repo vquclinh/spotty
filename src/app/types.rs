@@ -180,7 +180,6 @@ impl PlaylistSelector {
     }
 }
 
-
 // -------------------------------- Stateful List ----------------------------------
 #[derive(Clone, Default)]
 pub struct StatefulList {

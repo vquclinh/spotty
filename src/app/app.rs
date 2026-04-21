@@ -19,6 +19,8 @@ pub struct App {
     pub network_tx: mpsc::UnboundedSender<ClientRequest>, // the bridge between UI and Network
     pub shared_state: SharedState,
 
+    pub user: User,
+
     pub playback: Option<Playback>,
     pub liked_songs: usize,
     pub playlists: StatefulTable<Playlist>,
@@ -40,6 +42,7 @@ impl App {
         shared_state: SharedState,
     ) -> Self {
         // At initialization, send a request to get current playback and playlists
+        let _ = network_tx.send(ClientRequest::GetCurrentUser);
         let _ = network_tx.send(ClientRequest::GetCurrentPlayback);
         let _ = network_tx.send(ClientRequest::GetUserPlaylists);
 
@@ -53,6 +56,8 @@ impl App {
             network_tx,
             shared_state,
 
+            user: User::default(),
+            
             playback: None,
             liked_songs: 0,
             playlists: StatefulTable::new(),
@@ -105,6 +110,10 @@ impl App {
 
     fn sync_data(&mut self) {
         if let Ok(mut shared_state) = self.shared_state.lock() {
+
+            if self.user.id.is_empty() && !shared_state.user.id.is_empty() {
+                self.user = shared_state.user.clone();
+            }
 
             if shared_state.playback.is_some() {
                 self.playback = shared_state.playback.take();

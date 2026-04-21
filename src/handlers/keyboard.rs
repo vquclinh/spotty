@@ -1,6 +1,6 @@
 use crate::app::{ActiveBlock, App};
 use crate::handlers::{queue, search};
-use crate::network::models::MenuTarget;
+use crate::network::models::*;
 use crate::network::request::{PlayerRequest, ClientRequest};
 use crossterm::event::{KeyEvent, KeyCode};
 
@@ -115,10 +115,28 @@ fn execute_action_menu_command(app: &mut App) -> bool {
                 true
             }
             MenuAction::AddToPlaylist => {
-                app.playlist_selector.playlists = app.playlists.items.clone();
-                app.playlist_selector.is_open = true;
-                app.playlist_selector.state.select(Some(0));
-                false
+                let my_id = &app.user.id;
+
+                let writable_playlists: Vec<Playlist> = app.playlists.items
+                    .iter()
+                    .filter(|p| {
+                        let is_owner = p.owner.id == *my_id;
+                        let is_collaborator = p.collaborative;
+                        
+                        is_owner || is_collaborator
+                    })
+                    .cloned()
+                    .collect();
+
+                if !writable_playlists.is_empty() {
+                    app.playlist_selector.playlists = writable_playlists;
+                    app.playlist_selector.is_open = true;
+                    app.playlist_selector.state.select(Some(0));
+                    
+                    false 
+                } else {
+                    true
+                }
             }
             MenuAction::GoToAlbum => {
                 // TODO
