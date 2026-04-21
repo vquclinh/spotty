@@ -1,10 +1,30 @@
 use rspotify::{prelude::*, AuthCodePkceSpotify};
 use serde::{Serialize, de::DeserializeOwned};
-use anyhow::{Result, Context, bail};
+use anyhow::{Result, Context};
 use std::collections::HashMap;
 
+pub struct HttpResponse<T> {
+    pub response: String,
+    pub data: Option<T>
+}
+
+impl<T> Default for HttpResponse<T> {
+    fn default() -> Self {
+        Self { response: String::new(), data: None }
+    }
+}
+
+impl<T> HttpResponse<T> 
+where 
+    T: Default + Clone 
+{
+    pub fn data(&self) -> T {
+        self.data.clone().unwrap_or_default()
+    }
+}
+
 // Returns the deserialized value
-pub async fn get<T>(client: &AuthCodePkceSpotify, endpoint: &str, params: &HashMap<&str, &str>) -> Result<T>
+pub async fn get<T>(client: &AuthCodePkceSpotify, endpoint: &str, params: &HashMap<&str, &str>) -> Result<HttpResponse<T>>
 where
     T: DeserializeOwned,
 {
@@ -12,36 +32,15 @@ where
         .await
         .context(format!("GET request failed at: {}", endpoint))?;
 
-    if response.trim().is_empty() {
-        bail!("GET request returned empty response at: {}", endpoint)
+    if let Ok(data) = serde_json::from_str(&response) {
+        Ok(HttpResponse { response, data: Some(data) })
+    } else {
+        Ok(HttpResponse { response, data: None })
     }
 
-    let data: T = serde_json::from_str(&response)
-        .context("Failed to deserialize GET response")?;
-
-    Ok(data)
 }
 
-// Used when we want to allow empty response
-pub async fn get_opt<T>(client: &AuthCodePkceSpotify, endpoint: &str, params: &HashMap<&str, &str>) -> Result<Option<T>>
-where
-    T: DeserializeOwned,
-{
-    let response = client.api_get(endpoint, params)
-        .await
-        .context(format!("GET request failed at: {}", endpoint))?;
-
-    if response.trim().is_empty() {
-        return Ok(None);
-    }
-
-    let data: T = serde_json::from_str(&response)
-        .context("Failed to deserialize GET response")?;
-
-    Ok(Some(data))
-}
-
-pub async fn post<T, B>(client: &AuthCodePkceSpotify, endpoint: &str, body: &B) -> Result<Option<T>>
+pub async fn post<T, B>(client: &AuthCodePkceSpotify, endpoint: &str, body: &B) -> Result<HttpResponse<T>>
 where
     T: DeserializeOwned,
     B: Serialize,
@@ -52,30 +51,33 @@ where
         .await
         .context(format!("POST request failed at: {}", endpoint))?;
 
-    if response.trim().is_empty() {
-        return Ok(None);
+    if let Ok(data) = serde_json::from_str(&response) {
+        Ok(HttpResponse { response, data: Some(data) })
+    } else {
+        Ok(HttpResponse { response, data: None })
     }
-
-    let data: T = serde_json::from_str(&response)
-        .context("Failed to deserialize POST response")?;
-
-    Ok(Some(data))
 }
 
 // PUT always returns 204
-pub async fn put<B>(client: &AuthCodePkceSpotify, endpoint: &str, body: &B) -> Result<()>
+pub async fn put<T, B>(client: &AuthCodePkceSpotify, endpoint: &str, body: &B) -> Result<HttpResponse<T>>
 where
-    B: Serialize,
+    T: DeserializeOwned,
+    B: Serialize
 {
     let payload = serde_json::to_value(body)?;
 
-    client.api_put(endpoint, &payload)
+    let response = client.api_put(endpoint, &payload)
         .await
         .context(format!("PUT request failed at: {}", endpoint))?;
-    Ok(())
+
+    if let Ok(data) = serde_json::from_str(&response) {
+        Ok(HttpResponse { response, data: Some(data) })
+    } else {
+        Ok(HttpResponse { response, data: None })
+    }
 }
 
-pub async fn delete<T, B>(client: &AuthCodePkceSpotify, endpoint: &str, body: &B) -> Result<Option<T>>
+pub async fn delete<T, B>(client: &AuthCodePkceSpotify, endpoint: &str, body: &B) -> Result<HttpResponse<T>>
 where
     T: DeserializeOwned,
     B: Serialize,
@@ -86,11 +88,9 @@ where
         .await
         .context(format!("DELETE request failed at: {}", endpoint))?;
 
-    if response.trim().is_empty() {
-        return Ok(None);
+    if let Ok(data) = serde_json::from_str(&response) {
+        Ok(HttpResponse { response, data: Some(data) })
+    } else {
+        Ok(HttpResponse { response, data: None })
     }
-
-    let data: T = serde_json::from_str(&response)
-        .context("Failed to deserialize DELETE response")?;
-    Ok(Some(data))
 }
