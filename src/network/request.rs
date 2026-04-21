@@ -61,6 +61,8 @@ pub enum ClientRequest {
         uris: Vec<String>,
     },
 
+    Player(PlayerRequest),
+
     SaveItemsToLibrary(Vec<String>),
 
     RemoveItemsFromLibrary(Vec<String>),

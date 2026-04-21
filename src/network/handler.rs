@@ -1,6 +1,6 @@
 use crate::app::state::SharedState;
 use crate::network::client::WebApiClient;
-use crate::network::request::ClientRequest;
+use crate::network::request::{ClientRequest, PlayerRequest};
 use tokio::sync::mpsc;
 
 // Match request type and execute it with WebApiClient
@@ -100,6 +100,23 @@ pub async fn start_network_worker(
                 }
             }
 
+            ClientRequest::Player(player_req) => {
+                match player_req {
+                    PlayerRequest::AddItemToQueue(uri) => {
+                        let _ = client.add_item_to_queue(&uri).await;
+
+                        if let Ok(queue_res) = client.get_queue().await && let Ok(mut state) = shared_state.lock() {
+                            state.queue_data = Some((queue_res.currently_playing, queue_res.queue));
+                        }
+                    }
+
+                    PlayerRequest::NextTrack => {
+                        let _ = client.next_track().await;
+                    }
+
+                    _ => {}
+                }
+            }
             _ => {}
         }
     }

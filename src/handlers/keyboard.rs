@@ -1,5 +1,7 @@
 use crate::app::{ActiveBlock, App};
 use crate::handlers::{queue, search};
+use crate::network::models::MenuTarget;
+use crate::network::request::{PlayerRequest, ClientRequest};
 use crossterm::event::{KeyEvent, KeyCode};
 
 use super::{global, sidebar, home, playlist};
@@ -70,13 +72,23 @@ fn execute_action_menu_command(app: &mut App) {
     let selected_action = app.action_menu.state.selected()
         .and_then(|idx| app.action_menu.actions.get(idx));
 
-    if let (Some(action), Some(_target)) = (selected_action, &app.action_menu.target) {
+    if let (Some(action), Some(target)) = (selected_action, &app.action_menu.target) {
+        let uri = match target {
+            MenuTarget::Track(t) => Some(t.uri.clone()),
+            MenuTarget::Episode(e) => Some(e.uri.clone()),
+            MenuTarget::Artist(a) => Some(a.uri.clone()),
+            MenuTarget::Album(a) => Some(a.uri.clone()),
+            MenuTarget::Playlist(p) => Some(p.uri.clone()),
+        };
+        
         match action {
             MenuAction::PlayNow => {
                 // TODO
             }
             MenuAction::AddToQueue => {
-                // TODO
+                if let Some(u) = uri {
+                    let _ = app.network_tx.send(ClientRequest::Player(PlayerRequest::AddItemToQueue(u)));
+                }
             }
             MenuAction::AddToPlaylist => {
                 // TODO

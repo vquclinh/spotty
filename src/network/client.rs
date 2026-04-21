@@ -262,7 +262,6 @@ impl WebApiClient {
             .await.map(|r| r.data())
     }
 
-
     pub async fn add_items_to_playlist(&self, playlist_id: &str, uris: impl IntoIterator<Item = &str>) -> Result<()> {
         let endpoint = format!("playlists/{}/items", playlist_id);
         let uris: Vec<&str> = uris.into_iter().collect();

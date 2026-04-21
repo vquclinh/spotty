@@ -15,8 +15,7 @@ pub fn draw(f: &mut Frame, state: &mut QueueState, active_block: &ActiveBlock, a
     let block = Block::default()
         .title(" Queue ")
         .borders(Borders::ALL)
-        .border_style(Style::default().fg(border_color))
-        .style(Style::default().bg(Color::Rgb(28, 28, 28)));
+        .border_style(Style::default().fg(border_color));
 
     let inner_area = block.inner(area);
     f.render_widget(block, area);
