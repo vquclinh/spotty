@@ -33,7 +33,7 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
     }
 
     // search
-    if key.code == KeyCode::Char('s') {
+    if key.code == KeyCode::Char('S') {
         if !matches!(app.route, Route::Search(_)) {
             app.set_current_route(Route::Search(SearchState::default()));
         }
