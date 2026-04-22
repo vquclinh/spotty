@@ -156,6 +156,30 @@ pub async fn start_network_worker(
                         let _ = client.next_track().await;
                     }
 
+                    PlayerRequest::TogglePlayback(playing) => {
+                        let _ = client.toggle_playback(playing).await;
+                    }
+
+                    PlayerRequest::NextTrack => {
+                        let _ = client.next_track().await;
+                    }
+
+                    PlayerRequest::PreviousTrack => {
+                        let _ = client.prev_track().await;
+                    }
+
+                    PlayerRequest::SetRepeatMode(state) => {
+                        let _ = client.set_repeat_mode(state).await;
+                    }
+
+                    PlayerRequest::ToggleShuffle(shuffling) => {
+                        let _ = client.toggle_shuffle(shuffling).await;
+                    }
+
+                    PlayerRequest::SetVolume(vol) => {
+                        let _ = client.set_volume(vol).await;
+                    }
+
                     _ => {}
                 }
             }

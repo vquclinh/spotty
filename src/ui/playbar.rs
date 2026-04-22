@@ -11,7 +11,7 @@ use ratatui::{
 
 pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
     let width = f.area().width;
-    if width > 900 {
+    if width > 120 {
         draw_wide(f, app, area)
     } else {
         draw_narrow(f, app, area)
