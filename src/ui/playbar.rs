@@ -128,7 +128,7 @@ pub fn draw_wide(f: &mut Frame, app: &mut App, area: Rect) {
     // Keybind hints (right most)
     let hints_line = Line::from(vec![
         Span::raw("Vol "),
-        Span::styled("m/p", Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
+        Span::styled("-/+", Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
         Span::raw(" | "),
         Span::styled("L", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
         Span::raw("yrics | "),
@@ -226,7 +226,7 @@ pub fn draw_narrow(f: &mut Frame, app: &mut App, area: Rect) {
     // Keybind hints (right most)
     let hints_line = Line::from(vec![
         Span::raw("Vol "),
-        Span::styled("m/p", Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
+        Span::styled("-/+", Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
         Span::raw(" | "),
         Span::styled("L", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
         Span::raw("yrics | "),
