@@ -71,7 +71,7 @@ pub fn draw_wide(f: &mut Frame, app: &mut App, area: Rect) {
         .split(inner_area);
 
     // Song info (left)
-    let status = if is_playing { "▶" } else { "⏸" };
+    let status = if is_playing { "⏸" } else { "▶" };
     let info_line = Line::from(vec![
         Span::styled(format!(" {} ", status), Style::default().fg(Color::Green)),
         Span::styled(format!("{} ", track_name), Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
@@ -192,7 +192,7 @@ pub fn draw_narrow(f: &mut Frame, app: &mut App, area: Rect) {
         .split(inner_area);
 
     // Song info (left)
-    let status = if is_playing { "▶" } else { "⏸" };
+    let status = if is_playing { "⏸" } else { "▶" };
     let info_line = Line::from(vec![
         Span::styled(format!(" {} ", status), Style::default().fg(Color::Green)),
         Span::styled(format!("{} ", track_name), Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
