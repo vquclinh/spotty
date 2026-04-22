@@ -100,9 +100,10 @@ pub struct Playlist {
 }
 
 // ------------------------------------- Playback -----------------------------------
-#[derive(Debug, Deserialize, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Deserialize, Clone, Copy, PartialEq, Eq, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum RepeatState {
+    #[default]
     Off,
     Track,
     Context
@@ -118,7 +119,7 @@ impl RepeatState {
     }
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Default)]
 pub struct Device {
     pub is_active: bool,
     pub name: String,
@@ -126,7 +127,7 @@ pub struct Device {
     pub volume: u8
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Default)]
 pub struct Playback {
     pub item: Option<PlayableItem>,
     pub is_playing: bool,
