@@ -1,12 +1,12 @@
 use ratatui::widgets::ListState;
 use tokio::sync::mpsc;
+use std::time::Duration;
 
 use crate::app::home_state::HomeTab;
 use crate::app::splash_state::SplashState;
 use crate::app::types::{ActionMenu, ActiveBlock, PlaylistSelector, StatefulTable};
 use crate::app::route::Route;
 use crate::app::state::SharedState;
-use crate::app::playbar_state::PlaybarState;
 
 use crate::network::models::*;
 use crate::network::request::ClientRequest;
@@ -24,7 +24,6 @@ pub struct App {
     pub playback: Option<Playback>,
     pub liked_songs: usize,
     pub playlists: StatefulTable<Playlist>,
-    pub playbar_state: PlaybarState,
 
     // Tracks selection and scroll offset
     pub library_state: ListState,
@@ -64,7 +63,6 @@ impl App {
 
             library_state: ListState::default(),
             playlists_state: ListState::default(),
-            playbar_state: PlaybarState::default(),
 
             action_menu: ActionMenu::new(),
             playlist_selector: PlaylistSelector::new(),
@@ -104,10 +102,15 @@ impl App {
     }
 
     // tick in main loop
-    pub fn on_tick(&mut self) {
+    pub fn on_tick(&mut self, tick_rate: Duration) {
         // update route
         if let Some(next_route) = self.route.update() {
             self.set_current_route(next_route);
+        }
+
+        // Increment progress locally
+        if let Some(playback) = &mut self.playback && playback.is_playing {
+            playback.progress += tick_rate; 
         }
 
         self.sync_data();
@@ -120,8 +123,8 @@ impl App {
                 self.user = shared_state.user.clone();
             }
 
-            if shared_state.playback.is_some() {
-                self.playback = shared_state.playback.take();
+            if let Some(playback) = shared_state.playback.take() {
+                self.playback = Some(playback);
             }
 
             if !shared_state.playlists.is_empty() {

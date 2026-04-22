@@ -139,12 +139,24 @@ pub async fn start_network_worker(
                 }
             }
 
+            #[allow(clippy::collapsible_if)]
             ClientRequest::Player(player_req) => {
+                let update_playback = || async {
+                    // Optionally sleep here to wait for the server before we update
+                    // This will result in a 100ms delay in the UI for operations
+                    // that do not have client data like next_track
+                    tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+                    if let Ok(playback) = client.get_current_playback().await {
+                        if let Ok(mut state) = shared_state.lock() {
+                            state.playback = playback; 
+                        }
+                    }
+                };
+
                 match player_req {
                     PlayerRequest::AddItemToQueue(uri) => {
                         let _ = client.add_item_to_queue(&uri).await;
 
-                        #[allow(clippy::collapsible_if)]
                         if let Ok(queue_res) = client.get_queue().await {
                             if let Ok(mut state) = shared_state.lock() {
                                 state.queue_data = Some((queue_res.currently_playing, queue_res.queue));
@@ -152,8 +164,35 @@ pub async fn start_network_worker(
                         }
                     }
 
+                    PlayerRequest::TogglePlayback(playing) => {
+                        let _ = client.toggle_playback(playing).await;
+                        // Mainly for debugging right now
+                        update_playback().await;
+                    }
+
                     PlayerRequest::NextTrack => {
                         let _ = client.next_track().await;
+                        update_playback().await;
+                    }
+
+                    PlayerRequest::PreviousTrack => {
+                        let _ = client.prev_track().await;
+                        update_playback().await;
+                    }
+
+                    PlayerRequest::SetRepeatMode(state) => {
+                        let _ = client.set_repeat_mode(state).await;
+                        // update_playback().await;
+                    }
+
+                    PlayerRequest::ToggleShuffle(shuffling) => {
+                        let _ = client.toggle_shuffle(shuffling).await;
+                        // update_playback().await;
+                    }
+
+                    PlayerRequest::SetVolume(vol) => {
+                        let _ = client.set_volume(vol).await;
+                        // update_playback().await;
                     }
 
                     _ => {}

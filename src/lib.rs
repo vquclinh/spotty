@@ -26,6 +26,7 @@ use tokio::sync::mpsc;
 use crate::network::client::WebApiClient;
 use crate::network::request::ClientRequest;
 use crate::network::handler::start_network_worker;
+use crate::network::models::PlayableItem;
 
 use crate::app::state::IoSharedState;
 
@@ -70,7 +71,16 @@ pub async fn run() -> Result<()> {
         }
 
         if last_tick.elapsed() >= tick_rate {
-            app.on_tick();
+            app.on_tick(timeout);
+
+            // Fetch the new song when current song ends (locally)
+            #[allow(clippy::collapsible_if)]
+            if let Some(playback) = &app.playback && let Some(item) = &playback.item {
+                if let PlayableItem::Track(t) = item && playback.progress >= t.duration {
+                    let _ = app.network_tx.send(ClientRequest::GetCurrentPlayback);
+                }
+            }
+
             last_tick = Instant::now();
         }
     }
@@ -78,6 +88,17 @@ pub async fn run() -> Result<()> {
     disable_raw_mode()?;
     execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
     terminal.show_cursor()?;
+
+    Ok(())
+}
+
+use anyhow::Context;
+pub async fn test() -> Result<()> {
+    let client = WebApiClient::new(Some(1800)).await?;
+
+    let playback = client.get_current_playback().await?
+        .context("No playback found")?;
+    println!("{}", playback.device.volume);
 
     Ok(())
 }

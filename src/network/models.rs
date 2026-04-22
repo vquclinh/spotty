@@ -100,9 +100,10 @@ pub struct Playlist {
 }
 
 // ------------------------------------- Playback -----------------------------------
-#[derive(Debug, Deserialize, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Deserialize, Clone, Copy, PartialEq, Eq, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum RepeatState {
+    #[default]
     Off,
     Track,
     Context
@@ -118,17 +119,23 @@ impl RepeatState {
     }
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Default)]
+pub struct Device {
+    pub is_active: bool,
+    pub name: String,
+    #[serde(rename = "volume_percent")]
+    pub volume: u8
+}
+
+#[derive(Debug, Deserialize, Clone, Default)]
 pub struct Playback {
     pub item: Option<PlayableItem>,
     pub is_playing: bool,
     #[serde(with = "duration_ms", rename = "progress_ms")]
     pub progress: Duration,
-    #[serde(default)]
-    pub device_name: String,
+    pub device: Device,
     pub repeat_state: RepeatState,
     pub shuffle_state: bool,
-    // TODO: add volume
 }
 
 // -------------------------------------- Playable Item ------------------------------

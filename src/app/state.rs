@@ -26,6 +26,9 @@ pub struct IoSharedState {
 
     // album-state
     pub album_detail: Option<Album>,
+
+    // playback state
+    pub playback_state: Option<Playback>
 }
 
 // SharedState uses Arc and Mutex to ensure thread-safe,

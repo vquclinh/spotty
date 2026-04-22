@@ -3,6 +3,7 @@ use crate::app::home_state::HomeState;
 use crate::app::search_state::{SearchState, SearchHoveredPane};
 use crate::app::queue_state::QueueState;
 use crossterm::event::{KeyCode, KeyModifiers, KeyEvent};
+use crate::handlers::playbar;
 
 pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
     // quit
@@ -11,6 +12,11 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
         || (key.code == KeyCode::Char('c') && key.modifiers.contains(KeyModifiers::CONTROL)) 
     {
         app.should_quit = true;
+        return true;
+    }
+
+    // Playbar events
+    if playbar::handle_playbar_events(key, app) {
         return true;
     }
 
@@ -27,7 +33,7 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
     }
 
     // search
-    if key.code == KeyCode::Char('s') {
+    if key.code == KeyCode::Char('S') {
         if !matches!(app.route, Route::Search(_)) {
             app.set_current_route(Route::Search(SearchState::default()));
         }
