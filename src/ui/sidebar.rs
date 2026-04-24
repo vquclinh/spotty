@@ -40,7 +40,7 @@ fn draw_library(f: &mut Frame, app: &mut App, area: Rect) {
                 .add_modifier(Modifier::BOLD),
         );
 
-    f.render_stateful_widget(list, area, &mut app.library_state);
+    f.render_stateful_widget(list, area, &mut app.library_menu);
 }
 
 // playlists
@@ -48,7 +48,7 @@ fn draw_playlists(f: &mut Frame, app: &mut App, area: Rect) {
     let border_color = if app.active_block == ActiveBlock::PlaylistsMenu { Color::LightCyan } else { Color::White };
     let mut rows: Vec<Row> = vec![];
 
-    for playlist in &app.playlists.items {
+    for playlist in &app.playlists_menu.items {
         rows.push(Row::new(vec![format!(" ♪ {}", playlist.name)]));
     }
 
@@ -69,5 +69,5 @@ fn draw_playlists(f: &mut Frame, app: &mut App, area: Rect) {
                 .add_modifier(Modifier::BOLD),
         );
 
-    f.render_stateful_widget(table, area, &mut app.playlists.state);
+    f.render_stateful_widget(table, area, &mut app.playlists_menu.state);
 }

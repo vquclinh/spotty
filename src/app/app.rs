@@ -11,6 +11,7 @@ use crate::app::state::SharedState;
 use crate::network::models::*;
 use crate::network::request::ClientRequest;
 
+// Global/non route-specific data will be stored in app
 pub struct App {
     pub route: Route,
     pub active_block: ActiveBlock,
@@ -20,14 +21,9 @@ pub struct App {
     pub shared_state: SharedState,
 
     pub user: User,
-
     pub playback: Option<Playback>,
-    pub liked_songs: usize,
-    pub playlists: StatefulTable<Playlist>,
-
-    // Tracks selection and scroll offset
-    pub library_state: ListState,
-    pub playlists_state: ListState,
+    pub library_menu: ListState,
+    pub playlists_menu: StatefulTable<Playlist>,
 
     pub should_quit: bool, // Signal to quit main loop
     pub show_help: bool, // Signal to turn on pop-up help
@@ -58,11 +54,8 @@ impl App {
             user: User::default(),
             
             playback: None,
-            liked_songs: 0,
-            playlists: StatefulTable::new(),
-
-            library_state: ListState::default(),
-            playlists_state: ListState::default(),
+            library_menu: ListState::default(),
+            playlists_menu: StatefulTable::new(),
 
             action_menu: ActionMenu::new(),
             playlist_selector: PlaylistSelector::new(),
@@ -128,7 +121,7 @@ impl App {
             }
 
             if !shared_state.playlists.is_empty() {
-                self.playlists.items = shared_state.playlists.drain(..).collect();
+                self.playlists_menu.items = shared_state.playlists.drain(..).collect();
             }
 
             match &mut self.route {

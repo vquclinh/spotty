@@ -123,7 +123,7 @@ fn execute_action_menu_command(app: &mut App) -> bool {
             MenuAction::AddToPlaylist => {
                 let my_id = &app.user.id;
 
-                let writable_playlists: Vec<Playlist> = app.playlists.items
+                let writable_playlists: Vec<Playlist> = app.playlists_menu.items
                     .iter()
                     .filter(|p| {
                         let is_owner = p.owner.id == *my_id;
