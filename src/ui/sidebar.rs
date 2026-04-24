@@ -40,7 +40,7 @@ fn draw_library(f: &mut Frame, app: &mut App, area: Rect) {
                 .add_modifier(Modifier::BOLD),
         );
 
-    f.render_stateful_widget(list, area, &mut app.library_menu);
+    f.render_stateful_widget(list, area, &mut app.library_menu.state);
 }
 
 // playlists

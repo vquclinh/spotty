@@ -1,12 +1,12 @@
-use ratatui::widgets::ListState;
 use tokio::sync::mpsc;
 use std::time::Duration;
 
 use crate::app::home_state::HomeTab;
 use crate::app::splash_state::SplashState;
-use crate::app::types::{ActionMenu, ActiveBlock, PlaylistSelector, StatefulTable};
+use crate::app::types::{ActionMenu, ActiveBlock, PlaylistSelector, StatefulList, StatefulTable};
 use crate::app::route::Route;
 use crate::app::state::SharedState;
+use crate::app::library_state::*;
 
 use crate::network::models::*;
 use crate::network::request::ClientRequest;
@@ -22,7 +22,7 @@ pub struct App {
 
     pub user: User,
     pub playback: Option<Playback>,
-    pub library_menu: ListState,
+    pub library_menu: StatefulList<LibraryMenuItem>,
     pub playlists_menu: StatefulTable<Playlist>,
 
     pub should_quit: bool, // Signal to quit main loop
@@ -52,9 +52,15 @@ impl App {
             shared_state,
 
             user: User::default(),
-            
+
             playback: None,
-            library_menu: ListState::default(),
+            // Initialize the items we want to have in the library menu
+            library_menu: StatefulList::with_items(vec![
+                LibraryMenuItem::LikedSongs(LikedSongsState::new(vec![])),
+                LibraryMenuItem::Artists,
+                LibraryMenuItem::Albums(SavedAlbumsState::new(vec![])),
+                LibraryMenuItem::Podcasts
+            ]),
             playlists_menu: StatefulTable::new(),
 
             action_menu: ActionMenu::new(),
@@ -87,7 +93,7 @@ impl App {
                 let id = state.album_id.clone();
                 let _ = self.network_tx.send(ClientRequest::GetAlbum { id });
             }
-            
+
             _ => {}
         }
 
@@ -103,7 +109,7 @@ impl App {
 
         // Increment progress locally
         if let Some(playback) = &mut self.playback && playback.is_playing {
-            playback.progress += tick_rate; 
+            playback.progress += tick_rate;
         }
 
         self.sync_data();
@@ -147,11 +153,24 @@ impl App {
                 }
 
                 Route::Search(search_state) => {
-                    let has_tracks = shared_state.search_results.tracks.as_ref().is_some_and(|t| !t.items.is_empty());
-                    let has_artists = shared_state.search_results.artists.as_ref().is_some_and(|a| !a.items.is_empty());
+                    let results = &mut shared_state.search_results;
+
+                    let has_tracks = results.tracks.as_ref().is_some_and(|t| !t.items.is_empty());
+                    let has_artists = results.artists.as_ref().is_some_and(|a| !a.items.is_empty());
 
                     if has_tracks || has_artists {
-                        search_state.results = std::mem::take(&mut shared_state.search_results);
+                        if let Some(page) = results.tracks.take() {
+                            search_state.tracks_state.items = page.items;
+                        }
+                        if let Some(page) = results.artists.take() {
+                            search_state.artists_state.items = page.items;
+                        }
+                        if let Some(page) = results.albums.take() {
+                            search_state.albums_state.items = page.items;
+                        }
+                        if let Some(page) = results.playlists.take() {
+                            search_state.playlists_state.items = page.items;
+                        }
                     }
                 }
 
@@ -165,7 +184,7 @@ impl App {
                             queue_state.currently_playing = Some(c);
                         }
                         queue_state.queue_items.items = items;
-                        
+
                         if queue_state.queue_items.state.selected().is_none() && !queue_state.queue_items.items.is_empty() {
                             queue_state.queue_items.state.select(Some(0));
                         }

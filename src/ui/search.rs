@@ -96,10 +96,10 @@ pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
     };
 
     // get data
-    let results = if let Route::Search(ref s) = app.route {
-        &s.results
+    let search_state = if let Route::Search(ref s) = app.route {
+        s
     } else {
-        return; 
+        return;
     };
 
     let get_color = |pane: SearchHoveredPane| {
@@ -136,15 +136,16 @@ pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
 
     // tracks
     let track_max_width = tracks_area.width.saturating_sub(6);
-    let tracks_items: Vec<ListItem> = results.tracks
+    let tracks_items: Vec<ListItem> = search_state
+        .tracks_state
+        .items
         .iter()
-        .flat_map(|p| &p.items)
         .map(|t| {
             let artist_names = t.artists.iter()
                 .map(|a| a.name.as_str())
                 .collect::<Vec<_>>()
                 .join(", ");
-            
+
             let full_text = format!("{} - {}", t.name, artist_names);
             ListItem::new(format!("  {}", truncate_text(&full_text, track_max_width)))
         })
@@ -158,9 +159,10 @@ pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
 
     // artists
     let artist_max_width = artists_area.width.saturating_sub(6);
-    let artists_items: Vec<ListItem> = results.artists
+    let artists_items: Vec<ListItem> = search_state
+        .artists_state
+        .items
         .iter()
-        .flat_map(|p| &p.items)
         .map(|a| ListItem::new(format!("  {}", truncate_text(&a.name, artist_max_width))))
         .collect();
 
@@ -172,9 +174,10 @@ pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
 
     // albums
     let album_max_width = albums_area.width.saturating_sub(6);
-    let albums_items: Vec<ListItem> = results.albums
+    let albums_items: Vec<ListItem> = search_state
+        .albums_state
+        .items
         .iter()
-        .flat_map(|p| &p.items)
         .map(|a| {
             let date = a.release_date.as_deref().unwrap_or("Unknown");
             let full_text = format!("{} ({})", a.name, date);
@@ -190,14 +193,15 @@ pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
 
     // playlists
     let playlist_max_width = playlists_area.width.saturating_sub(6);
-    let playlists_items: Vec<ListItem> = results.playlists
+    let playlists_items: Vec<ListItem> = search_state
+        .playlists_state
+        .items
         .iter()
-        .flat_map(|p| &p.items)
-        .map(|p|{
+        .map(|p| {
             let full_text = format!("{} by {}", p.name, p.owner.display_name);
             ListItem::new(format!("  {}", truncate_text(&full_text, playlist_max_width)))
         })
-        .collect();
+    .collect();
 
     let playlists_list = List::new(playlists_items)
         .block(build_block("Playlists", SearchHoveredPane::Playlists))

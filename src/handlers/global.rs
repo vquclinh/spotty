@@ -8,7 +8,6 @@ use crate::handlers::playbar;
 pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
     // quit
     if key.code == KeyCode::Char('q') 
-        || key.code == KeyCode::Esc 
         || (key.code == KeyCode::Char('c') && key.modifiers.contains(KeyModifiers::CONTROL)) 
     {
         app.should_quit = true;

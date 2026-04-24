@@ -10,6 +10,7 @@ pub mod splash_state;
 pub mod playlist_state;
 pub mod queue_state;
 pub mod album_state;
+pub mod library_state;
 
 pub use types::ActiveBlock;
 pub use search_state::SearchState;

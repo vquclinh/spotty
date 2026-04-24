@@ -64,7 +64,7 @@ pub struct Track {
     pub name: String,
     pub artists: Vec<Artist>,
     #[serde(default)]
-    pub album: Option<SimplifiedAlbum>, 
+    pub album: Option<SimplifiedAlbum>,
     #[serde(with = "duration_ms", rename = "duration_ms")]
     pub duration: Duration,
     pub explicit: bool,
@@ -87,7 +87,7 @@ pub struct Episode {
     pub is_externally_hosted: bool,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Default)]
 pub struct Playlist {
     pub id: String,
     pub uri: String,
