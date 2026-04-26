@@ -275,18 +275,11 @@ impl<'de, T: DeserializeOwned> Deserialize<'de> for Page<T> {
             .and_then(Value::as_array)
             .map(|arr| {
                 arr.iter()
-                    .filter_map(|item| {
-                        // Flattens SavedTrack/PlaylistTrack wrappers if present
-                        let inner = item.get("track")
-                            .or_else(|| item.get("item"))
-                            .unwrap_or(item);
-                        serde_json::from_value(inner.clone()).ok()
-                    })
+                    .filter_map(|item| serde_json::from_value(item.clone()).ok())
                     .collect()
             })
             .unwrap_or_default();
 
-        // Extract cursor: cursors -> after
         let after = val.get("cursors")
             .and_then(|c| c.get("after"))
             .and_then(Value::as_str)
