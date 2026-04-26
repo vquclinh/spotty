@@ -4,7 +4,7 @@ use crate::network::models::MenuTarget;
 use crate::network::models::*;
 
 // -------------------------------- Active Block ----------------------------------
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub enum ActiveBlock {
     LibraryMenu,
     PlaylistsMenu,
@@ -17,6 +17,10 @@ pub enum ActiveBlock {
     LyricsInfo,
     Playbar,
     AlbumBlock,
+    LikedSongs,
+    SavedAlbums,
+    SavedArtists,
+    SavedPodcasts
 }
 
 // -------------------------------- Action Menu ------------------------------------
@@ -183,37 +187,62 @@ impl PlaylistSelector {
 
 // -------------------------------- Stateful List ----------------------------------
 #[derive(Clone, Default)]
-pub struct StatefulList {
+pub struct StatefulList<T> {
+    pub items: Vec<T>,
     pub state: ListState,
 }
 
-impl StatefulList {
+impl<T> StatefulList<T> {
     pub fn new() -> Self {
         Self {
+            items: Vec::new(),
             state: ListState::default(),
         }
     }
 
-    pub fn next(&mut self, len: usize) {
-        if len == 0 { return; }
+    pub fn with_items(items: Vec<T>) -> Self {
+        Self {
+            items,
+            state: ListState::default()
+        }
+    }
+
+    pub fn next(&mut self) {
+        if self.items.is_empty() {
+            return;
+        }
         let i = match self.state.selected() {
-            Some(i) => if i >= len - 1 { 0 } else { i + 1 },
+            Some(i) => {
+                if i >= self.items.len() - 1 {
+                    0
+                } else {
+                    i + 1
+                }
+            }
             None => 0,
         };
         self.state.select(Some(i));
     }
 
-    pub fn previous(&mut self, len: usize) {
-        if len == 0 { return; }
+    pub fn previous(&mut self) {
+        if self.items.is_empty() {
+            return;
+        }
         let i = match self.state.selected() {
-            Some(i) => if i == 0 { len - 1 } else { i - 1 },
+            Some(i) => {
+                if i == 0 {
+                    self.items.len() - 1
+                } else {
+                    i - 1
+                }
+            }
             None => 0,
         };
         self.state.select(Some(i));
     }
 }
 
-// -------------------------------- Stable Table ----------------------------------
+// -------------------------------- Stateful Table ----------------------------------
 #[derive(Clone, Default)]
 pub struct StatefulTable<T> {
     pub items: Vec<T>,
@@ -229,11 +258,10 @@ impl<T> StatefulTable<T> {
     }
 
     pub fn with_items(items: Vec<T>) -> Self {
-        let mut state = TableState::default();
-        if !items.is_empty() {
-            state.select(Some(0));
+        Self {
+            items,
+            state: TableState::default(),
         }
-        Self { items, state }
     }
 
     pub fn next(&mut self) {

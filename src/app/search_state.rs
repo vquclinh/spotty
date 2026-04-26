@@ -14,13 +14,11 @@ pub enum SearchHoveredPane {
 #[derive(Clone)]
 pub struct SearchState {
     pub input: String,
-    
-    pub results: SearchResult,
 
-    pub tracks_state: StatefulList,
-    pub artists_state: StatefulList,
-    pub albums_state: StatefulList,
-    pub playlists_state: StatefulList,
+    pub tracks_state: StatefulList<Track>,
+    pub artists_state: StatefulList<Artist>,
+    pub albums_state: StatefulList<Album>,
+    pub playlists_state: StatefulList<Playlist>,
 
     pub hovered_pane: SearchHoveredPane,
 
@@ -31,8 +29,6 @@ impl SearchState {
     pub fn new() -> Self {
         Self {
             input: String::new(),
-
-            results: SearchResult::default(),
 
             tracks_state: StatefulList::default(),
             artists_state: StatefulList::default(),

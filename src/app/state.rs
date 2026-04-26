@@ -28,7 +28,13 @@ pub struct IoSharedState {
     pub album_detail: Option<Album>,
 
     // playback state
-    pub playback_state: Option<Playback>
+    pub playback_state: Option<Playback>,
+
+    // library state
+    pub liked_songs: Vec<Track>,
+    pub saved_albums: Vec<Album>,
+    pub saved_artists: Vec<Artist>,
+    pub saved_podcasts: Vec<Episode>
 }
 
 // SharedState uses Arc and Mutex to ensure thread-safe,

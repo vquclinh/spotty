@@ -91,14 +91,3 @@ pub async fn run() -> Result<()> {
 
     Ok(())
 }
-
-use anyhow::Context;
-pub async fn test() -> Result<()> {
-    let client = WebApiClient::new(Some(1800)).await?;
-
-    let playback = client.get_current_playback().await?
-        .context("No playback found")?;
-    println!("{}", playback.device.volume);
-
-    Ok(())
-}

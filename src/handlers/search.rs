@@ -9,11 +9,6 @@ pub fn handle_search_events(key: KeyEvent, app: &mut App) {
     let mut target_to_open = None;
 
     if let Route::Search(search_state) = &mut app.route {
-        let tracks_len = search_state.results.tracks.as_ref().map_or(0, |t| t.items.len());
-        let artists_len = search_state.results.artists.as_ref().map_or(0, |t| t.items.len());
-        let albums_len = search_state.results.albums.as_ref().map_or(0, |t| t.items.len());
-        let playlists_len = search_state.results.playlists.as_ref().map_or(0, |t| t.items.len());
-
         match app.active_block {
             ActiveBlock::SearchInput => {
                 match key.code {
@@ -54,62 +49,54 @@ pub fn handle_search_events(key: KeyEvent, app: &mut App) {
 
                     KeyCode::Down | KeyCode::Char('j') => {
                         match search_state.hovered_pane {
-                            SearchHoveredPane::Tracks => search_state.tracks_state.next(tracks_len),
-                            SearchHoveredPane::Artists => search_state.artists_state.next(artists_len),
-                            SearchHoveredPane::Albums => search_state.albums_state.next(albums_len),
-                            SearchHoveredPane::Playlists => search_state.playlists_state.next(playlists_len),
+                            SearchHoveredPane::Tracks => search_state.tracks_state.next(),
+                            SearchHoveredPane::Artists => search_state.artists_state.next(),
+                            SearchHoveredPane::Albums => search_state.albums_state.next(),
+                            SearchHoveredPane::Playlists => search_state.playlists_state.next(),
                             _ => {}
                         }
                     }
-                    
+
                     KeyCode::Up | KeyCode::Char('k') => {
                         match search_state.hovered_pane {
-                            SearchHoveredPane::Tracks => search_state.tracks_state.previous(tracks_len),
-                            SearchHoveredPane::Artists => search_state.artists_state.previous(artists_len),
-                            SearchHoveredPane::Albums => search_state.albums_state.previous(albums_len),
-                            SearchHoveredPane::Playlists => search_state.playlists_state.previous(playlists_len),
+                            SearchHoveredPane::Tracks => search_state.tracks_state.previous(),
+                            SearchHoveredPane::Artists => search_state.artists_state.previous(),
+                            SearchHoveredPane::Albums => search_state.albums_state.previous(),
+                            SearchHoveredPane::Playlists => search_state.playlists_state.previous(),
                             _ => {}
                         }
                     }
 
                     KeyCode::Char('t') => {
                         target_to_open = match search_state.hovered_pane {
-                            SearchHoveredPane::Tracks => {
-                                search_state.tracks_state.state.selected()
-                                    .and_then(|idx| {
-                                        search_state.results.tracks.as_ref()
-                                            .and_then(|page| page.items.get(idx))
-                                    })
-                                    .map(|track| MenuTarget::Track(track.clone()))
-                            }
-                            
-                            SearchHoveredPane::Artists => {
-                                search_state.artists_state.state.selected()
-                                    .and_then(|idx| {
-                                        search_state.results.artists.as_ref()
-                                            .and_then(|page| page.items.get(idx))
-                                    })
-                                    .map(|artist| MenuTarget::Artist(artist.clone()))
-                            }
-                            
-                            SearchHoveredPane::Albums => {
-                                search_state.albums_state.state.selected()
-                                    .and_then(|idx| {
-                                        search_state.results.albums.as_ref()
-                                            .and_then(|page| page.items.get(idx))
-                                    })
-                                    .map(|album| MenuTarget::Album(album.clone()))
-                            }
-                            
-                            SearchHoveredPane::Playlists => {
-                                search_state.playlists_state.state.selected()
-                                    .and_then(|idx| {
-                                        search_state.results.playlists.as_ref()
-                                            .and_then(|page| page.items.get(idx))
-                                    })
-                                    .map(|playlist| MenuTarget::Playlist(playlist.clone()))
-                            }
-                            
+                            SearchHoveredPane::Tracks => search_state
+                                .tracks_state
+                                .state
+                                .selected()
+                                .and_then(|idx| search_state.tracks_state.items.get(idx))
+                                .map(|track| MenuTarget::Track(track.clone())),
+
+                            SearchHoveredPane::Artists => search_state
+                                .artists_state
+                                .state
+                                .selected()
+                                .and_then(|idx| search_state.artists_state.items.get(idx))
+                                .map(|artist| MenuTarget::Artist(artist.clone())),
+
+                            SearchHoveredPane::Albums => search_state
+                                .albums_state
+                                .state
+                                .selected()
+                                .and_then(|idx| search_state.albums_state.items.get(idx))
+                                .map(|album| MenuTarget::Album(album.clone())),
+
+                            SearchHoveredPane::Playlists => search_state
+                                .playlists_state
+                                .state
+                                .selected()
+                                .and_then(|idx| search_state.playlists_state.items.get(idx))
+                                .map(|playlist| MenuTarget::Playlist(playlist.clone())),
+
                             _ => None,
                         };
                     }
@@ -130,8 +117,8 @@ pub fn handle_search_events(key: KeyEvent, app: &mut App) {
 
     if let Some(query) = query_to_send {
         let types = vec![SearchType::Track, SearchType::Artist, SearchType::Album, SearchType::Playlist];
-        let _ = app.network_tx.send(ClientRequest::SearchItems { 
-            query, 
+        let _ = app.network_tx.send(ClientRequest::SearchItems {
+            query,
             search_types: types,
             limit: 10,
             offset: 0

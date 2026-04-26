@@ -3,6 +3,9 @@ use serde::{Serialize, de::DeserializeOwned};
 use anyhow::{Result, Context};
 use std::collections::HashMap;
 
+// The current implementation simply ignores if the reponse deserialization
+// fails because there are quite a few cases to handle. We could probably
+// improve this later.
 pub struct HttpResponse<T> {
     pub response: String,
     pub data: Option<T>
@@ -16,15 +19,16 @@ impl<T> Default for HttpResponse<T> {
 
 impl<T> HttpResponse<T> 
 where 
-    T: Default + Clone 
+    T: Default
 {
-    pub fn data(&self) -> T {
-        self.data.clone().unwrap_or_default()
+    pub fn data(self) -> T {
+        self.data.unwrap_or_default()
     }
 }
 
 // Returns the deserialized value
-pub async fn get<T>(client: &AuthCodePkceSpotify, endpoint: &str, params: &HashMap<&str, &str>) -> Result<HttpResponse<T>>
+pub async fn get<T>(client: &AuthCodePkceSpotify, endpoint: &str, params: &HashMap<&str, &str>)
+-> Result<HttpResponse<T>>
 where
     T: DeserializeOwned,
 {

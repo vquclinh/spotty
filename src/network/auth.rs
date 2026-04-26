@@ -36,9 +36,9 @@ pub async fn create_auth_client() -> Result<AuthCodePkceSpotify> {
             "user-read-recently-played",
             // Library
             "user-library-modify",
-            "user-library-read"
+            "user-library-read",
             // Users
-            //"user-personalized"
+            "user-follow-read"
         )
     ).ok_or(anyhow::anyhow!("Spotify OAuth config not found"))?;
 

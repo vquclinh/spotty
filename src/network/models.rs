@@ -64,7 +64,7 @@ pub struct Track {
     pub name: String,
     pub artists: Vec<Artist>,
     #[serde(default)]
-    pub album: Option<SimplifiedAlbum>, 
+    pub album: Option<SimplifiedAlbum>,
     #[serde(with = "duration_ms", rename = "duration_ms")]
     pub duration: Duration,
     pub explicit: bool,
@@ -87,7 +87,7 @@ pub struct Episode {
     pub is_externally_hosted: bool,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Default)]
 pub struct Playlist {
     pub id: String,
     pub uri: String,
@@ -238,28 +238,32 @@ impl TimeRange {
 }
 
 // -------------------------------------------- Page --------------------------------------
+// Supports both offset-based and cursor-based pagination
 #[derive(Debug, Clone)]
 pub struct Page<T> {
     pub items: Vec<T>,
-    pub total: u32,
-    pub offset: u32,
+    pub total: Option<u32>,
+    pub offset: Option<u32>,
     pub limit: u32,
     pub next: Option<String>,
+    pub after: Option<String>,
 }
 
 impl<T> Default for Page<T> {
     fn default() -> Self {
         Self {
             items: Vec::new(),
-            total: 0,
-            offset: 0,
-            limit: 10,
+            total: None,
+            offset: None,
+            limit: 20,
             next: None,
+            after: None,
         }
     }
 }
 
-// Custom deserialization logic to handle spotify's edge cases
+// Custom deserialization logic to handle spotify's inconsistency where the page
+// is nested inside different layers
 impl<'de, T: DeserializeOwned> Deserialize<'de> for Page<T> {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -267,22 +271,34 @@ impl<'de, T: DeserializeOwned> Deserialize<'de> for Page<T> {
     {
         let val = Value::deserialize(deserializer)?;
 
-        // Safely extract the array. filter_map silently discards any `null` elements
         let items = val.get("items")
             .and_then(Value::as_array)
             .map(|arr| {
                 arr.iter()
-                    .filter_map(|item| serde_json::from_value(item.clone()).ok())
+                    .filter_map(|item| {
+                        // Flattens SavedTrack/PlaylistTrack wrappers if present
+                        let inner = item.get("track")
+                            .or_else(|| item.get("item"))
+                            .unwrap_or(item);
+                        serde_json::from_value(inner.clone()).ok()
+                    })
                     .collect()
             })
             .unwrap_or_default();
 
+        // Extract cursor: cursors -> after
+        let after = val.get("cursors")
+            .and_then(|c| c.get("after"))
+            .and_then(Value::as_str)
+            .map(String::from);
+
         Ok(Page {
             items,
-            total: val.get("total").and_then(Value::as_u64).unwrap_or(0) as u32,
-            offset: val.get("offset").and_then(Value::as_u64).unwrap_or(0) as u32,
-            limit: val.get("limit").and_then(Value::as_u64).unwrap_or(0) as u32,
+            total: val.get("total").and_then(Value::as_u64).map(|v| v as u32),
+            offset: val.get("offset").and_then(Value::as_u64).map(|v| v as u32),
+            limit: val.get("limit").and_then(Value::as_u64).unwrap_or(20) as u32,
             next: val.get("next").and_then(Value::as_str).map(String::from),
+            after,
         })
     }
 }

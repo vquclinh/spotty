@@ -1,16 +1,17 @@
-use ratatui::widgets::ListState;
 use tokio::sync::mpsc;
 use std::time::Duration;
 
 use crate::app::home_state::HomeTab;
 use crate::app::splash_state::SplashState;
-use crate::app::types::{ActionMenu, ActiveBlock, PlaylistSelector, StatefulTable};
+use crate::app::types::{ActionMenu, ActiveBlock, PlaylistSelector, StatefulList, StatefulTable};
 use crate::app::route::Route;
 use crate::app::state::SharedState;
+use crate::app::library_state::*;
 
 use crate::network::models::*;
 use crate::network::request::ClientRequest;
 
+// Global/non route-specific data will be stored in app
 pub struct App {
     pub route: Route,
     pub active_block: ActiveBlock,
@@ -20,14 +21,9 @@ pub struct App {
     pub shared_state: SharedState,
 
     pub user: User,
-
     pub playback: Option<Playback>,
-    pub liked_songs: usize,
-    pub playlists: StatefulTable<Playlist>,
-
-    // Tracks selection and scroll offset
-    pub library_state: ListState,
-    pub playlists_state: ListState,
+    pub library_menu: StatefulList<LibraryMenuItem>,
+    pub playlists_menu: StatefulTable<Playlist>,
 
     pub should_quit: bool, // Signal to quit main loop
     pub show_help: bool, // Signal to turn on pop-up help
@@ -47,7 +43,7 @@ impl App {
 
         Self {
             route: Route::Splash(SplashState::new()),
-            active_block: ActiveBlock::PlaylistsMenu,
+            active_block: ActiveBlock::LibraryMenu,
             history: vec![],
             show_help: false,
             should_quit: false,
@@ -56,13 +52,16 @@ impl App {
             shared_state,
 
             user: User::default(),
-            
-            playback: None,
-            liked_songs: 0,
-            playlists: StatefulTable::new(),
 
-            library_state: ListState::default(),
-            playlists_state: ListState::default(),
+            playback: None,
+            // Initialize the items we want to have in the library menu
+            library_menu: StatefulList::with_items(vec![
+                LibraryMenuItem::LikedSongs(LikedSongsState::new(vec![])),
+                LibraryMenuItem::SavedArtists(SavedArtistsState::new(vec![])),
+                LibraryMenuItem::SavedAlbums(SavedAlbumsState::new(vec![])),
+                LibraryMenuItem::SavedPodcasts(SavedPodcastsState::new(vec![]))
+            ]),
+            playlists_menu: StatefulTable::new(),
 
             action_menu: ActionMenu::new(),
             playlist_selector: PlaylistSelector::new(),
@@ -94,7 +93,18 @@ impl App {
                 let id = state.album_id.clone();
                 let _ = self.network_tx.send(ClientRequest::GetAlbum { id });
             }
-            
+            Route::LikedSongs(_) => {
+                let _ = self.network_tx.send(ClientRequest::GetUserLikedSongs { limit: 50, offset: 0 });
+            }
+            Route::SavedAlbums(_) => {
+                let _ = self.network_tx.send(ClientRequest::GetUserSavedAlbums { limit: 50, offset: 0 });
+            }
+            Route::SavedArtists(_) => {
+                let _ = self.network_tx.send(ClientRequest::GetUserSavedArtists { limit: 50, after: None });
+            }
+            Route::SavedPodcasts(_) => {
+                let _ = self.network_tx.send(ClientRequest::GetUserSavedPodcasts { limit: 50, offset: 0 });
+            }
             _ => {}
         }
 
@@ -110,7 +120,7 @@ impl App {
 
         // Increment progress locally
         if let Some(playback) = &mut self.playback && playback.is_playing {
-            playback.progress += tick_rate; 
+            playback.progress += tick_rate;
         }
 
         self.sync_data();
@@ -128,7 +138,7 @@ impl App {
             }
 
             if !shared_state.playlists.is_empty() {
-                self.playlists.items = shared_state.playlists.drain(..).collect();
+                self.playlists_menu.items = shared_state.playlists.drain(..).collect();
             }
 
             match &mut self.route {
@@ -154,11 +164,24 @@ impl App {
                 }
 
                 Route::Search(search_state) => {
-                    let has_tracks = shared_state.search_results.tracks.as_ref().is_some_and(|t| !t.items.is_empty());
-                    let has_artists = shared_state.search_results.artists.as_ref().is_some_and(|a| !a.items.is_empty());
+                    let results = &mut shared_state.search_results;
+
+                    let has_tracks = results.tracks.as_ref().is_some_and(|t| !t.items.is_empty());
+                    let has_artists = results.artists.as_ref().is_some_and(|a| !a.items.is_empty());
 
                     if has_tracks || has_artists {
-                        search_state.results = std::mem::take(&mut shared_state.search_results);
+                        if let Some(page) = results.tracks.take() {
+                            search_state.tracks_state.items = page.items;
+                        }
+                        if let Some(page) = results.artists.take() {
+                            search_state.artists_state.items = page.items;
+                        }
+                        if let Some(page) = results.albums.take() {
+                            search_state.albums_state.items = page.items;
+                        }
+                        if let Some(page) = results.playlists.take() {
+                            search_state.playlists_state.items = page.items;
+                        }
                     }
                 }
 
@@ -172,7 +195,7 @@ impl App {
                             queue_state.currently_playing = Some(c);
                         }
                         queue_state.queue_items.items = items;
-                        
+
                         if queue_state.queue_items.state.selected().is_none() && !queue_state.queue_items.items.is_empty() {
                             queue_state.queue_items.state.select(Some(0));
                         }
@@ -189,6 +212,30 @@ impl App {
                                 album_state.tracks.state.select(Some(0));
                             }
                         }
+                    }
+                }
+
+                Route::LikedSongs(like_songs_state) => {
+                    if !shared_state.liked_songs.is_empty() {
+                        like_songs_state.tracks.items = shared_state.liked_songs.drain(..).collect();
+                    }
+                }
+
+                Route::SavedAlbums(saved_albums_state) => {
+                    if !shared_state.saved_albums.is_empty() {
+                        saved_albums_state.albums.items = shared_state.saved_albums.drain(..).collect();
+                    }
+                }
+
+                Route::SavedArtists(saved_artists_state) => {
+                    if !shared_state.saved_artists.is_empty() {
+                        saved_artists_state.artists.items = shared_state.saved_artists.drain(..).collect();
+                    }
+                }
+
+                Route::SavedPodcasts(saved_podcasts_state) => {
+                    if !shared_state.saved_podcasts.is_empty() {
+                        saved_podcasts_state.podcasts.items = shared_state.saved_podcasts.drain(..).collect();
                     }
                 }
 

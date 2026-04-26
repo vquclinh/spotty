@@ -1,10 +1,10 @@
 use crate::app::{ActiveBlock, App, Route};
-use crate::handlers::{album, queue, search};
+use crate::handlers::{album, library, queue, search, sidebar};
 use crate::network::models::*;
 use crate::network::request::{PlayerRequest, ClientRequest};
 use crossterm::event::{KeyEvent, KeyCode};
 
-use super::{global, sidebar, home, playlist};
+use super::{global, home, playlist};
 use crate::app::types::MenuAction;
 
 use crate::app::album_state::AlbumState;
@@ -68,7 +68,7 @@ pub fn handle_key_events(key: KeyEvent, app: &mut App) {
 
     // each active_block
     match app.active_block {
-        ActiveBlock::PlaylistsMenu => {
+        ActiveBlock::PlaylistsMenu | ActiveBlock::LibraryMenu => {
             sidebar::handle_sidebar_events(key, app);
             return;
         }
@@ -91,6 +91,18 @@ pub fn handle_key_events(key: KeyEvent, app: &mut App) {
         ActiveBlock::AlbumBlock => {
             album::handle_album_events(key, app);
             return;
+        }
+        ActiveBlock::LikedSongs => {
+            library::handle_liked_songs_events(key, app);
+        }
+        ActiveBlock::SavedAlbums => {
+            library::handle_saved_albums_events(key, app);
+        }
+        ActiveBlock::SavedArtists => {
+            library::handle_saved_artists_events(key, app);
+        }
+        ActiveBlock::SavedPodcasts => {
+            library::handle_saved_podcasts_events(key, app);
         }
         _ => {}
     }
@@ -123,7 +135,7 @@ fn execute_action_menu_command(app: &mut App) -> bool {
             MenuAction::AddToPlaylist => {
                 let my_id = &app.user.id;
 
-                let writable_playlists: Vec<Playlist> = app.playlists.items
+                let writable_playlists: Vec<Playlist> = app.playlists_menu.items
                     .iter()
                     .filter(|p| {
                         let is_owner = p.owner.id == *my_id;
