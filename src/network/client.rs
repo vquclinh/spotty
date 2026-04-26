@@ -329,7 +329,7 @@ impl WebApiClient {
         let res: Page<SavedTrack> = helper::get(&self.client, "me/tracks", &params).await?.data();
 
         // Destructure to get items and metadata
-        let Page { items, total, offset, limit, next } = res;
+        let Page { items, total, offset, limit, next, after } = res;
 
         Ok(Page {
             items: items.into_iter().map(|st| st.track).collect(),
@@ -337,6 +337,7 @@ impl WebApiClient {
             offset,
             limit,
             next,
+            after,
         })
     }
 
@@ -355,7 +356,7 @@ impl WebApiClient {
 
         let res: Page<SavedAlbum> = helper::get(&self.client, "me/albums", &params).await?.data();
 
-        let Page { items, total, offset, limit, next } = res;
+        let Page { items, total, offset, limit, next, after } = res;
 
         Ok(Page {
             items: items.into_iter().map(|st| st.album).collect(),
@@ -363,20 +364,29 @@ impl WebApiClient {
             offset,
             limit,
             next,
+            after,
         })
     }
 
 
-    pub async fn get_user_saved_artists(&self, limit: u32, offset: u32) -> Result<Page<Artist>> {
+    pub async fn get_user_saved_artists(&self, limit: u32, after: Option<&str>) -> Result<Page<Artist>> {
         let limit = limit.clamp(1, 50).to_string();
-        let offset = offset.to_string();
-        let params = HashMap::<&str, &str>::from([
+        let mut params = HashMap::<&str, &str>::from([
             ("type", "artist"),
             ("limit", limit.as_str()),
         ]);
+        if let Some(ref cursor) = after {
+            params.insert("after", cursor);
+        }
+        
+        #[derive(Deserialize, Default)]
+        struct FollowedArtists {
+            artists: Page<Artist>,
+        }
 
-        helper::get(&self.client, "me/albums", &params)
-            .await.map(|r| r.data())
+        let res: FollowedArtists = helper::get(&self.client, "me/following", &params).await?.data();
+        
+        Ok(res.artists)
     }
 
     pub async fn get_user_saved_podcasts(&self, limit: u32, offset: u32) -> Result<Page<Episode>> {
@@ -392,9 +402,9 @@ impl WebApiClient {
             episode: Episode,
         }
 
-        let res: Page<SavedEpisode> = helper::get(&self.client, "me/albums", &params).await?.data();
+        let res: Page<SavedEpisode> = helper::get(&self.client, "me/episodes", &params).await?.data();
 
-        let Page { items, total, offset, limit, next } = res;
+        let Page { items, total, offset, limit, next, after } = res;
 
         Ok(Page {
             items: items.into_iter().map(|st| st.episode).collect(),
@@ -402,6 +412,7 @@ impl WebApiClient {
             offset,
             limit,
             next,
+            after,
         })
     }
 }

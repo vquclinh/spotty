@@ -100,7 +100,7 @@ impl App {
                 let _ = self.network_tx.send(ClientRequest::GetUserSavedAlbums { limit: 50, offset: 0 });
             }
             Route::SavedArtists(_) => {
-                let _ = self.network_tx.send(ClientRequest::GetUserSavedArtists { limit: 50, offset: 0 });
+                let _ = self.network_tx.send(ClientRequest::GetUserSavedArtists { limit: 50, after: None });
             }
             Route::SavedPodcasts(_) => {
                 let _ = self.network_tx.send(ClientRequest::GetUserSavedPodcasts { limit: 50, offset: 0 });

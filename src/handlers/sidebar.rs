@@ -62,7 +62,7 @@ pub fn handle_sidebar_events(key: KeyEvent, app: &mut App) {
 
                                     let _ = network_tx.send(ClientRequest::GetUserSavedArtists { 
                                         limit: 50, 
-                                        offset: 0 
+                                        after: None
                                     });
                                 }
 

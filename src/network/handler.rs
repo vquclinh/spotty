@@ -169,11 +169,11 @@ pub async fn start_network_worker(
                 }
             }
 
-            ClientRequest::GetUserSavedArtists { limit, offset } => {
-                match client.get_user_saved_artists(limit, offset).await {
+            ClientRequest::GetUserSavedArtists { limit, after } => {
+                match client.get_user_saved_artists(limit, after.as_deref()).await {
                     Ok(saved_artists) => {
                         if let Ok(mut state) = shared_state.lock() {
-                            if offset == 0 {
+                            if after.is_none() {
                                 state.saved_artists = saved_artists.items;
                             } else {
                                 state.saved_artists.extend(saved_artists.items);

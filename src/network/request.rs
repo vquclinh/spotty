@@ -83,7 +83,7 @@ pub enum ClientRequest {
 
     GetUserSavedArtists {
         limit: u32,
-        offset: u32
+        after: Option<String>
     },
 
     GetUserSavedPodcasts {
