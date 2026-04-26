@@ -18,7 +18,16 @@ pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
 
 // library
 fn draw_library(f: &mut Frame, app: &mut App, area: Rect) {
-    let border_color = if app.active_block == ActiveBlock::LibraryMenu { Color::LightCyan } else { Color::White };
+    let is_focused = app.active_block == ActiveBlock::LibraryMenu;
+    let border_color = if is_focused { Color::LightCyan } else { Color::White };
+    // Only highlight the selected item when the block is focused
+    let highlight_style = if is_focused {
+        Style::default()
+            .fg(Color::Cyan)
+            .add_modifier(Modifier::BOLD)
+    } else {
+        Style::default()
+    };
 
     let items = vec![
         ListItem::new(" ♥ Liked Songs"),
@@ -35,9 +44,7 @@ fn draw_library(f: &mut Frame, app: &mut App, area: Rect) {
                 .border_style(Style::default().fg(border_color)),
         )
         .highlight_style(
-            Style::default()
-                .fg(Color::Cyan)
-                .add_modifier(Modifier::BOLD),
+            highlight_style
         );
 
     f.render_stateful_widget(list, area, &mut app.library_menu.state);
@@ -45,7 +52,16 @@ fn draw_library(f: &mut Frame, app: &mut App, area: Rect) {
 
 // playlists
 fn draw_playlists(f: &mut Frame, app: &mut App, area: Rect) {
-    let border_color = if app.active_block == ActiveBlock::PlaylistsMenu { Color::LightCyan } else { Color::White };
+    let is_focused = app.active_block == ActiveBlock::PlaylistsMenu;
+    let border_color = if is_focused { Color::LightCyan } else { Color::White };
+    // Only highlight the selected item when the block is focused
+    let highlight_style = if is_focused {
+        Style::default()
+            .fg(Color::Cyan)
+            .add_modifier(Modifier::BOLD)
+    } else {
+        Style::default()
+    };
     let mut rows: Vec<Row> = vec![];
 
     for playlist in &app.playlists_menu.items {
@@ -64,9 +80,7 @@ fn draw_playlists(f: &mut Frame, app: &mut App, area: Rect) {
                 .border_style(Style::default().fg(border_color)),
         )
         .row_highlight_style(
-            Style::default()
-                .fg(Color::Cyan)
-                .add_modifier(Modifier::BOLD),
+            highlight_style
         );
 
     f.render_stateful_widget(table, area, &mut app.playlists_menu.state);

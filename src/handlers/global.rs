@@ -68,6 +68,11 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
                 Route::Search(_) => ActiveBlock::SearchInput,
                 Route::Queue(_) => ActiveBlock::QueueBlock,
                 Route::AlbumDetail(_) => ActiveBlock::AlbumBlock,
+
+                Route::LikedSongs(_) => ActiveBlock::LikedSongs,
+                Route::SavedAlbums(_) => ActiveBlock::SavedAlbums,
+                Route::SavedArtists(_) => ActiveBlock::SavedArtists,
+                Route::SavedPodcasts(_) => ActiveBlock::SavedPodcasts,
                 _ => ActiveBlock::HomeBlock,
             },
 
@@ -82,7 +87,11 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
             | ActiveBlock::PlaylistTracks 
             | ActiveBlock::QueueBlock 
             | ActiveBlock::LyricsText
-            | ActiveBlock::AlbumBlock => {
+            | ActiveBlock::AlbumBlock
+            | ActiveBlock::LikedSongs
+            | ActiveBlock::SavedAlbums
+            | ActiveBlock::SavedArtists
+            | ActiveBlock::SavedPodcasts => {
                 ActiveBlock::Playbar
             },
 

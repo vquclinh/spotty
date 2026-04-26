@@ -43,7 +43,7 @@ impl App {
 
         Self {
             route: Route::Splash(SplashState::new()),
-            active_block: ActiveBlock::PlaylistsMenu,
+            active_block: ActiveBlock::LibraryMenu,
             history: vec![],
             show_help: false,
             should_quit: false,
@@ -57,9 +57,9 @@ impl App {
             // Initialize the items we want to have in the library menu
             library_menu: StatefulList::with_items(vec![
                 LibraryMenuItem::LikedSongs(LikedSongsState::new(vec![])),
-                LibraryMenuItem::Artists,
-                LibraryMenuItem::Albums(SavedAlbumsState::new(vec![])),
-                LibraryMenuItem::Podcasts
+                LibraryMenuItem::SavedArtists(SavedArtistsState::new(vec![])),
+                LibraryMenuItem::SavedAlbums(SavedAlbumsState::new(vec![])),
+                LibraryMenuItem::SavedPodcasts(SavedPodcastsState::new(vec![]))
             ]),
             playlists_menu: StatefulTable::new(),
 
@@ -93,7 +93,18 @@ impl App {
                 let id = state.album_id.clone();
                 let _ = self.network_tx.send(ClientRequest::GetAlbum { id });
             }
-
+            Route::LikedSongs(_) => {
+                let _ = self.network_tx.send(ClientRequest::GetUserLikedSongs { limit: 50, offset: 0 });
+            }
+            Route::SavedAlbums(_) => {
+                let _ = self.network_tx.send(ClientRequest::GetUserSavedAlbums { limit: 50, offset: 0 });
+            }
+            Route::SavedArtists(_) => {
+                let _ = self.network_tx.send(ClientRequest::GetUserSavedArtists { limit: 50, offset: 0 });
+            }
+            Route::SavedPodcasts(_) => {
+                let _ = self.network_tx.send(ClientRequest::GetUserSavedPodcasts { limit: 50, offset: 0 });
+            }
             _ => {}
         }
 
@@ -201,6 +212,30 @@ impl App {
                                 album_state.tracks.state.select(Some(0));
                             }
                         }
+                    }
+                }
+
+                Route::LikedSongs(like_songs_state) => {
+                    if !shared_state.liked_songs.is_empty() {
+                        like_songs_state.tracks.items = shared_state.liked_songs.drain(..).collect();
+                    }
+                }
+
+                Route::SavedAlbums(saved_albums_state) => {
+                    if !shared_state.saved_albums.is_empty() {
+                        saved_albums_state.albums.items = shared_state.saved_albums.drain(..).collect();
+                    }
+                }
+
+                Route::SavedArtists(saved_artists_state) => {
+                    if !shared_state.saved_artists.is_empty() {
+                        saved_artists_state.artists.items = shared_state.saved_artists.drain(..).collect();
+                    }
+                }
+
+                Route::SavedPodcasts(saved_podcasts_state) => {
+                    if !shared_state.saved_podcasts.is_empty() {
+                        saved_podcasts_state.podcasts.items = shared_state.saved_podcasts.drain(..).collect();
                     }
                 }
 

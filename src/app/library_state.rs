@@ -5,9 +5,9 @@ use ratatui::layout::Rect;
 #[derive(Clone)]
 pub enum LibraryMenuItem {
     LikedSongs(LikedSongsState),
-    Artists,
-    Albums(SavedAlbumsState),
-    Podcasts
+    SavedAlbums(SavedAlbumsState),
+    SavedArtists(SavedArtistsState),
+    SavedPodcasts(SavedPodcastsState)
 }
 
 #[derive(Clone)]
@@ -43,3 +43,38 @@ impl SavedAlbumsState {
         }
     }
 }
+
+#[derive(Clone)]
+pub struct SavedArtistsState {
+    pub artists: StatefulTable<Artist>,
+
+    pub last_area: Rect
+}
+
+impl SavedArtistsState {
+    pub fn new(artists: Vec<Artist>) -> Self {
+        Self {
+            artists: StatefulTable::with_items(artists),
+
+            last_area: Rect::default(),
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct SavedPodcastsState {
+    pub podcasts: StatefulTable<Episode>,
+
+    pub last_area: Rect
+}
+
+impl SavedPodcastsState {
+    pub fn new(podcasts: Vec<Episode>) -> Self {
+        Self {
+            podcasts: StatefulTable::with_items(podcasts),
+
+            last_area: Rect::default(),
+        }
+    }
+}
+

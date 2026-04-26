@@ -8,6 +8,7 @@ use anyhow::{Result, Context};
 use std::collections::HashMap;
 use std::time::{Instant, Duration};
 use serde_json::{Value, json};
+use serde::Deserialize;
 use core::iter::IntoIterator;
 
 // -------------------------------------- CACHE ---------------------------------------
@@ -309,5 +310,98 @@ impl WebApiClient {
         helper::get(&self.client, &endpoint, &HashMap::new())
             .await.map(|r| r.data())
             .context(format!("Failed to fetch album with id: {}", id))
+    }
+
+    pub async fn get_user_liked_songs(&self, limit: u32, offset: u32) -> Result<Page<Track>> {
+        let limit = limit.clamp(1, 50).to_string();
+        let offset = offset.to_string();
+        let params = HashMap::<&str, &str>::from([
+            ("limit", limit.as_str()),
+            ("offset", offset.as_str())
+        ]);
+
+        // We will only get the item for now and ignore the added datetime
+        #[derive(Deserialize)]
+        struct SavedTrack {
+            track: Track,
+        }
+
+        let res: Page<SavedTrack> = helper::get(&self.client, "me/tracks", &params).await?.data();
+
+        // Destructure to get items and metadata
+        let Page { items, total, offset, limit, next } = res;
+
+        Ok(Page {
+            items: items.into_iter().map(|st| st.track).collect(),
+            total,
+            offset,
+            limit,
+            next,
+        })
+    }
+
+    pub async fn get_user_saved_albums(&self, limit: u32, offset: u32) -> Result<Page<Album>> {
+        let limit = limit.clamp(1, 50).to_string();
+        let offset = offset.to_string();
+        let params = HashMap::<&str, &str>::from([
+            ("limit", limit.as_str()),
+            ("offset", offset.as_str())
+        ]);
+
+        #[derive(Deserialize)]
+        struct SavedAlbum {
+            album: Album,
+        }
+
+        let res: Page<SavedAlbum> = helper::get(&self.client, "me/albums", &params).await?.data();
+
+        let Page { items, total, offset, limit, next } = res;
+
+        Ok(Page {
+            items: items.into_iter().map(|st| st.album).collect(),
+            total,
+            offset,
+            limit,
+            next,
+        })
+    }
+
+
+    pub async fn get_user_saved_artists(&self, limit: u32, offset: u32) -> Result<Page<Artist>> {
+        let limit = limit.clamp(1, 50).to_string();
+        let offset = offset.to_string();
+        let params = HashMap::<&str, &str>::from([
+            ("type", "artist"),
+            ("limit", limit.as_str()),
+        ]);
+
+        helper::get(&self.client, "me/albums", &params)
+            .await.map(|r| r.data())
+    }
+
+    pub async fn get_user_saved_podcasts(&self, limit: u32, offset: u32) -> Result<Page<Episode>> {
+        let limit = limit.clamp(1, 50).to_string();
+        let offset = offset.to_string();
+        let params = HashMap::<&str, &str>::from([
+            ("limit", limit.as_str()),
+            ("offset", offset.as_str())
+        ]);
+
+        #[derive(Deserialize)]
+        struct SavedEpisode {
+            episode: Episode,
+        }
+
+        let res: Page<SavedEpisode> = helper::get(&self.client, "me/albums", &params).await?.data();
+
+        let Page { items, total, offset, limit, next } = res;
+
+        Ok(Page {
+            items: items.into_iter().map(|st| st.episode).collect(),
+            total,
+            offset,
+            limit,
+            next,
+        })
     }
 }

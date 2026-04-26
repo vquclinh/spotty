@@ -4,7 +4,7 @@ use crate::network::models::MenuTarget;
 use crate::network::models::*;
 
 // -------------------------------- Active Block ----------------------------------
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub enum ActiveBlock {
     LibraryMenu,
     PlaylistsMenu,
@@ -17,6 +17,10 @@ pub enum ActiveBlock {
     LyricsInfo,
     Playbar,
     AlbumBlock,
+    LikedSongs,
+    SavedAlbums,
+    SavedArtists,
+    SavedPodcasts
 }
 
 // -------------------------------- Action Menu ------------------------------------
@@ -197,11 +201,10 @@ impl<T> StatefulList<T> {
     }
 
     pub fn with_items(items: Vec<T>) -> Self {
-        let mut state = ListState::default();
-        if !items.is_empty() {
-            state.select(Some(0));
+        Self {
+            items,
+            state: ListState::default()
         }
-        Self { items, state }
     }
 
     pub fn next(&mut self) {
@@ -255,11 +258,10 @@ impl<T> StatefulTable<T> {
     }
 
     pub fn with_items(items: Vec<T>) -> Self {
-        let mut state = TableState::default();
-        if !items.is_empty() {
-            state.select(Some(0));
+        Self {
+            items,
+            state: TableState::default(),
         }
-        Self { items, state }
     }
 
     pub fn next(&mut self) {

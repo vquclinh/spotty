@@ -6,7 +6,7 @@ use ratatui::{
 use crate::app::home_state::*;
 use crate::app::search_state::*;
 
-use super::{home, splash, lyrics, playbar, queue, search, sidebar, playlist, album, popups};
+use super::{home, splash, lyrics, playbar, queue, search, sidebar, playlist, album, popups, library};
 
 pub fn draw(f: &mut Frame, app: &mut App) {
     // splash
@@ -51,6 +51,10 @@ pub fn draw(f: &mut Frame, app: &mut App) {
                 Route::Queue(queue_state) => queue::draw(f, queue_state, &app.active_block, content_chunks[1]),
                 Route::AlbumDetail(album_state) => album::draw(f, album_state, &app.active_block, content_chunks[1]),
                 Route::PlaylistDetail(playlist_state) => playlist::draw(f, playlist_state, &app.active_block, content_chunks[1]),
+                Route::LikedSongs(liked_songs_state) => library::draw_liked_songs(f, liked_songs_state, &app.active_block, content_chunks[1]),
+                Route::SavedAlbums(saved_albums_state) => library::draw_saved_albums(f, saved_albums_state, &app.active_block, content_chunks[1]),
+                Route::SavedArtists(saved_artists_state) => library::draw_saved_artists(f, saved_artists_state, &app.active_block, content_chunks[1]),
+                Route::SavedPodcasts(saved_podcasts_state) => library::draw_saved_podcasts(f, saved_podcasts_state, &app.active_block, content_chunks[1]),
                 _ => {}
             }
         }
@@ -99,8 +103,40 @@ pub fn draw(f: &mut Frame, app: &mut App) {
                     a.tracks.state.offset()
                 )
             }
+            
+            Route::LikedSongs(a) => {
+                (
+                    a.last_area, 
+                    a.tracks.state.selected().unwrap_or(0), 
+                    a.tracks.state.offset()
+                )
+            }
 
-            _ => (f.area(), 0, 0),
+            Route::SavedAlbums(a) => {
+                (
+                    a.last_area, 
+                    a.albums.state.selected().unwrap_or(0), 
+                    a.albums.state.offset()
+                )
+            }
+            
+            Route::SavedArtists(a) => {
+                (
+                    a.last_area, 
+                    a.artists.state.selected().unwrap_or(0), 
+                    a.artists.state.offset()
+                )
+            }
+            
+            Route::SavedPodcasts(a) => {
+                (
+                    a.last_area, 
+                    a.podcasts.state.selected().unwrap_or(0), 
+                    a.podcasts.state.offset()
+                )
+            }
+
+            _ => (f.area(), 0, 0)
         };
 
         popups::draw_action_menu(f, app, area, selected, offset);

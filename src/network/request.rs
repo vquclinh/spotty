@@ -70,4 +70,24 @@ pub enum ClientRequest {
     SaveItemsToLibrary(Vec<String>),
 
     RemoveItemsFromLibrary(Vec<String>),
+
+    GetUserLikedSongs {
+        limit: u32,
+        offset: u32
+    },
+
+    GetUserSavedAlbums {
+        limit: u32,
+        offset: u32
+    },
+
+    GetUserSavedArtists {
+        limit: u32,
+        offset: u32
+    },
+
+    GetUserSavedPodcasts {
+        limit: u32,
+        offset: u32
+    },
 }

@@ -139,6 +139,66 @@ pub async fn start_network_worker(
                 }
             }
 
+            ClientRequest::GetUserLikedSongs { limit, offset } => {
+                match client.get_user_liked_songs(limit, offset).await {
+                    Ok(liked_songs) => {
+                        if let Ok(mut state) = shared_state.lock() {
+                            if offset == 0 {
+                                state.liked_songs = liked_songs.items;
+                            } else {
+                                state.liked_songs.extend(liked_songs.items);
+                            };
+                        }
+                    }
+                    Err(_e) => {}
+                }
+            }
+
+            ClientRequest::GetUserSavedAlbums { limit, offset } => {
+                match client.get_user_saved_albums(limit, offset).await {
+                    Ok(saved_albums) => {
+                        if let Ok(mut state) = shared_state.lock() {
+                            if offset == 0 {
+                                state.saved_albums = saved_albums.items;
+                            } else {
+                                state.saved_albums.extend(saved_albums.items);
+                            };
+                        }
+                    }
+                    Err(_e) => {}
+                }
+            }
+
+            ClientRequest::GetUserSavedArtists { limit, offset } => {
+                match client.get_user_saved_artists(limit, offset).await {
+                    Ok(saved_artists) => {
+                        if let Ok(mut state) = shared_state.lock() {
+                            if offset == 0 {
+                                state.saved_artists = saved_artists.items;
+                            } else {
+                                state.saved_artists.extend(saved_artists.items);
+                            };
+                        }
+                    }
+                    Err(_e) => {}
+                }
+            }
+
+            ClientRequest::GetUserSavedPodcasts { limit, offset } => {
+                match client.get_user_saved_podcasts(limit, offset).await {
+                    Ok(saved_podcasts) => {
+                        if let Ok(mut state) = shared_state.lock() {
+                            if offset == 0 {
+                                state.saved_podcasts = saved_podcasts.items;
+                            } else {
+                                state.saved_podcasts.extend(saved_podcasts.items);
+                            };
+                        }
+                    }
+                    Err(_e) => {}
+                }
+            }
+
             #[allow(clippy::collapsible_if)]
             ClientRequest::Player(player_req) => {
                 let update_playback = || async {

@@ -9,5 +9,6 @@ pub mod playlist;
 pub mod splash;
 pub mod popups;
 pub mod album;
+pub mod library;
 
 pub use layout::draw;
