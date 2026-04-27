@@ -210,6 +210,16 @@ pub enum TimeRange {
     LongTerm
 }
 
+impl TimeRange {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::ShortTerm => "short_term",
+            Self::MediumTerm => "medium_term",
+            Self::LongTerm => "long_term"
+        }
+    }
+}
+
 // ------------------------------------------- Queue Response -----------------------------
 #[derive(Debug, Deserialize, Clone)]
 pub struct QueueResponse {
@@ -225,16 +235,6 @@ pub enum MenuTarget {
     Album(Album),
     Playlist(Playlist),
     Episode(Episode),
-}
-
-impl TimeRange {
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Self::ShortTerm => "short_term",
-            Self::MediumTerm => "medium_term",
-            Self::LongTerm => "long_term"
-        }
-    }
 }
 
 // -------------------------------------------- Page --------------------------------------

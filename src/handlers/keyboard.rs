@@ -108,6 +108,8 @@ pub fn handle_key_events(key: KeyEvent, app: &mut App) {
     }
 }
 
+// TODO: handle the AddToPlaylist action outside the function and
+// return nothing here
 fn execute_action_menu_command(app: &mut App) -> bool {
     let selected_action = app.action_menu.state.selected()
         .and_then(|idx| app.action_menu.actions.get(idx));
@@ -178,8 +180,39 @@ fn execute_action_menu_command(app: &mut App) -> bool {
                 // TODO
                 true
             }
-            // TODO
-            _ => true,
+            MenuAction::GoToShow => {
+                true
+            }
+            MenuAction::SaveToLibrary => {
+                if let Some(uri) = uri && !uri.is_empty() {
+                    match target {
+                        MenuTarget::Track(_) => {
+                            let _ = app.network_tx
+                                .send(ClientRequest::SaveItemsToLibrary(vec![uri]));
+                        }
+                        MenuTarget::Album(_) => {
+                            let _ = app.network_tx
+                                .send(ClientRequest::SaveItemsToLibrary(vec![uri]));
+                        }
+                        MenuTarget::Artist(_) => {
+                            let _ = app.network_tx
+                                .send(ClientRequest::SaveItemsToLibrary(vec![uri]));
+                        }
+                        MenuTarget::Episode(_) => {
+                            let _ = app.network_tx
+                                .send(ClientRequest::SaveItemsToLibrary(vec![uri]));
+                        }
+                        _ => {}
+                    }
+                }
+                true
+            }
+            MenuAction::FollowArtist => {
+                if let MenuTarget::Artist(t) = target {
+                    let _ = app.network_tx.send(ClientRequest::SaveItemsToLibrary(vec![t.uri.clone()]));
+                }
+                true
+            }
         }
     } else {
         true

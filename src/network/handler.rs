@@ -199,6 +199,11 @@ pub async fn start_network_worker(
                 }
             }
 
+            ClientRequest::SaveItemsToLibrary( uris ) => {
+                let uris: Vec<&str> = uris.iter().map(|u| u.as_str()).collect();
+                let _ = client.save_items_to_library(uris).await;
+            }
+
             #[allow(clippy::collapsible_if)]
             ClientRequest::Player(player_req) => {
                 let update_playback = || async {

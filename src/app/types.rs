@@ -52,6 +52,7 @@ impl MenuAction {
         }
     }
 }
+
 #[derive(Default)]
 pub struct ActionMenu {
     pub is_open: bool,
@@ -84,7 +85,7 @@ impl ActionMenu {
                 {
                     dynamic_actions.push(MenuAction::GoToAlbum);
                 }
-                
+                dynamic_actions.push(MenuAction::SaveToLibrary);
                 if !t.artists.is_empty() {
                     dynamic_actions.push(MenuAction::GoToArtist);
                 }
@@ -109,6 +110,7 @@ impl ActionMenu {
             MenuTarget::Episode(e) => {
                 dynamic_actions.push(MenuAction::PlayNow);
                 dynamic_actions.push(MenuAction::AddToQueue);
+                dynamic_actions.push(MenuAction::SaveToLibrary);
                 if !e.show_name.is_empty() {
                     dynamic_actions.push(MenuAction::GoToShow);
                 }
