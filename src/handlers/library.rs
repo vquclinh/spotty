@@ -24,7 +24,7 @@ pub fn handle_liked_songs_events(key: KeyEvent, app: &mut App) {
     }
     
     if let Some(target) = target_to_open {
-        app.action_menu.open(target);
+        app.action_menu.open(target, &app.route);
     }
 }
 
@@ -50,7 +50,7 @@ pub fn handle_saved_albums_events(key: KeyEvent, app: &mut App) {
     }
     
     if let Some(target) = target_to_open {
-        app.action_menu.open(target);
+        app.action_menu.open(target, &app.route);
     }
 }
 
@@ -76,7 +76,7 @@ pub fn handle_saved_artists_events(key: KeyEvent, app: &mut App) {
     }
     
     if let Some(target) = target_to_open {
-        app.action_menu.open(target);
+        app.action_menu.open(target, &app.route);
     }
 }
 
@@ -102,6 +102,6 @@ pub fn handle_saved_podcasts_events(key: KeyEvent, app: &mut App) {
     }
     
     if let Some(target) = target_to_open {
-        app.action_menu.open(target);
+        app.action_menu.open(target, &app.route);
     }
 }

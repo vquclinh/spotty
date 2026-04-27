@@ -2,6 +2,7 @@ use ratatui::widgets::TableState;
 use ratatui::widgets::ListState;
 use crate::network::models::MenuTarget;
 use crate::network::models::*;
+use crate::app::Route;
 
 // -------------------------------- Active Block ----------------------------------
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -33,7 +34,9 @@ pub enum MenuAction {
     GoToArtist,
     GoToShow,
     SaveToLibrary,
+    RemoveFromLibrary,
     FollowArtist,
+    UnfollowArtist,
     ViewDetails,
 }
 
@@ -47,7 +50,9 @@ impl MenuAction {
             MenuAction::GoToArtist => "Go to Artist",
             MenuAction::GoToShow => "Go to Podcast Show",
             MenuAction::SaveToLibrary => "Save to Library",
+            MenuAction::RemoveFromLibrary => "Remove from Library",
             MenuAction::FollowArtist => "Follow Artist",
+            MenuAction::UnfollowArtist => "Unfollow Artist",
             MenuAction::ViewDetails => "View Details",
         }
     }
@@ -71,7 +76,7 @@ impl ActionMenu {
         }
     }
 
-    pub fn open(&mut self, target: MenuTarget) {
+    pub fn open(&mut self, target: MenuTarget, route: &Route) {
         let mut dynamic_actions = Vec::new();
 
         match &target {
@@ -85,19 +90,34 @@ impl ActionMenu {
                 {
                     dynamic_actions.push(MenuAction::GoToAlbum);
                 }
-                dynamic_actions.push(MenuAction::SaveToLibrary);
+                if let Route::LikedSongs(_) = route {
+                    // If we view an item in library view then the item is already saved to library
+                    dynamic_actions.push(MenuAction::RemoveFromLibrary);
+                } else {
+                    // TODO: The item could be already in the library and the menu should show
+                    // Remove from Ribrary
+                    dynamic_actions.push(MenuAction::SaveToLibrary);
+                }
                 if !t.artists.is_empty() {
                     dynamic_actions.push(MenuAction::GoToArtist);
                 }
             }
             MenuTarget::Artist(_) => {
                 dynamic_actions.push(MenuAction::PlayNow);
-                dynamic_actions.push(MenuAction::FollowArtist);
+                if let Route::SavedArtists(_) = route {
+                    dynamic_actions.push(MenuAction::UnfollowArtist);
+                } else {
+                    dynamic_actions.push(MenuAction::FollowArtist);
+                }
                 dynamic_actions.push(MenuAction::ViewDetails);
             }
             MenuTarget::Album(a) => {
                 dynamic_actions.push(MenuAction::PlayNow);
-                dynamic_actions.push(MenuAction::SaveToLibrary);
+                if let Route::SavedAlbums(_) = route {
+                    dynamic_actions.push(MenuAction::RemoveFromLibrary);
+                } else {
+                    dynamic_actions.push(MenuAction::SaveToLibrary);
+                }
                 if !a.artists.is_empty() {
                     dynamic_actions.push(MenuAction::GoToArtist);
                 }
@@ -110,7 +130,11 @@ impl ActionMenu {
             MenuTarget::Episode(e) => {
                 dynamic_actions.push(MenuAction::PlayNow);
                 dynamic_actions.push(MenuAction::AddToQueue);
-                dynamic_actions.push(MenuAction::SaveToLibrary);
+                if let Route::SavedPodcasts(_) = route {
+                    dynamic_actions.push(MenuAction::RemoveFromLibrary);
+                } else {
+                    dynamic_actions.push(MenuAction::SaveToLibrary);
+                }
                 if !e.show_name.is_empty() {
                     dynamic_actions.push(MenuAction::GoToShow);
                 }

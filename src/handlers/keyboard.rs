@@ -207,9 +207,39 @@ fn execute_action_menu_command(app: &mut App) -> bool {
                 }
                 true
             }
+            MenuAction::RemoveFromLibrary => {
+                if let Some(uri) = uri && !uri.is_empty() {
+                    match target {
+                        MenuTarget::Track(_) => {
+                            let _ = app.network_tx
+                                .send(ClientRequest::RemoveItemsFromLibrary(vec![uri]));
+                        }
+                        MenuTarget::Album(_) => {
+                            let _ = app.network_tx
+                                .send(ClientRequest::RemoveItemsFromLibrary(vec![uri]));
+                        }
+                        MenuTarget::Artist(_) => {
+                            let _ = app.network_tx
+                                .send(ClientRequest::RemoveItemsFromLibrary(vec![uri]));
+                        }
+                        MenuTarget::Episode(_) => {
+                            let _ = app.network_tx
+                                .send(ClientRequest::RemoveItemsFromLibrary(vec![uri]));
+                        }
+                        _ => {}
+                    }
+                }
+                true
+            }
             MenuAction::FollowArtist => {
-                if let MenuTarget::Artist(t) = target {
-                    let _ = app.network_tx.send(ClientRequest::SaveItemsToLibrary(vec![t.uri.clone()]));
+                if let MenuTarget::Artist(_) = target && let Some(uri) = uri {
+                    let _ = app.network_tx.send(ClientRequest::SaveItemsToLibrary(vec![uri]));
+                }
+                true
+            }
+            MenuAction::UnfollowArtist => {
+                if let MenuTarget::Artist(_) = target && let Some(uri) = uri {
+                    let _ = app.network_tx.send(ClientRequest::RemoveItemsFromLibrary(vec![uri]));
                 }
                 true
             }

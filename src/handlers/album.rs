@@ -24,6 +24,6 @@ pub fn handle_album_events(key: KeyEvent, app: &mut App) {
     }
     
     if let Some(target) = target_to_open {
-        app.action_menu.open(target);
+        app.action_menu.open(target, &app.route);
     }
 }

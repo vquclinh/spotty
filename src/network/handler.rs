@@ -117,11 +117,23 @@ pub async fn start_network_worker(
 
                 match client.add_items_to_playlist(&playlist_id, uris_ref).await {
                     Ok(_) => {
-                        #[allow(clippy::collapsible_if)]
-                        if let Ok(playlists) = client.get_user_playlists().await {
-                            if let Ok(mut state) = shared_state.lock() {
-                                state.playlists = playlists;
-                            }
+                        if let Ok(playlists) = client.get_user_playlists().await
+                        && let Ok(mut state) = shared_state.lock() {
+                            state.playlists = playlists;
+                        }
+                    }
+                    Err(_e) => {}
+                }
+            }
+
+            ClientRequest::RemoveItemsFromPlaylist { playlist_id, uris } => {
+                let uris_ref: Vec<&str> = uris.iter().map(|s| s.as_str()).collect();
+
+                match client.remove_items_from_playlist(&playlist_id, uris_ref).await {
+                    Ok(_) => {
+                        if let Ok(playlists) = client.get_user_playlists().await
+                        && let Ok(mut state) = shared_state.lock() {
+                            state.playlists = playlists;
                         }
                     }
                     Err(_e) => {}
@@ -202,6 +214,11 @@ pub async fn start_network_worker(
             ClientRequest::SaveItemsToLibrary( uris ) => {
                 let uris: Vec<&str> = uris.iter().map(|u| u.as_str()).collect();
                 let _ = client.save_items_to_library(uris).await;
+            }
+
+            ClientRequest::RemoveItemsFromLibrary( uris ) => {
+                let uris: Vec<&str> = uris.iter().map(|u| u.as_str()).collect();
+                let _ = client.remove_items_from_library(uris).await;
             }
 
             #[allow(clippy::collapsible_if)]

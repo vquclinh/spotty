@@ -75,7 +75,7 @@ pub fn handle_home_events(key: KeyEvent, app: &mut App) {
                 };
 
                 if let Some(t) = target {
-                    action_menu.open(t);
+                    action_menu.open(t, &route);
                 }
             }
             _ => {}
