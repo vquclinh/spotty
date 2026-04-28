@@ -49,20 +49,20 @@ pub fn handle_search_events(key: KeyEvent, app: &mut App) {
 
                     KeyCode::Down | KeyCode::Char('j') => {
                         match search_state.hovered_pane {
-                            SearchHoveredPane::Tracks => search_state.tracks_state.next(),
-                            SearchHoveredPane::Artists => search_state.artists_state.next(),
-                            SearchHoveredPane::Albums => search_state.albums_state.next(),
-                            SearchHoveredPane::Playlists => search_state.playlists_state.next(),
+                            SearchHoveredPane::Tracks => search_state.tracks_state.next(false),
+                            SearchHoveredPane::Artists => search_state.artists_state.next(false),
+                            SearchHoveredPane::Albums => search_state.albums_state.next(false),
+                            SearchHoveredPane::Playlists => search_state.playlists_state.next(false),
                             _ => {}
                         }
                     }
 
                     KeyCode::Up | KeyCode::Char('k') => {
                         match search_state.hovered_pane {
-                            SearchHoveredPane::Tracks => search_state.tracks_state.previous(),
-                            SearchHoveredPane::Artists => search_state.artists_state.previous(),
-                            SearchHoveredPane::Albums => search_state.albums_state.previous(),
-                            SearchHoveredPane::Playlists => search_state.playlists_state.previous(),
+                            SearchHoveredPane::Tracks => search_state.tracks_state.previous(false),
+                            SearchHoveredPane::Artists => search_state.artists_state.previous(false),
+                            SearchHoveredPane::Albums => search_state.albums_state.previous(false),
+                            SearchHoveredPane::Playlists => search_state.playlists_state.previous(false),
                             _ => {}
                         }
                     }
@@ -112,7 +112,7 @@ pub fn handle_search_events(key: KeyEvent, app: &mut App) {
     }
 
     if let Some(target) = target_to_open {
-        app.action_menu.open(target);
+        app.action_menu.open(target, &app.route);
     }
 
     if let Some(query) = query_to_send {

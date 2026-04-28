@@ -72,7 +72,7 @@ pub async fn start_network_worker(
                 match client.get_playlist_items(&playlist_id, limit, offset).await {
                     Ok(items) => {
                         if let Ok(mut state) = shared_state.lock() {
-                            state.playlist_items = items; 
+                            state.playlist_items = items;
                         }
                     }
                     Err(_e) => {}
@@ -117,11 +117,23 @@ pub async fn start_network_worker(
 
                 match client.add_items_to_playlist(&playlist_id, uris_ref).await {
                     Ok(_) => {
-                        #[allow(clippy::collapsible_if)]
-                        if let Ok(playlists) = client.get_user_playlists().await {
-                            if let Ok(mut state) = shared_state.lock() {
-                                state.playlists = playlists;
-                            }
+                        if let Ok(playlists) = client.get_user_playlists().await
+                        && let Ok(mut state) = shared_state.lock() {
+                            state.playlists = playlists;
+                        }
+                    }
+                    Err(_e) => {}
+                }
+            }
+
+            ClientRequest::RemoveItemsFromPlaylist { playlist_id, uris } => {
+                let uris_ref: Vec<&str> = uris.iter().map(|s| s.as_str()).collect();
+
+                match client.remove_items_from_playlist(&playlist_id, uris_ref).await {
+                    Ok(_) => {
+                        if let Ok(playlists) = client.get_user_playlists().await
+                        && let Ok(mut state) = shared_state.lock() {
+                            state.playlists = playlists;
                         }
                     }
                     Err(_e) => {}
@@ -143,11 +155,7 @@ pub async fn start_network_worker(
                 match client.get_user_liked_songs(limit, offset).await {
                     Ok(liked_songs) => {
                         if let Ok(mut state) = shared_state.lock() {
-                            if offset == 0 {
-                                state.liked_songs = liked_songs.items;
-                            } else {
-                                state.liked_songs.extend(liked_songs.items);
-                            };
+                            state.liked_songs = liked_songs.items;
                         }
                     }
                     Err(_e) => {}
@@ -158,11 +166,7 @@ pub async fn start_network_worker(
                 match client.get_user_saved_albums(limit, offset).await {
                     Ok(saved_albums) => {
                         if let Ok(mut state) = shared_state.lock() {
-                            if offset == 0 {
-                                state.saved_albums = saved_albums.items;
-                            } else {
-                                state.saved_albums.extend(saved_albums.items);
-                            };
+                            state.saved_albums = saved_albums.items;
                         }
                     }
                     Err(_e) => {}
@@ -173,11 +177,7 @@ pub async fn start_network_worker(
                 match client.get_user_saved_artists(limit, after.as_deref()).await {
                     Ok(saved_artists) => {
                         if let Ok(mut state) = shared_state.lock() {
-                            if after.is_none() {
-                                state.saved_artists = saved_artists.items;
-                            } else {
-                                state.saved_artists.extend(saved_artists.items);
-                            };
+                            state.saved_artists = saved_artists.items;
                         }
                     }
                     Err(_e) => {}
@@ -188,15 +188,21 @@ pub async fn start_network_worker(
                 match client.get_user_saved_podcasts(limit, offset).await {
                     Ok(saved_podcasts) => {
                         if let Ok(mut state) = shared_state.lock() {
-                            if offset == 0 {
-                                state.saved_podcasts = saved_podcasts.items;
-                            } else {
-                                state.saved_podcasts.extend(saved_podcasts.items);
-                            };
+                            state.saved_podcasts = saved_podcasts.items;
                         }
                     }
                     Err(_e) => {}
                 }
+            }
+
+            ClientRequest::SaveItemsToLibrary( uris ) => {
+                let uris: Vec<&str> = uris.iter().map(|u| u.as_str()).collect();
+                let _ = client.save_items_to_library(uris).await;
+            }
+
+            ClientRequest::RemoveItemsFromLibrary( uris ) => {
+                let uris: Vec<&str> = uris.iter().map(|u| u.as_str()).collect();
+                let _ = client.remove_items_from_library(uris).await;
             }
 
             #[allow(clippy::collapsible_if)]

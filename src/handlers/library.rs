@@ -7,8 +7,8 @@ pub fn handle_liked_songs_events(key: KeyEvent, app: &mut App) {
 
     if let Route::LikedSongs(liked_songs) = &mut app.route {
         match key.code {
-            KeyCode::Down | KeyCode::Char('j') => liked_songs.tracks.next(),
-            KeyCode::Up | KeyCode::Char('k') => liked_songs.tracks.previous(),
+            KeyCode::Down | KeyCode::Char('j') => liked_songs.tracks.next(false),
+            KeyCode::Up | KeyCode::Char('k') => liked_songs.tracks.previous(false),
             
             KeyCode::Char('t') => {
                 target_to_open = liked_songs.tracks.state.selected()
@@ -24,7 +24,7 @@ pub fn handle_liked_songs_events(key: KeyEvent, app: &mut App) {
     }
     
     if let Some(target) = target_to_open {
-        app.action_menu.open(target);
+        app.action_menu.open(target, &app.route);
     }
 }
 
@@ -33,8 +33,8 @@ pub fn handle_saved_albums_events(key: KeyEvent, app: &mut App) {
 
     if let Route::SavedAlbums(saved_albums) = &mut app.route {
         match key.code {
-            KeyCode::Down | KeyCode::Char('j') => saved_albums.albums.next(),
-            KeyCode::Up | KeyCode::Char('k') => saved_albums.albums.previous(),
+            KeyCode::Down | KeyCode::Char('j') => saved_albums.albums.next(false),
+            KeyCode::Up | KeyCode::Char('k') => saved_albums.albums.previous(false),
             
             KeyCode::Char('t') => {
                 target_to_open = saved_albums.albums.state.selected()
@@ -50,7 +50,7 @@ pub fn handle_saved_albums_events(key: KeyEvent, app: &mut App) {
     }
     
     if let Some(target) = target_to_open {
-        app.action_menu.open(target);
+        app.action_menu.open(target, &app.route);
     }
 }
 
@@ -59,8 +59,8 @@ pub fn handle_saved_artists_events(key: KeyEvent, app: &mut App) {
 
     if let Route::SavedArtists(saved_artists) = &mut app.route {
         match key.code {
-            KeyCode::Down | KeyCode::Char('j') => saved_artists.artists.next(),
-            KeyCode::Up | KeyCode::Char('k') => saved_artists.artists.previous(),
+            KeyCode::Down | KeyCode::Char('j') => saved_artists.artists.next(false),
+            KeyCode::Up | KeyCode::Char('k') => saved_artists.artists.previous(false),
             
             KeyCode::Char('t') => {
                 target_to_open = saved_artists.artists.state.selected()
@@ -76,7 +76,7 @@ pub fn handle_saved_artists_events(key: KeyEvent, app: &mut App) {
     }
     
     if let Some(target) = target_to_open {
-        app.action_menu.open(target);
+        app.action_menu.open(target, &app.route);
     }
 }
 
@@ -85,8 +85,8 @@ pub fn handle_saved_podcasts_events(key: KeyEvent, app: &mut App) {
 
     if let Route::SavedPodcasts(saved_podcasts) = &mut app.route {
         match key.code {
-            KeyCode::Down | KeyCode::Char('j') => saved_podcasts.podcasts.next(),
-            KeyCode::Up | KeyCode::Char('k') => saved_podcasts.podcasts.previous(),
+            KeyCode::Down | KeyCode::Char('j') => saved_podcasts.podcasts.next(false),
+            KeyCode::Up | KeyCode::Char('k') => saved_podcasts.podcasts.previous(false),
             
             KeyCode::Char('t') => {
                 target_to_open = saved_podcasts.podcasts.state.selected()
@@ -102,6 +102,6 @@ pub fn handle_saved_podcasts_events(key: KeyEvent, app: &mut App) {
     }
     
     if let Some(target) = target_to_open {
-        app.action_menu.open(target);
+        app.action_menu.open(target, &app.route);
     }
 }

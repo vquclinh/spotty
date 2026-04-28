@@ -1,4 +1,5 @@
 use crate::app::{ActiveBlock, App, route::Route};
+use crate::network::request::ClientRequest;
 use crossterm::event::{KeyCode, KeyEvent};
 use crate::network::models::*;
 
@@ -7,8 +8,8 @@ pub fn handle_playlist_events(key: KeyEvent, app: &mut App) {
 
     if let Route::PlaylistDetail(playlist_state) = &mut app.route {
         match key.code {
-            KeyCode::Down | KeyCode::Char('j') => playlist_state.tracks.next(),
-            KeyCode::Up | KeyCode::Char('k') => playlist_state.tracks.previous(),
+            KeyCode::Down | KeyCode::Char('j') => playlist_state.tracks.next(false),
+            KeyCode::Up | KeyCode::Char('k') => playlist_state.tracks.previous(false),
             
             KeyCode::Char('t') => {
                 target_to_open = playlist_state.tracks.state.selected()
@@ -27,6 +28,6 @@ pub fn handle_playlist_events(key: KeyEvent, app: &mut App) {
     }
     
     if let Some(target) = target_to_open {
-        app.action_menu.open(target);
+        app.action_menu.open(target, &app.route);
     }
 }

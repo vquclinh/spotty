@@ -2,6 +2,7 @@ use ratatui::widgets::TableState;
 use ratatui::widgets::ListState;
 use crate::network::models::MenuTarget;
 use crate::network::models::*;
+use crate::app::Route;
 
 // -------------------------------- Active Block ----------------------------------
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -32,7 +33,9 @@ pub enum MenuAction {
     GoToAlbum,
     GoToShow,
     SaveToLibrary,
+    RemoveFromLibrary,
     FollowArtist,
+    UnfollowArtist,
     ViewDetails,
 }
 
@@ -45,11 +48,14 @@ impl MenuAction {
             MenuAction::GoToAlbum => "Go to Album",
             MenuAction::GoToShow => "Go to Podcast Show",
             MenuAction::SaveToLibrary => "Save to Library",
+            MenuAction::RemoveFromLibrary => "Remove from Library",
             MenuAction::FollowArtist => "Follow Artist",
+            MenuAction::UnfollowArtist => "Unfollow Artist",
             MenuAction::ViewDetails => "View Details",
         }
     }
 }
+
 #[derive(Default)]
 pub struct ActionMenu {
     pub is_open: bool,
@@ -68,7 +74,7 @@ impl ActionMenu {
         }
     }
 
-    pub fn open(&mut self, target: MenuTarget) {
+    pub fn open(&mut self, target: MenuTarget, route: &Route) {
         let mut dynamic_actions = Vec::new();
 
         match &target {
@@ -82,24 +88,49 @@ impl ActionMenu {
                 {
                     dynamic_actions.push(MenuAction::GoToAlbum);
                 }
+                if let Route::LikedSongs(_) = route {
+                    // If we view an item in library view then the item is already saved to library
+                    dynamic_actions.push(MenuAction::RemoveFromLibrary);
+                } else {
+                    // TODO: The item could be already in the library and the menu should show
+                    // Remove from Ribrary
+                    dynamic_actions.push(MenuAction::SaveToLibrary);
+                }
             }
+
             MenuTarget::Artist(_) => {
                 dynamic_actions.push(MenuAction::PlayNow);
-                dynamic_actions.push(MenuAction::FollowArtist);
+                if let Route::SavedArtists(_) = route {
+                    dynamic_actions.push(MenuAction::UnfollowArtist);
+                } else {
+                    dynamic_actions.push(MenuAction::FollowArtist);
+                }
                 dynamic_actions.push(MenuAction::ViewDetails);
             }
+
             MenuTarget::Album(_) => {
                 dynamic_actions.push(MenuAction::PlayNow);
-                dynamic_actions.push(MenuAction::SaveToLibrary);
+                if let Route::SavedAlbums(_) = route {
+                    dynamic_actions.push(MenuAction::RemoveFromLibrary);
+                } else {
+                    dynamic_actions.push(MenuAction::SaveToLibrary);
+                }
             }
+
             MenuTarget::Playlist(_) => {
                 dynamic_actions.push(MenuAction::PlayNow);
                 dynamic_actions.push(MenuAction::SaveToLibrary);
                 dynamic_actions.push(MenuAction::ViewDetails);
             }
+
             MenuTarget::Episode(e) => {
                 dynamic_actions.push(MenuAction::PlayNow);
                 dynamic_actions.push(MenuAction::AddToQueue);
+                if let Route::SavedPodcasts(_) = route {
+                    dynamic_actions.push(MenuAction::RemoveFromLibrary);
+                } else {
+                    dynamic_actions.push(MenuAction::SaveToLibrary);
+                }
                 if !e.show_name.is_empty() {
                     dynamic_actions.push(MenuAction::GoToShow);
                 }
@@ -198,14 +229,14 @@ impl<T> StatefulList<T> {
         }
     }
 
-    pub fn next(&mut self) {
+    pub fn next(&mut self, wrap_around: bool) {
         if self.items.is_empty() {
             return;
         }
         let i = match self.state.selected() {
             Some(i) => {
                 if i >= self.items.len() - 1 {
-                    0
+                    if wrap_around { 0 } else { self.items.len() - 1 }
                 } else {
                     i + 1
                 }
@@ -215,14 +246,14 @@ impl<T> StatefulList<T> {
         self.state.select(Some(i));
     }
 
-    pub fn previous(&mut self) {
+    pub fn previous(&mut self, wrap_around: bool) {
         if self.items.is_empty() {
             return;
         }
         let i = match self.state.selected() {
             Some(i) => {
                 if i == 0 {
-                    self.items.len() - 1
+                    if wrap_around { self.items.len() - 1 } else { 0 }
                 } else {
                     i - 1
                 }
@@ -255,17 +286,35 @@ impl<T> StatefulTable<T> {
         }
     }
 
-    pub fn next(&mut self) {
+    pub fn next(&mut self, wrap_around: bool) {
+        if self.items.is_empty() {
+            return;
+        }
         let i = match self.state.selected() {
-            Some(i) => if i >= self.items.len() - 1 { 0 } else { i + 1 },
+            Some(i) => {
+                if i >= self.items.len() - 1 {
+                    if wrap_around { 0 } else { self.items.len() - 1 }
+                } else {
+                    i + 1
+                }
+            }
             None => 0,
         };
         self.state.select(Some(i));
     }
 
-    pub fn previous(&mut self) {
+    pub fn previous(&mut self, wrap_around: bool) {
+        if self.items.is_empty() {
+            return;
+        }
         let i = match self.state.selected() {
-            Some(i) => if i == 0 { self.items.len() - 1 } else { i - 1 },
+            Some(i) => {
+                if i == 0 {
+                    if wrap_around { self.items.len() - 1 } else { 0 }
+                } else {
+                    i - 1
+                }
+            }
             None => 0,
         };
         self.state.select(Some(i));
