@@ -6,6 +6,7 @@ use ratatui::{
     style::{Color, Modifier, Style},
     widgets::{Block, Borders, Table, Row, HighlightSpacing},
 };
+use super::layout::truncate;
 
 pub fn draw_liked_songs(f: &mut Frame, state: &mut LikedSongsState, active_block: &ActiveBlock, area: Rect) {
     let is_focused = *active_block == ActiveBlock::LikedSongs;
@@ -206,19 +207,4 @@ pub fn draw_saved_podcasts(f: &mut Frame, state: &mut SavedPodcastsState, active
         .highlight_spacing(HighlightSpacing::Always);
 
     f.render_stateful_widget(table, inner_area, &mut state.podcasts.state);
-}
-
-fn truncate(text: &str, max_width: u16) -> String {
-    let max_width = max_width as usize;
-    let char_count = text.chars().count();
-    
-    if char_count > max_width {
-        if max_width <= 3 {
-            return text.chars().take(max_width).collect();
-        }
-        let truncated: String = text.chars().take(max_width - 3).collect();
-        format!("{}...", truncated)
-    } else {
-        text.to_string()
-    }
 }

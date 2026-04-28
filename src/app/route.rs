@@ -39,7 +39,6 @@ impl Route {
             Route::SavedAlbums(_) => None,
             Route::SavedArtists(_) => None,
             Route::SavedPodcasts(_) => None,
-            _ => None,
         }
     }
 }

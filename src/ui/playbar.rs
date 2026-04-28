@@ -159,7 +159,7 @@ pub fn draw_narrow(f: &mut Frame, app: &mut App, area: Rect) {
     };
 
     // Try to extract spotify data
-    let (is_playing, track_name, artist_name, progress_ms, duration_ms, repeat, shuffle) = {
+    let (is_playing, track_name, artist_name, progress_ms, duration_ms, _repeat, _shuffle) = {
         let is_playing = playback.is_playing;
         let progress = playback.progress.as_millis() as u32; 
         let repeat = playback.repeat_state;

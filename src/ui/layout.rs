@@ -142,3 +142,19 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         popups::draw_action_menu(f, app, area, selected, offset);
     }
 }
+
+pub fn truncate(text: &str, max_width: u16) -> String {
+    let max_width = max_width as usize;
+    let char_count = text.chars().count();
+    
+    if char_count > max_width {
+        if max_width <= 3 {
+            return text.chars().take(max_width).collect();
+        }
+        
+        let truncated: String = text.chars().take(max_width - 3).collect();
+        format!("{}...", truncated)
+    } else {
+        text.to_string()
+    }
+}

@@ -31,7 +31,6 @@ pub enum MenuAction {
     AddToQueue,
     AddToPlaylist,
     GoToAlbum,
-    GoToArtist,
     GoToShow,
     SaveToLibrary,
     RemoveFromLibrary,
@@ -47,7 +46,6 @@ impl MenuAction {
             MenuAction::AddToQueue => "Add to Queue",
             MenuAction::AddToPlaylist => "Add to Playlist",
             MenuAction::GoToAlbum => "Go to Album",
-            MenuAction::GoToArtist => "Go to Artist",
             MenuAction::GoToShow => "Go to Podcast Show",
             MenuAction::SaveToLibrary => "Save to Library",
             MenuAction::RemoveFromLibrary => "Remove from Library",
@@ -98,10 +96,8 @@ impl ActionMenu {
                     // Remove from Ribrary
                     dynamic_actions.push(MenuAction::SaveToLibrary);
                 }
-                if !t.artists.is_empty() {
-                    dynamic_actions.push(MenuAction::GoToArtist);
-                }
             }
+
             MenuTarget::Artist(_) => {
                 dynamic_actions.push(MenuAction::PlayNow);
                 if let Route::SavedArtists(_) = route {
@@ -111,22 +107,22 @@ impl ActionMenu {
                 }
                 dynamic_actions.push(MenuAction::ViewDetails);
             }
-            MenuTarget::Album(a) => {
+
+            MenuTarget::Album(_) => {
                 dynamic_actions.push(MenuAction::PlayNow);
                 if let Route::SavedAlbums(_) = route {
                     dynamic_actions.push(MenuAction::RemoveFromLibrary);
                 } else {
                     dynamic_actions.push(MenuAction::SaveToLibrary);
                 }
-                if !a.artists.is_empty() {
-                    dynamic_actions.push(MenuAction::GoToArtist);
-                }
             }
+
             MenuTarget::Playlist(_) => {
                 dynamic_actions.push(MenuAction::PlayNow);
                 dynamic_actions.push(MenuAction::SaveToLibrary);
                 dynamic_actions.push(MenuAction::ViewDetails);
             }
+
             MenuTarget::Episode(e) => {
                 dynamic_actions.push(MenuAction::PlayNow);
                 dynamic_actions.push(MenuAction::AddToQueue);
