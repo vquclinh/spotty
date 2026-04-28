@@ -7,6 +7,7 @@ use ratatui::{
     text::{Line, Span},
     widgets::{Block, Borders, Table, Row, HighlightSpacing, Paragraph, Padding},
 };
+use super::layout::truncate;
 
 pub fn draw(f: &mut Frame, state: &mut QueueState, active_block: &ActiveBlock, area: Rect) {
     let is_focused = *active_block == ActiveBlock::QueueBlock;
@@ -143,13 +144,4 @@ pub fn draw(f: &mut Frame, state: &mut QueueState, active_block: &ActiveBlock, a
         .row_highlight_style(highlight_style);
 
     f.render_stateful_widget(table, chunks[1], &mut state.queue_items.state);
-}
-
-fn truncate(text: &str, max_width: u16) -> String {
-    let max_width = max_width as usize;
-    if text.chars().count() > max_width && max_width > 3 {
-        format!("{}...", text.chars().take(max_width - 3).collect::<String>())
-    } else {
-        text.to_string()
-    }
 }

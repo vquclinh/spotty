@@ -30,7 +30,6 @@ pub enum MenuAction {
     AddToQueue,
     AddToPlaylist,
     GoToAlbum,
-    GoToArtist,
     GoToShow,
     SaveToLibrary,
     FollowArtist,
@@ -44,7 +43,6 @@ impl MenuAction {
             MenuAction::AddToQueue => "Add to Queue",
             MenuAction::AddToPlaylist => "Add to Playlist",
             MenuAction::GoToAlbum => "Go to Album",
-            MenuAction::GoToArtist => "Go to Artist",
             MenuAction::GoToShow => "Go to Podcast Show",
             MenuAction::SaveToLibrary => "Save to Library",
             MenuAction::FollowArtist => "Follow Artist",
@@ -84,22 +82,15 @@ impl ActionMenu {
                 {
                     dynamic_actions.push(MenuAction::GoToAlbum);
                 }
-                
-                if !t.artists.is_empty() {
-                    dynamic_actions.push(MenuAction::GoToArtist);
-                }
             }
             MenuTarget::Artist(_) => {
                 dynamic_actions.push(MenuAction::PlayNow);
                 dynamic_actions.push(MenuAction::FollowArtist);
                 dynamic_actions.push(MenuAction::ViewDetails);
             }
-            MenuTarget::Album(a) => {
+            MenuTarget::Album(_) => {
                 dynamic_actions.push(MenuAction::PlayNow);
                 dynamic_actions.push(MenuAction::SaveToLibrary);
-                if !a.artists.is_empty() {
-                    dynamic_actions.push(MenuAction::GoToArtist);
-                }
             }
             MenuTarget::Playlist(_) => {
                 dynamic_actions.push(MenuAction::PlayNow);

@@ -170,10 +170,6 @@ fn execute_action_menu_command(app: &mut App) -> bool {
                 }
                 true
             }
-            MenuAction::GoToArtist => {
-                // TODO
-                true
-            }
             MenuAction::ViewDetails => {
                 // TODO
                 true

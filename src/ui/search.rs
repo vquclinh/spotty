@@ -6,6 +6,7 @@ use ratatui::{
     style::{Color, Modifier, Style},
     widgets::{Block, Borders, BorderType, Paragraph, List, ListItem, Padding, HighlightSpacing},
 };
+use super::layout::truncate;
 
 pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
     let (input_text, hovered_pane) = if let Route::Search(s) = &app.route {
@@ -147,7 +148,7 @@ pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
                 .join(", ");
 
             let full_text = format!("{} - {}", t.name, artist_names);
-            ListItem::new(format!("  {}", truncate_text(&full_text, track_max_width)))
+            ListItem::new(format!("  {}", truncate(&full_text, track_max_width)))
         })
     .collect();
 
@@ -163,7 +164,7 @@ pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
         .artists_state
         .items
         .iter()
-        .map(|a| ListItem::new(format!("  {}", truncate_text(&a.name, artist_max_width))))
+        .map(|a| ListItem::new(format!("  {}", truncate(&a.name, artist_max_width))))
         .collect();
 
     let artists_list = List::new(artists_items)
@@ -181,7 +182,7 @@ pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
         .map(|a| {
             let date = a.release_date.as_deref().unwrap_or("Unknown");
             let full_text = format!("{} ({})", a.name, date);
-            ListItem::new(format!("  {}", truncate_text(&full_text, album_max_width)))
+            ListItem::new(format!("  {}", truncate(&full_text, album_max_width)))
         })
     .collect();
 
@@ -199,7 +200,7 @@ pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
         .iter()
         .map(|p| {
             let full_text = format!("{} by {}", p.name, p.owner.display_name);
-            ListItem::new(format!("  {}", truncate_text(&full_text, playlist_max_width)))
+            ListItem::new(format!("  {}", truncate(&full_text, playlist_max_width)))
         })
     .collect();
 
@@ -230,21 +231,5 @@ pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
         if let Some(w) = lists.1.take() { f.render_stateful_widget(w, artists_area, &mut search_state.artists_state.state); }
         if let Some(w) = lists.2.take() { f.render_stateful_widget(w, albums_area, &mut search_state.albums_state.state); }
         if let Some(w) = lists.3.take() { f.render_stateful_widget(w, playlists_area, &mut search_state.playlists_state.state); }
-    }
-}
-
-fn truncate_text(text: &str, max_width: u16) -> String {
-    let max_chars = max_width as usize;
-    let char_count = text.chars().count();
-    
-    if char_count > max_chars {
-        if max_chars <= 3 {
-            return text.chars().take(max_chars).collect();
-        }
-        
-        let truncated: String = text.chars().take(max_chars - 3).collect();
-        format!("{}...", truncated)
-    } else {
-        text.to_string()
     }
 }

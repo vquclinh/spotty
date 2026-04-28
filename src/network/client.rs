@@ -368,7 +368,6 @@ impl WebApiClient {
         })
     }
 
-
     pub async fn get_user_saved_artists(&self, limit: u32, after: Option<&str>) -> Result<Page<Artist>> {
         let limit = limit.clamp(1, 50).to_string();
         let mut params = HashMap::<&str, &str>::from([

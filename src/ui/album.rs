@@ -6,6 +6,7 @@ use ratatui::{
     text::{Line, Span},
     widgets::{Block, Borders, Table, Row, HighlightSpacing, Paragraph, Padding},
 };
+use super::layout::truncate;
 
 pub fn draw(f: &mut Frame, state: &mut AlbumState, active_block: &ActiveBlock, area: Rect) {
     let is_focused = *active_block == ActiveBlock::AlbumBlock;
@@ -26,20 +27,23 @@ pub fn draw(f: &mut Frame, state: &mut AlbumState, active_block: &ActiveBlock, a
             Constraint::Min(0),
         ])
         .split(inner_area);
+    
+    let info_width = chunks[0].width;
+    let info_max = info_width.saturating_sub(20);
 
     // --------------------------------------- Album Info -----------------------------
     let album_content = if let Some(album) = &state.album {
-        let artists = album.artists.iter().map(|a| a.name.as_str()).collect::<Vec<_>>().join(", ");
+        let artists_full = album.artists.iter().map(|a| a.name.as_str()).collect::<Vec<_>>().join(", ");
         let release_date = album.release_date.as_deref().unwrap_or("Unknown Date");
 
         vec![
             Line::from(vec![
                 Span::styled(" 💿 Album: ", Style::default().fg(Color::LightGreen).add_modifier(Modifier::BOLD)),
-                Span::styled(album.name.clone(), Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
+                Span::styled(truncate(&album.name, info_max), Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
             ]),
             Line::from(vec![
                 Span::raw("    👤 Artist: "),
-                Span::styled(artists, Style::default().fg(Color::White)),
+                Span::styled(truncate(&artists_full, info_max), Style::default().fg(Color::White)),
             ]),
             Line::from(vec![
                 Span::raw("    📅 Released: "),
@@ -83,40 +87,38 @@ pub fn draw(f: &mut Frame, state: &mut AlbumState, active_block: &ActiveBlock, a
 
     let (title_max, artist_max) = if show_extra_column {
         (
-            ((table_width as f32 * 0.45) as u16).saturating_sub(6),
-            ((table_width as f32 * 0.35) as u16).saturating_sub(2),
+            ((table_width as f32 * 0.45) as u16).saturating_sub(15),
+            ((table_width as f32 * 0.35) as u16).saturating_sub(4),
         )
     } else {
         (
-            ((table_width as f32 * 0.55) as u16).saturating_sub(6),
-            ((table_width as f32 * 0.45) as u16).saturating_sub(2),
+            ((table_width as f32 * 0.55) as u16).saturating_sub(15),
+            ((table_width as f32 * 0.45) as u16).saturating_sub(4),
         )
     };
 
     let header = Row::new(header_cells).style(header_style).bottom_margin(0);
 
-    let rows: Vec<Row> = state.tracks.items.iter().enumerate().map(|(i, track)| {
-        let title = truncate(&track.name, title_max);
-        let artist = truncate(
-            &track.artists.iter().map(|a| a.name.as_str()).collect::<Vec<_>>().join(", "), 
-            artist_max
-        );
+    let rows: Vec<Row> = state.tracks.items.iter().enumerate().map(|(i, t)| {
+        let trunc_title = truncate(&t.name, title_max);
+        let artists = t.artists.iter().map(|a| a.name.as_str()).collect::<Vec<_>>().join(", ");
+        let trunc_artist = truncate(&artists, artist_max);
         
-        let duration = track.duration;
-        let duration_str = format!("{}:{:02}", duration.as_secs() / 60, duration.as_secs() % 60);
+        let duration_secs = t.duration.as_secs();
+        let duration_str = format!("{}:{:02}", duration_secs / 60, duration_secs % 60);
         
         let icon = "󰎆";
 
         if show_extra_column {
             Row::new(vec![
-                format!("  {} {}. {}", icon, i + 1, title),
-                artist,
-                duration_str,
+                format!("  {} {}. {}", icon, i + 1, trunc_title),
+                trunc_artist,
+                duration_str
             ]).style(Style::default().fg(Color::White))
         } else {
             Row::new(vec![
-                format!("  {} {}. {}", icon, i + 1, title),
-                artist,
+                format!("  {} {}. {}", icon, i + 1, trunc_title),
+                trunc_artist
             ]).style(Style::default().fg(Color::White))
         }
     }).collect();
@@ -129,13 +131,4 @@ pub fn draw(f: &mut Frame, state: &mut AlbumState, active_block: &ActiveBlock, a
         .row_highlight_style(highlight_style);
 
     f.render_stateful_widget(table, chunks[1], &mut state.tracks.state);
-}
-
-fn truncate(text: &str, max_width: u16) -> String {
-    let max_width = max_width as usize;
-    if text.chars().count() > max_width && max_width > 3 {
-        format!("{}...", text.chars().take(max_width - 3).collect::<String>())
-    } else {
-        text.to_string()
-    }
 }
