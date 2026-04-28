@@ -7,8 +7,8 @@ pub fn handle_queue_events(key: KeyEvent, app: &mut App) {
 
     if let Route::Queue(queue_state) = &mut app.route {
         match key.code {
-            KeyCode::Down | KeyCode::Char('j') => queue_state.queue_items.next(),
-            KeyCode::Up | KeyCode::Char('k') => queue_state.queue_items.previous(),
+            KeyCode::Down | KeyCode::Char('j') => queue_state.queue_items.next(false),
+            KeyCode::Up | KeyCode::Char('k') => queue_state.queue_items.previous(false),
             
             KeyCode::Char('t') => {
                 target_to_open = queue_state.queue_items.state.selected()

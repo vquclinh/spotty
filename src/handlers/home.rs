@@ -49,16 +49,16 @@ pub fn handle_home_events(key: KeyEvent, app: &mut App) {
 
             KeyCode::Down | KeyCode::Char('j') => {
                 match home_state.active_tab {
-                    HomeTab::TopTracks => home_state.top_tracks.next(),
-                    HomeTab::TopArtists => home_state.top_artists.next(),
-                    HomeTab::RecentlyPlayed => home_state.recent_tracks.next(),
+                    HomeTab::TopTracks => home_state.top_tracks.next(false),
+                    HomeTab::TopArtists => home_state.top_artists.next(false),
+                    HomeTab::RecentlyPlayed => home_state.recent_tracks.next(false),
                 }
             }
             KeyCode::Up | KeyCode::Char('k') => {
                 match home_state.active_tab {
-                    HomeTab::TopTracks => home_state.top_tracks.previous(),
-                    HomeTab::TopArtists => home_state.top_artists.previous(),
-                    HomeTab::RecentlyPlayed => home_state.recent_tracks.previous(),
+                    HomeTab::TopTracks => home_state.top_tracks.previous(false),
+                    HomeTab::TopArtists => home_state.top_artists.previous(false),
+                    HomeTab::RecentlyPlayed => home_state.recent_tracks.previous(false),
                 }
             }
             KeyCode::Char('t') => {

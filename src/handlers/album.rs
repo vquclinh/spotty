@@ -7,8 +7,8 @@ pub fn handle_album_events(key: KeyEvent, app: &mut App) {
 
     if let Route::AlbumDetail(album_state) = &mut app.route {
         match key.code {
-            KeyCode::Down | KeyCode::Char('j') => album_state.tracks.next(),
-            KeyCode::Up | KeyCode::Char('k') => album_state.tracks.previous(),
+            KeyCode::Down | KeyCode::Char('j') => album_state.tracks.next(false),
+            KeyCode::Up | KeyCode::Char('k') => album_state.tracks.previous(false),
             
             KeyCode::Char('t') => {
                 target_to_open = album_state.tracks.state.selected()
