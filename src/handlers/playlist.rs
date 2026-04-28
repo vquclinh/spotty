@@ -1,5 +1,4 @@
 use crate::app::{ActiveBlock, App, route::Route};
-use crate::network::request::ClientRequest;
 use crossterm::event::{KeyCode, KeyEvent};
 use crate::network::models::*;
 

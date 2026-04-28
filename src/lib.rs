@@ -3,7 +3,6 @@ pub mod event;
 pub mod handlers;
 pub mod network;
 pub mod ui;
-pub mod util;
 
 use app::App;
 use crossterm::{

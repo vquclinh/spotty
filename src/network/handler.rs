@@ -264,8 +264,6 @@ pub async fn start_network_worker(
                     _ => {}
                 }
             }
-
-            _ => {}
         }
     }
 }

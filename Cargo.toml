@@ -24,6 +24,10 @@ chrono = "0.4.44"
 rand = "0.10.0"
 urlencoding = "2.1.3"
 
+# librespot-core = "0.8.0"
+# librespot-playback = { version = "0.8.0", features = ["rodio-backend"] }
+# librespot-metadata = "0.8.0"
+
 [[bin]]
 path = "src/main.rs"
 name = "scui"
