@@ -1,6 +1,7 @@
 use crate::app::state::SharedState;
 use crate::network::client::WebApiClient;
 use crate::network::request::{ClientRequest, PlayerRequest};
+use crate::audio::player::*;
 use tokio::sync::mpsc;
 
 // Match request type and execute it with WebApiClient
@@ -8,6 +9,7 @@ use tokio::sync::mpsc;
 pub async fn start_network_worker(
     client: WebApiClient,
     mut rx: mpsc::UnboundedReceiver<ClientRequest>,
+    audio_tx: mpsc::UnboundedSender<AudioCommand>,
     shared_state: SharedState,
 ) {
     while let Some(request) = rx.recv().await {
@@ -207,18 +209,6 @@ pub async fn start_network_worker(
 
             #[allow(clippy::collapsible_if)]
             ClientRequest::Player(player_req) => {
-                let update_playback = || async {
-                    // Optionally sleep here to wait for the server before we update
-                    // This will result in a 100ms delay in the UI for operations
-                    // that do not have client data like next_track
-                    tokio::time::sleep(std::time::Duration::from_millis(100)).await;
-                    if let Ok(playback) = client.get_current_playback().await {
-                        if let Ok(mut state) = shared_state.lock() {
-                            state.playback = playback; 
-                        }
-                    }
-                };
-
                 match player_req {
                     PlayerRequest::AddItemToQueue(uri) => {
                         let _ = client.add_item_to_queue(&uri).await;
@@ -230,38 +220,41 @@ pub async fn start_network_worker(
                         }
                     }
 
+                    PlayerRequest::Play(uri) => {
+                        let _ = audio_tx.send(AudioCommand::Play(uri));
+                    }
+                    PlayerRequest::PlayContext(uri) => {
+                        let _ = audio_tx.send(AudioCommand::PlayContext(uri));
+                    }
+                    
                     PlayerRequest::TogglePlayback(playing) => {
-                        let _ = client.toggle_playback(playing).await;
-                        // Mainly for debugging right now
-                        update_playback().await;
+                        let cmd = if playing { AudioCommand::Pause } else { AudioCommand::Resume };
+                        let _ = audio_tx.send(cmd);
                     }
 
                     PlayerRequest::NextTrack => {
-                        let _ = client.next_track().await;
-                        update_playback().await;
+                        let _ = audio_tx.send(AudioCommand::NextTrack);
                     }
 
                     PlayerRequest::PreviousTrack => {
-                        let _ = client.prev_track().await;
-                        update_playback().await;
+                        let _ = audio_tx.send(AudioCommand::PreviousTrack);
+                    }
+
+                    PlayerRequest::SeekToPosition(ms) => {
+                        let _ = audio_tx.send(AudioCommand::Seek(ms));
+                    }
+                    
+                    PlayerRequest::SetVolume(vol) => {
+                        let _ = audio_tx.send(AudioCommand::SetVolume(percent_to_librespot_volume(vol)));
                     }
 
                     PlayerRequest::SetRepeatMode(state) => {
                         let _ = client.set_repeat_mode(state).await;
-                        // update_playback().await;
                     }
 
                     PlayerRequest::ToggleShuffle(shuffling) => {
                         let _ = client.toggle_shuffle(shuffling).await;
-                        // update_playback().await;
                     }
-
-                    PlayerRequest::SetVolume(vol) => {
-                        let _ = client.set_volume(vol).await;
-                        // update_playback().await;
-                    }
-
-                    _ => {}
                 }
             }
         }

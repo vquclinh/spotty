@@ -51,8 +51,8 @@ impl Default for Cache {
 // ---------------------------------------- WEB API CLIENT ----------------------------
 #[allow(dead_code)]
 pub struct WebApiClient {
-    client: AuthCodePkceSpotify,
-    cache: Cache
+    pub client: AuthCodePkceSpotify,
+    pub cache: Cache
 }
 
 impl WebApiClient {

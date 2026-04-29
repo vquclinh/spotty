@@ -3,3 +3,4 @@
 .spotify_token_cache.json
 /*.log
 /*.txt
+.spotty_cache/

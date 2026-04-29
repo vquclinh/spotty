@@ -4,6 +4,8 @@ use crate::network::models::{
 
 #[derive(Clone, Debug)]
 pub enum PlayerRequest {
+    Play(String),
+    PlayContext(String),
     TogglePlayback(bool),
     NextTrack,
     PreviousTrack,

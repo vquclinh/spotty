@@ -11,6 +11,8 @@ use crate::app::library_state::*;
 use crate::network::models::*;
 use crate::network::request::ClientRequest;
 
+use crate::audio::events::*;
+
 // Global/non route-specific data will be stored in app
 pub struct App {
     pub route: Route,
@@ -18,6 +20,7 @@ pub struct App {
     pub history: Vec<(Route, ActiveBlock)>, // store history about Route and ActiveBlock
 
     pub network_tx: mpsc::UnboundedSender<ClientRequest>, // the bridge between UI and Network
+    pub audio_event_rx: mpsc::UnboundedReceiver<AudioEvent>,
     pub shared_state: SharedState,
 
     pub user: User,
@@ -34,6 +37,7 @@ pub struct App {
 impl App {
     pub fn new(
         network_tx: mpsc::UnboundedSender<ClientRequest>,
+        audio_event_rx: mpsc::UnboundedReceiver<AudioEvent>,
         shared_state: SharedState,
     ) -> Self {
         // At initialization, send a request to get current playback and playlists
@@ -49,6 +53,7 @@ impl App {
             should_quit: false,
 
             network_tx,
+            audio_event_rx,
             shared_state,
 
             user: User::default(),
@@ -118,9 +123,47 @@ impl App {
             self.set_current_route(next_route);
         }
 
-        // Increment progress locally
-        if let Some(playback) = &mut self.playback && playback.is_playing {
-            playback.progress += tick_rate;
+        // update progress
+        while let Ok(event) = self.audio_event_rx.try_recv() {
+            match event {
+                AudioEvent::Changed { .. } => {
+                    if let Some(pb) = &mut self.playback {
+                        pb.progress = Duration::from_millis(0);
+                    }
+                }
+
+                AudioEvent::Playing { position_ms, .. } => {
+                    if let Some(pb) = &mut self.playback {
+                        pb.is_playing = true;
+                        pb.progress = Duration::from_millis(position_ms as u64);
+                    }
+                }
+
+                AudioEvent::Paused { position_ms, .. } => {
+                    if let Some(pb) = &mut self.playback {
+                        pb.is_playing = false;
+                        pb.progress = Duration::from_millis(position_ms as u64);
+                    }
+                }
+
+                AudioEvent::EndOfTrack { .. } => {
+                    if let Some(pb) = &mut self.playback {
+                        pb.is_playing = false;
+                    }
+                }
+            }
+        }
+
+        if let Some(playback) = &mut self.playback {
+            if playback.is_playing {
+                playback.progress += tick_rate;
+
+                if let Some(PlayableItem::Track(t)) = &playback.item {
+                    if playback.progress > t.duration {
+                        playback.progress = t.duration;
+                    }
+                }
+            }
         }
 
         self.sync_data();
