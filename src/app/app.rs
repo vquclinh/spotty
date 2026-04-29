@@ -39,7 +39,7 @@ impl App {
         // At initialization, send a request to get current playback and playlists
         let _ = network_tx.send(ClientRequest::GetCurrentUser);
         let _ = network_tx.send(ClientRequest::GetCurrentPlayback);
-        let _ = network_tx.send(ClientRequest::GetUserPlaylists);
+        let _ = network_tx.send(ClientRequest::GetUserPlaylists { limit: 50, offset: 0 });
 
         Self {
             route: Route::Splash(SplashState::new()),
@@ -76,7 +76,7 @@ impl App {
             Route::Home(state) => {
                 match state.active_tab {
                     HomeTab::RecentlyPlayed => {
-                        let _ = self.network_tx.send(ClientRequest::GetRecentlyPlayed { limit: 15, offset: 0 });
+                        let _ = self.network_tx.send(ClientRequest::GetRecentlyPlayed { limit: 15, after: None });
                     }
                     HomeTab::TopTracks => {
                         let _ = self.network_tx.send(ClientRequest::GetUserTopTracks { time_range: TimeRange::ShortTerm, limit: 15, offset: 0 });
@@ -137,29 +137,29 @@ impl App {
                 self.playback = Some(playback);
             }
 
-            if !shared_state.playlists.is_empty() {
-                self.playlists_menu.items = shared_state.playlists.drain(..).collect();
+            if !shared_state.playlists.items.is_empty() {
+                self.playlists_menu.items = shared_state.playlists.items.drain(..).collect();
             }
 
             match &mut self.route {
                 Route::Home(home_state) => {
 
-                    if !shared_state.recent_tracks.is_empty() {
-                        home_state.recent_tracks.items = shared_state.recent_tracks.drain(..).collect();
+                    if !shared_state.recent_tracks.items.is_empty() {
+                        home_state.recent_tracks.items = shared_state.recent_tracks.items.drain(..).collect();
                     }
 
-                    if !shared_state.top_tracks.is_empty() {
-                        home_state.top_tracks.items = shared_state.top_tracks.drain(..).collect();
+                    if !shared_state.top_tracks.items.is_empty() {
+                        home_state.top_tracks.items = shared_state.top_tracks.items.drain(..).collect();
                     }
 
-                    if !shared_state.top_artists.is_empty() {
-                        home_state.top_artists.items = shared_state.top_artists.drain(..).collect();
+                    if !shared_state.top_artists.items.is_empty() {
+                        home_state.top_artists.items = shared_state.top_artists.items.drain(..).collect();
                     }
                 }
 
                 Route::PlaylistDetail(playlist_state) => {
-                    if !shared_state.playlist_items.is_empty() {
-                        playlist_state.tracks.items = shared_state.playlist_items.drain(..).collect();
+                    if !shared_state.playlist_items.items.is_empty() {
+                        playlist_state.tracks.items = shared_state.playlist_items.items.drain(..).collect();
                     }
                 }
 
@@ -216,26 +216,26 @@ impl App {
                 }
 
                 Route::LikedSongs(like_songs_state) => {
-                    if !shared_state.liked_songs.is_empty() {
-                        like_songs_state.tracks.items = shared_state.liked_songs.drain(..).collect();
+                    if !shared_state.liked_songs.items.is_empty() {
+                        like_songs_state.tracks.items = shared_state.liked_songs.items.drain(..).collect();
                     }
                 }
 
                 Route::SavedAlbums(saved_albums_state) => {
-                    if !shared_state.saved_albums.is_empty() {
-                        saved_albums_state.albums.items = shared_state.saved_albums.drain(..).collect();
+                    if !shared_state.saved_albums.items.is_empty() {
+                        saved_albums_state.albums.items = shared_state.saved_albums.items.drain(..).collect();
                     }
                 }
 
                 Route::SavedArtists(saved_artists_state) => {
-                    if !shared_state.saved_artists.is_empty() {
-                        saved_artists_state.artists.items = shared_state.saved_artists.drain(..).collect();
+                    if !shared_state.saved_artists.items.is_empty() {
+                        saved_artists_state.artists.items = shared_state.saved_artists.items.drain(..).collect();
                     }
                 }
 
                 Route::SavedPodcasts(saved_podcasts_state) => {
-                    if !shared_state.saved_podcasts.is_empty() {
-                        saved_podcasts_state.podcasts.items = shared_state.saved_podcasts.drain(..).collect();
+                    if !shared_state.saved_podcasts.items.is_empty() {
+                        saved_podcasts_state.podcasts.items = shared_state.saved_podcasts.items.drain(..).collect();
                     }
                 }
 

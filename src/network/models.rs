@@ -70,7 +70,7 @@ pub struct Track {
     pub explicit: bool,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Default)]
 pub struct Episode {
     pub id: String,
     pub uri: String,
@@ -184,6 +184,14 @@ impl PlayableItem {
     }
 }
 
+impl Default for PlayableItem {
+    fn default() -> Self {
+        Self::Track(
+            Track::default()
+        )
+    }
+}
+
 // ----------------------------------------- Search Item --------------------------------
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SearchType {
@@ -293,5 +301,21 @@ impl<'de, T: DeserializeOwned> Deserialize<'de> for Page<T> {
             next: val.get("next").and_then(Value::as_str).map(String::from),
             after,
         })
+    }
+}
+
+impl<T> Page<T> {
+    pub fn map<U, F>(self, f: F) -> Page<U>
+    where
+        F: FnMut(T) -> U,
+    {
+        Page {
+            items: self.items.into_iter().map(f).collect(),
+            total: self.total,
+            offset: self.offset,
+            limit: self.limit,
+            next: self.next,
+            after: self.after,
+        }
     }
 }
