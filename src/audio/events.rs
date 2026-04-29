@@ -52,6 +52,15 @@ impl AudioEvent {
                 Some(Self::EndOfTrack { uri })
             }
 
+            LibrespotEvent::Seeked {
+                track_id,
+                position_ms,
+                ..
+            } => {
+                let uri = spotify_uri_to_string(&track_id)?;
+                Some(Self::Playing { uri, position_ms })
+            }
+
             _ => None,
         }
     }
