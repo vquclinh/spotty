@@ -8,7 +8,6 @@ use super::{global, home, playlist};
 use crate::app::types::MenuAction;
 
 use crate::app::album_state::AlbumState;
-use crate::audio::player::*;
 
 pub fn handle_key_events(key: KeyEvent, app: &mut App) {
     if app.show_help {

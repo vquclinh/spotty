@@ -43,7 +43,7 @@ pub async fn run() -> Result<()> {
 
     let (network_tx, network_rx) = mpsc::unbounded_channel::<ClientRequest>();
     let (audio_cmd_tx, audio_cmd_rx) = mpsc::unbounded_channel::<AudioCommand>();
-    let (audio_event_tx, mut audio_event_rx) = mpsc::unbounded_channel::<AudioEvent>();
+    let (audio_event_tx, audio_event_rx) = mpsc::unbounded_channel::<AudioEvent>();
 
     let spotify_client = WebApiClient::new(Some(1800)).await?;
 
