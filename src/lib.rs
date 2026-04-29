@@ -18,7 +18,7 @@ use ratatui::{
 use std::{io, panic, time::{Duration, Instant}};
 
 use handlers::handle_key_events;
-use anyhow::{Result, Context};
+use anyhow::Result;
 
 use std::sync::{Arc, Mutex};
 
@@ -31,7 +31,6 @@ use crate::audio::events::*;
 use crate::audio::player::*;
 
 use crate::app::state::IoSharedState;
-use librespot_oauth::OAuthClientBuilder;
 
 pub async fn run() -> Result<()> {
     // when app crash, call disable_raw_mode()
@@ -47,54 +46,8 @@ pub async fn run() -> Result<()> {
 
     let spotify_client = WebApiClient::new(Some(1800)).await?;
 
-    // construct session
-    let cache_dir = std::path::Path::new(".spotty_cache");
-    if !cache_dir.exists() {
-        let _ = std::fs::create_dir_all(cache_dir);
-    }
-    
-    let cache = librespot_core::cache::Cache::new(
-        Some(cache_dir),
-        Some(cache_dir),
-        Some(cache_dir),
-        None,
-    ).context("Failed to create librespot cache")?;
+    let (session, credentials) = crate::audio::auth::get_audio_session()?;
 
-    let credentials = match cache.credentials() {
-        Some(creds) => {
-            creds
-        }
-        None => {
-            let oauth_client = OAuthClientBuilder::new(
-                "2c51a156a0a649b88bf852b12feedf7b",
-                "http://127.0.0.1:8888/callback",
-                vec![
-                    "streaming",
-                    "user-read-playback-state",
-                    "user-modify-playback-state",
-                    "user-read-currently-playing",
-                    "app-remote-control",
-                ],
-            )
-            .open_in_browser()
-            .build()
-            .context("Failed to build OAuth client")?;
-
-            let token = oauth_client
-                .get_access_token()
-                .context("Failed to get access token")?;
-            
-            librespot_core::authentication::Credentials::with_access_token(
-                token.access_token,
-            )
-        }
-    };
-    
-    let session = librespot_core::session::Session::new(
-        librespot_core::config::SessionConfig::default(),
-        Some(cache),
-    );
- 
     // shared_state
     let shared_state = Arc::new(Mutex::new(IoSharedState::default()));
     
