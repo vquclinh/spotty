@@ -123,9 +123,43 @@ impl App {
             self.set_current_route(next_route);
         }
 
-        // Increment progress locally
-        if let Some(playback) = &mut self.playback && playback.is_playing {
-            playback.progress += tick_rate;
+        // update progress
+        while let Ok(event) = self.audio_event_rx.try_recv() {
+            match event {
+                AudioEvent::Changed { .. } => {
+                    if let Some(pb) = &mut self.playback {
+                        pb.progress = Duration::from_millis(0);
+                    }
+                }
+
+                AudioEvent::Playing { position_ms, .. } => {
+                    if let Some(pb) = &mut self.playback {
+                        pb.is_playing = true;
+                        pb.progress = Duration::from_millis(position_ms as u64);
+                    }
+                }
+
+                AudioEvent::Paused { position_ms, .. } => {
+                    if let Some(pb) = &mut self.playback {
+                        pb.is_playing = false;
+                        pb.progress = Duration::from_millis(position_ms as u64);
+                    }
+                }
+                
+                _ => {}
+            }
+        }
+
+        if let Some(playback) = &mut self.playback {
+            if playback.is_playing {
+                playback.progress += tick_rate;
+
+                if let Some(PlayableItem::Track(t)) = &playback.item {
+                    if playback.progress > t.duration {
+                        playback.progress = t.duration;
+                    }
+                }
+            }
         }
 
         self.sync_data();

@@ -96,7 +96,9 @@ pub async fn start_audio_worker(
                             }
                         }
                     }
-                    _ => {}
+                    AudioEvent::EndOfTrack { .. } => {
+                        let _ = net_tx.send(ClientRequest::GetCurrentPlayback);
+                    }
                 }
 
                 // send signal to ui immediately (sth like change track for lyrics page)
