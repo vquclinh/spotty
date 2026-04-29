@@ -90,7 +90,7 @@ pub async fn run() -> Result<()> {
         }
 
         if last_tick.elapsed() >= tick_rate {
-            app.on_tick(timeout);
+            app.on_tick(last_tick.elapsed());
 
             last_tick = Instant::now();
         }

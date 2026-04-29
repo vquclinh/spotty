@@ -145,8 +145,12 @@ impl App {
                         pb.progress = Duration::from_millis(position_ms as u64);
                     }
                 }
-                
-                _ => {}
+
+                AudioEvent::EndOfTrack { .. } => {
+                    if let Some(pb) = &mut self.playback {
+                        pb.is_playing = false;
+                    }
+                }
             }
         }
 
