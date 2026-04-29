@@ -22,6 +22,8 @@ pub async fn create_auth_client() -> Result<AuthCodePkceSpotify> {
             "user-read-playback-state",
             "user-modify-playback-state",
             "user-read-currently-playing",
+            "user-read-private",
+            "user-read-email",
             // Playback
             "app-remote-control",
             "streaming",

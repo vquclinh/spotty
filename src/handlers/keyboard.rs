@@ -8,6 +8,7 @@ use super::{global, home, playlist};
 use crate::app::types::MenuAction;
 
 use crate::app::album_state::AlbumState;
+use crate::audio::player::*;
 
 pub fn handle_key_events(key: KeyEvent, app: &mut App) {
     if app.show_help {
@@ -125,7 +126,14 @@ fn execute_action_menu_command(app: &mut App) -> bool {
         
         match action {
             MenuAction::PlayNow => {
-                // TODO
+                if let Some(u) = uri {
+                    let player_req = match target {
+                        MenuTarget::Track(_) | MenuTarget::Episode(_) => PlayerRequest::Play(u),
+                        MenuTarget::Album(_) | MenuTarget::Playlist(_) | MenuTarget::Artist(_) => PlayerRequest::PlayContext(u),
+                    };
+                    
+                    let _ = app.network_tx.send(ClientRequest::Player(player_req));
+                }
                 true
             }
             MenuAction::AddToQueue => {
