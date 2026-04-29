@@ -78,7 +78,11 @@ pub async fn start_audio_worker(
             if let Some(app_event) = AudioEvent::from_librespot(raw_event) {
                 match &app_event {
                     AudioEvent::Changed { .. } => {
-                        let _ = net_tx.send(ClientRequest::GetCurrentPlayback);
+                        let net_tx_clone = net_tx.clone();
+                        tokio::spawn(async move {
+                            tokio::time::sleep(Duration::from_millis(500)).await;
+                            let _ = net_tx_clone.send(ClientRequest::GetCurrentPlayback);
+                        });
                     }
                     AudioEvent::Playing { position_ms, .. } => {
                         if let Ok(mut state) = state_for_events.lock() {
@@ -97,7 +101,11 @@ pub async fn start_audio_worker(
                         }
                     }
                     AudioEvent::EndOfTrack { .. } => {
-                        let _ = net_tx.send(ClientRequest::GetCurrentPlayback);
+                        let net_tx_delayed = net_tx.clone();
+                        tokio::spawn(async move {
+                            tokio::time::sleep(Duration::from_millis(500)).await;
+                            let _ = net_tx_delayed.send(ClientRequest::GetCurrentPlayback);
+                        });
                     }
                 }
 
