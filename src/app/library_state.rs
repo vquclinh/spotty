@@ -14,6 +14,8 @@ pub enum LibraryMenuItem {
 pub struct LikedSongsState {
     pub tracks: StatefulTable<Track>,
 
+    pub is_loading: bool,
+    pub is_end: bool,
     pub last_area: Rect,
 }
 
@@ -22,6 +24,8 @@ impl LikedSongsState {
         Self {
             tracks: StatefulTable::with_items(tracks),
 
+            is_loading: false,
+            is_end: false,
             last_area: Rect::default(),
         }
     }
@@ -31,6 +35,8 @@ impl LikedSongsState {
 pub struct SavedAlbumsState {
     pub albums: StatefulTable<Album>,
 
+    pub is_loading: bool,
+    pub is_end: bool,
     pub last_area: Rect,
 }
 
@@ -39,6 +45,8 @@ impl SavedAlbumsState {
         Self {
             albums: StatefulTable::with_items(albums),
 
+            is_loading: false,
+            is_end: false,
             last_area: Rect::default(),
         }
     }
@@ -48,6 +56,8 @@ impl SavedAlbumsState {
 pub struct SavedArtistsState {
     pub artists: StatefulTable<Artist>,
 
+    pub is_loading: bool,
+    pub is_end: bool,
     pub last_area: Rect
 }
 
@@ -56,6 +66,8 @@ impl SavedArtistsState {
         Self {
             artists: StatefulTable::with_items(artists),
 
+            is_loading: false,
+            is_end: false,
             last_area: Rect::default(),
         }
     }
@@ -65,6 +77,8 @@ impl SavedArtistsState {
 pub struct SavedPodcastsState {
     pub podcasts: StatefulTable<Episode>,
 
+    pub is_loading: bool,
+    pub is_end: bool,
     pub last_area: Rect
 }
 
@@ -73,6 +87,8 @@ impl SavedPodcastsState {
         Self {
             podcasts: StatefulTable::with_items(podcasts),
 
+            is_loading: false,
+            is_end: false,
             last_area: Rect::default(),
         }
     }

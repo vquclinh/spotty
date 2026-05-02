@@ -23,7 +23,7 @@ use anyhow::Result;
 use std::sync::{Arc, Mutex};
 
 use tokio::sync::mpsc;
-use crate::network::client::WebApiClient;
+use crate::network::client::SpotifyClient;
 use crate::network::request::ClientRequest;
 use crate::network::handler::start_network_worker;
 
@@ -44,26 +44,26 @@ pub async fn run() -> Result<()> {
     let (audio_cmd_tx, audio_cmd_rx) = mpsc::unbounded_channel::<AudioCommand>();
     let (audio_event_tx, audio_event_rx) = mpsc::unbounded_channel::<AudioEvent>();
 
-    let spotify_client = WebApiClient::new(Some(1800)).await?;
-
-    let (session, credentials) = crate::audio::auth::get_audio_session()?;
+    let spotify_client = Arc::new(SpotifyClient::new(Some(1800)).await?);
 
     // shared_state
     let shared_state = Arc::new(Mutex::new(IoSharedState::default()));
     
     // network
+    let network_client = Arc::clone(&spotify_client);
     let audio_cmd_tx_for_net = audio_cmd_tx.clone();
     let network_shared_state = Arc::clone(&shared_state);
     
     tokio::spawn(async move {
-        start_network_worker(spotify_client, network_rx, audio_cmd_tx_for_net, network_shared_state).await;   
+        start_network_worker(network_client, network_rx, audio_cmd_tx_for_net, network_shared_state).await;   
     });
 
     // audio
+    let network_client = Arc::clone(&spotify_client);
     let net_tx_for_audio = network_tx.clone();
     let audio_shared_state = Arc::clone(&shared_state);
     tokio::spawn(async move {
-        if let Err(e) = start_audio_worker(session, credentials, audio_cmd_rx, audio_event_tx, net_tx_for_audio, audio_shared_state).await {
+        if let Err(e) = start_audio_worker(network_client, audio_cmd_rx, audio_event_tx, net_tx_for_audio, audio_shared_state).await {
             let _ = std::fs::write("audio_crash.log", format!("Audio Worker crash:\n{:#?}", e));
         }
     });

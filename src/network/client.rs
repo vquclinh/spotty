@@ -1,6 +1,8 @@
 use super::auth;
 use super::models::*;
 use super::helper;
+use crate::audio::auth::get_audio_session;
+use rspotify::prelude::BaseClient;
 use rspotify::{
     AuthCodePkceSpotify,
 };
@@ -50,19 +52,36 @@ impl Default for Cache {
 
 // ---------------------------------------- WEB API CLIENT ----------------------------
 #[allow(dead_code)]
-pub struct WebApiClient {
+pub struct SpotifyClient {
     pub client: AuthCodePkceSpotify,
-    pub cache: Cache
+    pub cache: Cache,
+    pub session: librespot_core::session::Session,
+    pub creds: librespot_core::authentication::Credentials
 }
 
-impl WebApiClient {
+impl SpotifyClient {
     pub async fn new(cache_ttl_sec: Option<u64>) -> Result<Self> {
         let mut client = auth::create_auth_client().await?;
         auth::authenticate(&mut client).await?;
 
+        // Extract the access token from rspotify
+        let token_lock = client.get_token();
+        let lock = token_lock.lock().await.map_err(|_| anyhow::anyhow!("Failed to lock token"))?;
+
+        let access_token = lock
+            .as_ref()
+            .context("No access token available after authentication")?
+            .access_token
+            .clone();
+
+        // Initialize the librespot session with the shared token
+        let (session, creds) = get_audio_session(access_token)?;
+
         Ok(Self {
             client,
-            cache: cache_ttl_sec.map_or(Cache::default(), Cache::new)
+            session,
+            cache: cache_ttl_sec.map_or(Cache::default(), Cache::new),
+            creds
         })
     }
 
@@ -80,15 +99,16 @@ impl WebApiClient {
             .await.map(|r| r.data())
     }
 
-    pub async fn get_user_playlists(&self) -> Result<Vec<Playlist>> {
-        // Spotify returns a paging object with an "items" field
-        let data: Value = helper::get(&self.client, "me/playlists", &HashMap::new())
-            .await.map(|r| r.data())?;
+    pub async fn get_user_playlists(&self, limit: u32, offset: u32) -> Result<Page<Playlist>> {
+        let limit = limit.clamp(1, 50).to_string();
+        let offset = offset.to_string();
+        let params = HashMap::from([
+            ("limit", limit.as_str()),
+            ("offset", offset.as_str())
+        ]);
 
-        let playlists = serde_json::from_value(data["items"].clone())
-            .context("Failed to parse playlists items")?;
-
-        Ok(playlists)
+        helper::get(&self.client, "me/playlists", &params)
+            .await.map(|r| r.data())
     }
 
     pub async fn get_queue(&self) -> Result<QueueResponse> {
@@ -101,7 +121,7 @@ impl WebApiClient {
         Ok(queue_res)
     }
 
-    pub async fn get_playlist_items(&self, id: &str, limit: u32, offset: u32) -> Result<Vec<PlayableItem>> {
+    pub async fn get_playlist_items(&self, id: &str, limit: u32, offset: u32) -> Result<Page<PlayableItem>> {
         let endpoint = format!("playlists/{}/items", id);
         let limit = limit.clamp(1, 50).to_string();
         let offset = offset.to_string();
@@ -111,73 +131,65 @@ impl WebApiClient {
         ]);
 
         let data: Value = helper::get(&self.client, &endpoint, &params).await?.data();
+        let raw_page: Page<Value> = serde_json::from_value(data)?;
 
-        let items: Vec<PlayableItem> = data["items"]
-            .as_array()
-            .unwrap_or(&vec![])
-            .iter()
-            .filter_map(|wrapper| {
-                let target = wrapper.get("track")
-                    .or_else(|| wrapper.get("item"))
-                    .filter(|v| !v.is_null())?;
+        Ok(raw_page.map(|val| {
+            let inner = val.get("track")
+                .or(val.get("item"))
+                .cloned()
+                .unwrap_or(val);
 
-                serde_json::from_value::<PlayableItem>(target.clone()).ok()
-            })
-            .collect();
-
-        Ok(items)
+            serde_json::from_value(inner).unwrap_or_default()
+        }))
     }
 
-    pub async fn get_user_top_tracks(&self, time_range: TimeRange, limit: u32, offset: u32) -> Result<Vec<Track>> {
+    pub async fn get_user_top_tracks(&self, time_range: TimeRange, limit: u32, offset: u32) -> Result<Page<Track>> {
         let limit = limit.clamp(1, 50).to_string();
         let offset = offset.to_string();
-        let params = HashMap::<&str, &str>::from([
+        let params = HashMap::from([
             ("limit", limit.as_str()),
             ("offset", offset.as_str()),
             ("time_range", time_range.as_str())
         ]);
 
-        let data: Value = helper::get(&self.client, "me/top/tracks", &params)
-            .await?.data();
-        let tracks = serde_json::from_value(data["items"].clone())?;
-        Ok(tracks)
+        helper::get(&self.client, "me/top/tracks", &params)
+            .await.map(|r| r.data())
     }
 
-    pub async fn get_user_top_artists(&self, time_range: TimeRange, limit: u32, offset: u32) -> Result<Vec<Artist>> {
+    pub async fn get_user_top_artists(&self, time_range: TimeRange, limit: u32, offset: u32) -> Result<Page<Artist>> {
         let limit = limit.clamp(1, 50).to_string();
         let offset = offset.to_string();
-        let params = HashMap::<&str, &str>::from([
+        let params = HashMap::from([
             ("limit", limit.as_str()),
             ("offset", offset.as_str()),
             ("time_range", time_range.as_str())
         ]);
 
-        let data: Value = helper::get(&self.client, "me/top/artists", &params)
-            .await?.data();
-        let artists = serde_json::from_value(data["items"].clone())?;
-        Ok(artists)
+        helper::get(&self.client, "me/top/artists", &params)
+            .await.map(|r| r.data())
     }
 
-    pub async fn get_recently_played_tracks(&self, limit: u32, offset: u32) -> Result<Vec<Track>> {
+    pub async fn get_recently_played_tracks(&self, limit: u32, after: Option<Duration>) -> Result<Page<Track>> {
         let limit = limit.clamp(1, 50).to_string();
-        let offset = offset.to_string();
-        let params = HashMap::<&str, &str>::from([
+        let mut params = HashMap::<&str, &str>::from([
             ("limit", limit.as_str()),
-            ("offset", offset.as_str())
         ]);
 
-        let data: Value = helper::get(&self.client, "me/player/recently-played", &params)
+        let after_ms;
+        if let Some(ts) = after {
+            after_ms = ts.as_millis().to_string();
+            params.insert("after", after_ms.as_str());
+        }
+
+        #[derive(Deserialize)]
+        struct RecentTrack {
+            track: Track,
+        }
+
+        let res: Page<RecentTrack> = helper::get(&self.client, "me/player/recently-played", &params)
             .await?.data();
 
-        // Recently played items are nested under { track: { ... } }
-        let tracks = data["items"]
-            .as_array()
-            .unwrap_or(&vec![])
-            .iter()
-            .filter_map(|item| serde_json::from_value(item["track"].clone()).ok())
-            .collect();
-
-        Ok(tracks)
+        Ok(res.map(|rt| rt.track))
     }
 
     pub async fn toggle_playback(&self, playing: bool) -> Result<()> {
@@ -328,17 +340,7 @@ impl WebApiClient {
 
         let res: Page<SavedTrack> = helper::get(&self.client, "me/tracks", &params).await?.data();
 
-        // Destructure to get items and metadata
-        let Page { items, total, offset, limit, next, after } = res;
-
-        Ok(Page {
-            items: items.into_iter().map(|st| st.track).collect(),
-            total,
-            offset,
-            limit,
-            next,
-            after,
-        })
+        Ok(res.map(|st| st.track))
     }
 
     pub async fn get_user_saved_albums(&self, limit: u32, offset: u32) -> Result<Page<Album>> {
@@ -356,16 +358,7 @@ impl WebApiClient {
 
         let res: Page<SavedAlbum> = helper::get(&self.client, "me/albums", &params).await?.data();
 
-        let Page { items, total, offset, limit, next, after } = res;
-
-        Ok(Page {
-            items: items.into_iter().map(|st| st.album).collect(),
-            total,
-            offset,
-            limit,
-            next,
-            after,
-        })
+        Ok(res.map(|sa| sa.album))
     }
 
     pub async fn get_user_saved_artists(&self, limit: u32, after: Option<&str>) -> Result<Page<Artist>> {
@@ -374,7 +367,7 @@ impl WebApiClient {
             ("type", "artist"),
             ("limit", limit.as_str()),
         ]);
-        if let Some(ref cursor) = after {
+        if let Some(cursor) = after {
             params.insert("after", cursor);
         }
         
@@ -403,15 +396,6 @@ impl WebApiClient {
 
         let res: Page<SavedEpisode> = helper::get(&self.client, "me/episodes", &params).await?.data();
 
-        let Page { items, total, offset, limit, next, after } = res;
-
-        Ok(Page {
-            items: items.into_iter().map(|st| st.episode).collect(),
-            total,
-            offset,
-            limit,
-            next,
-            after,
-        })
+        Ok(res.map(|se| se.episode))
     }
 }

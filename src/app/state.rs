@@ -1,24 +1,49 @@
 use std::sync::{Arc, Mutex};
 use crate::network::models::*;
 
+#[derive(Default)]
+pub struct DataPayload<T> {
+    pub items: Vec<T>,
+    pub is_end: bool,
+    pub should_append: bool
+}
+
+impl<T> DataPayload<T> {
+    pub fn clear(&mut self) {
+        self.items.clear();
+        self.is_end = false;
+        self.should_append = true;
+    }
+}
+
+impl<T> From<Page<T>> for DataPayload<T> {
+    fn from(page: Page<T>) -> Self {
+        Self {
+            items: page.items,
+            is_end: page.next.is_none() && page.after.is_none(),
+            should_append: page.offset.unwrap_or(0) != 0
+        }
+    }
+}
+
 // Stores unified network data
 #[derive(Default)]
 pub struct IoSharedState {
     pub user: User,
     
-    pub playlists: Vec<Playlist>,
+    pub playlists: DataPayload<Playlist>,
     pub playback: Option<Playback>,
 
     // home-state
-    pub recent_tracks: Vec<Track>,
-    pub top_tracks: Vec<Track>,
-    pub top_artists: Vec<Artist>,
+    pub recent_tracks: DataPayload<Track>,
+    pub top_tracks: DataPayload<Track>,
+    pub top_artists: DataPayload<Artist>,
 
     // playlist-detail-state
-    pub playlist_items: Vec<PlayableItem>,
-    pub playlist_tracks: Vec<Track>,
+    pub playlist_items: DataPayload<PlayableItem>,
 
     // search-results
+    // TODO: Handle paging for search result, this currently holds normal vector
     pub search_results: SearchResult,
 
     // queue-state
@@ -31,10 +56,10 @@ pub struct IoSharedState {
     pub playback_state: Option<Playback>,
 
     // library state
-    pub liked_songs: Vec<Track>,
-    pub saved_albums: Vec<Album>,
-    pub saved_artists: Vec<Artist>,
-    pub saved_podcasts: Vec<Episode>
+    pub liked_songs: DataPayload<Track>,
+    pub saved_albums: DataPayload<Album>,
+    pub saved_artists: DataPayload<Artist>,
+    pub saved_podcasts: DataPayload<Episode>
 }
 
 // SharedState uses Arc and Mutex to ensure thread-safe,

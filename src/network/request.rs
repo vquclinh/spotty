@@ -1,6 +1,7 @@
 use crate::network::models::{
     TimeRange, SearchType, RepeatState
 };
+use std::time::Duration;
 
 #[derive(Clone, Debug)]
 pub enum PlayerRequest {
@@ -20,7 +21,12 @@ pub enum PlayerRequest {
 pub enum ClientRequest {
     GetCurrentUser,
     GetCurrentPlayback,
-    GetUserPlaylists,
+
+    GetUserPlaylists {
+        limit: u32,
+        offset: u32
+    },
+
     GetQueue,
 
     GetPlaylistItems {
@@ -43,7 +49,7 @@ pub enum ClientRequest {
 
     GetRecentlyPlayed {
         limit: u32,
-        offset: u32,
+        after: Option<Duration>
     },
 
     SearchItems {

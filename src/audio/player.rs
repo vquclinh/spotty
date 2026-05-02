@@ -1,8 +1,6 @@
 use anyhow::Context;
 use librespot_connect::{ConnectConfig, Spirc, LoadRequest, LoadRequestOptions};
-use librespot_core::authentication::Credentials;
 use librespot_core::config::DeviceType;
-use librespot_core::Session;
 use librespot_playback::audio_backend;
 use librespot_playback::config::{AudioFormat, Bitrate, PlayerConfig};
 use librespot_playback::mixer::{softmixer::SoftMixer, Mixer, MixerConfig};
@@ -12,6 +10,7 @@ use std::time::Duration;
 use tokio::sync::mpsc;
 
 use crate::app::state::SharedState;
+use crate::network::client::SpotifyClient;
 use super::events::AudioEvent;
 use crate::network::request::ClientRequest;
 
@@ -38,8 +37,7 @@ pub fn percent_to_librespot_volume(percent: u8) -> u16 {
 
 // start_audio_worker
 pub async fn start_audio_worker(
-    session: Session, // librespot session
-    creds: Credentials,
+    client: Arc<SpotifyClient>,
     mut cmd_rx: mpsc::UnboundedReceiver<AudioCommand>, // receive from UI
     event_tx: mpsc::UnboundedSender<AudioEvent>, // send event signal to UI
     net_tx: mpsc::UnboundedSender<ClientRequest>, // send request fetch API to network
@@ -61,7 +59,7 @@ pub async fn start_audio_worker(
 
     let player = Player::new(
         player_config,
-        session.clone(),
+        client.session.clone(),
         mixer.get_soft_volume(),
         move || backend(None, AudioFormat::default()),
     );
@@ -125,7 +123,7 @@ pub async fn start_audio_worker(
         volume_steps: 64,
     };
 
-    let (spirc, spirc_task) = Spirc::new(connect_config, session, creds, player, mixer.clone())
+    let (spirc, spirc_task) = Spirc::new(connect_config, client.session.clone(), client.creds.clone(), player, mixer.clone())
         .await
         .map_err(|e| anyhow::anyhow!("Failed to initialize Spirc: {e:#}"))?;
 
