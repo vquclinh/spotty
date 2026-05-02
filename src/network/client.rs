@@ -1,6 +1,8 @@
 use super::auth;
 use super::models::*;
 use super::helper;
+use crate::audio::auth::get_audio_session;
+use rspotify::prelude::BaseClient;
 use rspotify::{
     AuthCodePkceSpotify,
 };
@@ -50,19 +52,36 @@ impl Default for Cache {
 
 // ---------------------------------------- WEB API CLIENT ----------------------------
 #[allow(dead_code)]
-pub struct WebApiClient {
+pub struct SpotifyClient {
     pub client: AuthCodePkceSpotify,
-    pub cache: Cache
+    pub cache: Cache,
+    pub session: librespot_core::session::Session,
+    pub creds: librespot_core::authentication::Credentials
 }
 
-impl WebApiClient {
+impl SpotifyClient {
     pub async fn new(cache_ttl_sec: Option<u64>) -> Result<Self> {
         let mut client = auth::create_auth_client().await?;
         auth::authenticate(&mut client).await?;
 
+        // Extract the access token from rspotify
+        let token_lock = client.get_token();
+        let lock = token_lock.lock().await.map_err(|_| anyhow::anyhow!("Failed to lock token"))?;
+
+        let access_token = lock
+            .as_ref()
+            .context("No access token available after authentication")?
+            .access_token
+            .clone();
+
+        // Initialize the librespot session with the shared token
+        let (session, creds) = get_audio_session(access_token)?;
+
         Ok(Self {
             client,
-            cache: cache_ttl_sec.map_or(Cache::default(), Cache::new)
+            session,
+            cache: cache_ttl_sec.map_or(Cache::default(), Cache::new),
+            creds
         })
     }
 

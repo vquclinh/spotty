@@ -1,13 +1,14 @@
 use crate::app::state::SharedState;
-use crate::network::client::WebApiClient;
+use crate::network::client::SpotifyClient;
 use crate::network::request::{ClientRequest, PlayerRequest};
 use crate::audio::player::*;
 use tokio::sync::mpsc;
+use std::sync::Arc;
 
 // Match request type and execute it with WebApiClient
 // then store in shared state
 pub async fn start_network_worker(
-    client: WebApiClient,
+    client: Arc<SpotifyClient>,
     mut rx: mpsc::UnboundedReceiver<ClientRequest>,
     audio_tx: mpsc::UnboundedSender<AudioCommand>,
     shared_state: SharedState,

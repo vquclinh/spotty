@@ -242,18 +242,12 @@ impl App {
                         }
                         if let Some(page) = shared_state.search_results.artists.take() {
                             assign_or_append_payload(&mut search_state.artists_state.list.items, &mut page.into());
-                            search_state.artists_state.is_loading = false;
-                            search_state.artists_state.is_end = true;
                         }
                         if let Some(page) = shared_state.search_results.albums.take() {
                             assign_or_append_payload(&mut search_state.albums_state.list.items, &mut page.into());
-                            search_state.albums_state.is_loading = false;
-                            search_state.albums_state.is_end = true;
                         }
                         if let Some(page) = shared_state.search_results.playlists.take() {
                             assign_or_append_payload(&mut search_state.playlists_state.list.items, &mut page.into());
-                            search_state.playlists_state.is_loading = false;
-                            search_state.playlists_state.is_end = true;
                         }
                     }
                 }
