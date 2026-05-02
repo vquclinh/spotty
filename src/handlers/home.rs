@@ -10,17 +10,28 @@ pub fn handle_home_events(key: KeyEvent, app: &mut App) {
         match key.code {
             KeyCode::Char('1') => {
                 home_state.active_tab = HomeTab::TopTracks;
-                let _ = network_tx.send(ClientRequest::GetUserTopTracks { time_range: TimeRange::ShortTerm, limit: 15, offset: 0 });
-            },
+                let _ = network_tx.send(ClientRequest::GetUserTopTracks {
+                    time_range: TimeRange::ShortTerm,
+                    limit: app.page_limit,
+                    offset: 0,
+                });
+            }
             KeyCode::Char('2') => {
                 home_state.active_tab = HomeTab::TopArtists;
-                let _ = network_tx.send(ClientRequest::GetUserTopArtists { time_range: TimeRange::ShortTerm, limit: 15, offset: 0 });
-            },
+                let _ = network_tx.send(ClientRequest::GetUserTopArtists {
+                    time_range: TimeRange::ShortTerm,
+                    limit: app.page_limit,
+                    offset: 0,
+                });
+            }
             KeyCode::Char('3') => {
                 home_state.active_tab = HomeTab::RecentlyPlayed;
-                let _ = network_tx.send(ClientRequest::GetRecentlyPlayed { limit: 15, after: None });
-            },
-            
+                let _ = network_tx.send(ClientRequest::GetRecentlyPlayed {
+                    limit: app.page_limit,
+                    after: None,
+                });
+            }
+
             KeyCode::Right | KeyCode::Char('l') => {
                 home_state.active_tab = match home_state.active_tab {
                     HomeTab::TopTracks => HomeTab::TopArtists,
@@ -28,9 +39,26 @@ pub fn handle_home_events(key: KeyEvent, app: &mut App) {
                     HomeTab::RecentlyPlayed => HomeTab::TopTracks,
                 };
                 match home_state.active_tab {
-                    HomeTab::TopTracks => { let _ = network_tx.send(ClientRequest::GetUserTopTracks { time_range: TimeRange::ShortTerm, limit: 15, offset: 0 }); }
-                    HomeTab::RecentlyPlayed => { let _ = network_tx.send(ClientRequest::GetRecentlyPlayed { limit: 15, after: None }); }
-                    HomeTab::TopArtists => { let _ = network_tx.send(ClientRequest::GetUserTopArtists { time_range: TimeRange::ShortTerm, limit: 15, offset: 0 }); }
+                    HomeTab::TopTracks => {
+                        let _ = network_tx.send(ClientRequest::GetUserTopTracks {
+                            time_range: TimeRange::ShortTerm,
+                            limit: app.page_limit,
+                            offset: 0,
+                        });
+                    }
+                    HomeTab::RecentlyPlayed => {
+                        let _ = network_tx.send(ClientRequest::GetRecentlyPlayed {
+                            limit: app.page_limit,
+                            after: None,
+                        });
+                    }
+                    HomeTab::TopArtists => {
+                        let _ = network_tx.send(ClientRequest::GetUserTopArtists {
+                            time_range: TimeRange::ShortTerm,
+                            limit: app.page_limit,
+                            offset: 0,
+                        });
+                    }
                 }
             }
 
@@ -41,36 +69,96 @@ pub fn handle_home_events(key: KeyEvent, app: &mut App) {
                     HomeTab::RecentlyPlayed => HomeTab::TopArtists,
                 };
                 match home_state.active_tab {
-                    HomeTab::TopTracks => { let _ = network_tx.send(ClientRequest::GetUserTopTracks { time_range: TimeRange::ShortTerm, limit: 15, offset: 0 }); }
-                    HomeTab::RecentlyPlayed => { let _ = network_tx.send(ClientRequest::GetRecentlyPlayed { limit: 15, after: None }); }
-                    HomeTab::TopArtists => { let _ = network_tx.send(ClientRequest::GetUserTopArtists { time_range: TimeRange::ShortTerm, limit: 15, offset: 0 }); }
+                    HomeTab::TopTracks => {
+                        let _ = network_tx.send(ClientRequest::GetUserTopTracks {
+                            time_range: TimeRange::ShortTerm,
+                            limit: app.page_limit,
+                            offset: 0,
+                        });
+                    }
+                    HomeTab::RecentlyPlayed => {
+                        let _ = network_tx.send(ClientRequest::GetRecentlyPlayed {
+                            limit: app.page_limit,
+                            after: None,
+                        });
+                    }
+                    HomeTab::TopArtists => {
+                        let _ = network_tx.send(ClientRequest::GetUserTopArtists {
+                            time_range: TimeRange::ShortTerm,
+                            limit: app.page_limit,
+                            offset: 0,
+                        });
+                    }
                 }
             }
 
             KeyCode::Down | KeyCode::Char('j') => {
+                let threshold = 20;
+
                 match home_state.active_tab {
-                    HomeTab::TopTracks => home_state.top_tracks.next(false),
-                    HomeTab::TopArtists => home_state.top_artists.next(false),
-                    HomeTab::RecentlyPlayed => home_state.recent_tracks.next(false),
+                    HomeTab::TopTracks => {
+                        home_state.top_tracks.list.next(false);
+
+                        if let Some(selected) = home_state.top_tracks.list.state.selected()
+                            && home_state.top_tracks.list.items.len() - selected <= threshold
+                            && !home_state.top_tracks.is_loading
+                            && !home_state.top_tracks.is_end
+                        {
+                            let _ = network_tx.send(ClientRequest::GetUserTopTracks {
+                                time_range: TimeRange::ShortTerm,
+                                limit: app.page_limit,
+                                offset: home_state.top_tracks.list.items.len() as u32,
+                            });
+                            home_state.top_tracks.is_loading = true;
+                        }
+                    }
+                    HomeTab::TopArtists => {
+                        home_state.top_artists.list.next(false);
+
+                        if let Some(selected) = home_state.top_artists.list.state.selected()
+                            && home_state.top_artists.list.items.len() - selected <= threshold
+                            && !home_state.top_artists.is_loading
+                            && !home_state.top_artists.is_end
+                        {
+                            let _ = network_tx.send(ClientRequest::GetUserTopArtists {
+                                time_range: TimeRange::ShortTerm,
+                                limit: app.page_limit,
+                                offset: home_state.top_artists.list.items.len() as u32,
+                            });
+                            home_state.top_artists.is_loading = true;
+                        }
+                    }
+                    // Currently this endpoint works with a time-based cursor, while we only
+                    // handle index-based and id-based cursor for now
+                    HomeTab::RecentlyPlayed => home_state.recent_tracks.list.next(false),
                 }
             }
             KeyCode::Up | KeyCode::Char('k') => {
                 match home_state.active_tab {
-                    HomeTab::TopTracks => home_state.top_tracks.previous(false),
-                    HomeTab::TopArtists => home_state.top_artists.previous(false),
-                    HomeTab::RecentlyPlayed => home_state.recent_tracks.previous(false),
+                    HomeTab::TopTracks => home_state.top_tracks.list.previous(false),
+                    HomeTab::TopArtists => home_state.top_artists.list.previous(false),
+                    HomeTab::RecentlyPlayed => home_state.recent_tracks.list.previous(false),
                 }
             }
             KeyCode::Char('t') => {
                 let target = match home_state.active_tab {
-                    HomeTab::TopTracks => home_state.top_tracks.state.selected()
-                        .and_then(|idx| home_state.top_tracks.items.get(idx))
+                    HomeTab::TopTracks => home_state
+                        .top_tracks
+                        .list.state
+                        .selected()
+                        .and_then(|idx| home_state.top_tracks.list.items.get(idx))
                         .map(|t| MenuTarget::Track(t.clone())),
-                    HomeTab::RecentlyPlayed => home_state.recent_tracks.state.selected()
-                        .and_then(|idx| home_state.recent_tracks.items.get(idx))
+                    HomeTab::RecentlyPlayed => home_state
+                        .recent_tracks
+                        .list.state
+                        .selected()
+                        .and_then(|idx| home_state.recent_tracks.list.items.get(idx))
                         .map(|t| MenuTarget::Track(t.clone())),
-                    HomeTab::TopArtists => home_state.top_artists.state.selected()
-                        .and_then(|idx| home_state.top_artists.items.get(idx))
+                    HomeTab::TopArtists => home_state
+                        .top_artists
+                        .list.state
+                        .selected()
+                        .and_then(|idx| home_state.top_artists.list.items.get(idx))
                         .map(|a| MenuTarget::Artist(a.clone())),
                 };
 

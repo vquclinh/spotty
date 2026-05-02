@@ -5,14 +5,14 @@ use crate::network::models::*;
 pub struct DataPayload<T> {
     pub items: Vec<T>,
     pub is_end: bool,
-    pub total: Option<u32>,
+    pub should_append: bool
 }
 
 impl<T> DataPayload<T> {
     pub fn clear(&mut self) {
         self.items.clear();
         self.is_end = false;
-        self.total = None;
+        self.should_append = true;
     }
 }
 
@@ -21,7 +21,7 @@ impl<T> From<Page<T>> for DataPayload<T> {
         Self {
             items: page.items,
             is_end: page.next.is_none() && page.after.is_none(),
-            total: page.total,
+            should_append: page.offset.unwrap_or(0) != 0
         }
     }
 }
@@ -41,9 +41,9 @@ pub struct IoSharedState {
 
     // playlist-detail-state
     pub playlist_items: DataPayload<PlayableItem>,
-    pub playlist_tracks: DataPayload<Track>,
 
     // search-results
+    // TODO: Handle paging for search result, this currently holds normal vector
     pub search_results: SearchResult,
 
     // queue-state

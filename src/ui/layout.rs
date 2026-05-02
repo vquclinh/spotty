@@ -66,9 +66,9 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         let (area, selected, offset) = match &app.route {
             Route::Home(h) => {
                 let (idx, off) = match h.active_tab {
-                    HomeTab::TopTracks => (h.top_tracks.state.selected(), h.top_tracks.state.offset()),
-                    HomeTab::RecentlyPlayed => (h.recent_tracks.state.selected(), h.recent_tracks.state.offset()),
-                    HomeTab::TopArtists => (h.top_artists.state.selected(), h.top_artists.state.offset()),
+                    HomeTab::TopTracks => (h.top_tracks.list.state.selected(), h.top_tracks.list.state.offset()),
+                    HomeTab::RecentlyPlayed => (h.recent_tracks.list.state.selected(), h.recent_tracks.list.state.offset()),
+                    HomeTab::TopArtists => (h.top_artists.list.state.selected(), h.top_artists.list.state.offset()),
                 };
                 (h.last_area, idx.unwrap_or(0), off)
             }
@@ -79,10 +79,10 @@ pub fn draw(f: &mut Frame, app: &mut App) {
 
             Route::Search(s) => {
                 let (idx, off) = match s.hovered_pane {
-                    SearchHoveredPane::Tracks => (s.tracks_state.state.selected(), s.tracks_state.state.offset()),
-                    SearchHoveredPane::Artists => (s.artists_state.state.selected(), s.artists_state.state.offset()),
-                    SearchHoveredPane::Albums => (s.albums_state.state.selected(), s.albums_state.state.offset()),
-                    SearchHoveredPane::Playlists => (s.playlists_state.state.selected(), s.playlists_state.state.offset()),
+                    SearchHoveredPane::Tracks => (s.tracks_state.list.state.selected(), s.tracks_state.list.state.offset()),
+                    SearchHoveredPane::Artists => (s.artists_state.list.state.selected(), s.artists_state.list.state.offset()),
+                    SearchHoveredPane::Albums => (s.albums_state.list.state.selected(), s.albums_state.list.state.offset()),
+                    SearchHoveredPane::Playlists => (s.playlists_state.list.state.selected(), s.playlists_state.list.state.offset()),
                     _ => (None, 0),
                 };
                 (s.last_area, idx.unwrap_or(0), off)

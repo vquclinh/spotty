@@ -7,6 +7,7 @@ use crate::app::types::{ActionMenu, ActiveBlock, PlaylistSelector, StatefulList,
 use crate::app::route::Route;
 use crate::app::state::SharedState;
 use crate::app::library_state::*;
+use crate::app::state::DataPayload;
 
 use crate::network::models::*;
 use crate::network::request::ClientRequest;
@@ -16,6 +17,8 @@ pub struct App {
     pub route: Route,
     pub active_block: ActiveBlock,
     pub history: Vec<(Route, ActiveBlock)>, // store history about Route and ActiveBlock
+    // Limit for each Spotify Web Api page fetch
+    pub page_limit: u32,
 
     pub network_tx: mpsc::UnboundedSender<ClientRequest>, // the bridge between UI and Network
     pub shared_state: SharedState,
@@ -36,15 +39,19 @@ impl App {
         network_tx: mpsc::UnboundedSender<ClientRequest>,
         shared_state: SharedState,
     ) -> Self {
+        let page_limit = 50;
+
         // At initialization, send a request to get current playback and playlists
         let _ = network_tx.send(ClientRequest::GetCurrentUser);
         let _ = network_tx.send(ClientRequest::GetCurrentPlayback);
-        let _ = network_tx.send(ClientRequest::GetUserPlaylists { limit: 50, offset: 0 });
+        let _ = network_tx.send(ClientRequest::GetUserPlaylists { limit: page_limit, offset: 0 });
 
         Self {
             route: Route::Splash(SplashState::new()),
             active_block: ActiveBlock::LibraryMenu,
             history: vec![],
+            page_limit,
+
             show_help: false,
             should_quit: false,
 
@@ -76,13 +83,13 @@ impl App {
             Route::Home(state) => {
                 match state.active_tab {
                     HomeTab::RecentlyPlayed => {
-                        let _ = self.network_tx.send(ClientRequest::GetRecentlyPlayed { limit: 15, after: None });
+                        let _ = self.network_tx.send(ClientRequest::GetRecentlyPlayed { limit: self.page_limit, after: None });
                     }
                     HomeTab::TopTracks => {
-                        let _ = self.network_tx.send(ClientRequest::GetUserTopTracks { time_range: TimeRange::ShortTerm, limit: 15, offset: 0 });
+                        let _ = self.network_tx.send(ClientRequest::GetUserTopTracks { time_range: TimeRange::ShortTerm, limit: self.page_limit, offset: 0 });
                     }
                     HomeTab::TopArtists => {
-                        let _ = self.network_tx.send(ClientRequest::GetUserTopArtists { time_range: TimeRange::ShortTerm, limit: 15, offset: 0 });
+                        let _ = self.network_tx.send(ClientRequest::GetUserTopArtists { time_range: TimeRange::ShortTerm, limit: self.page_limit, offset: 0 });
                     }
                 }
             }
@@ -94,16 +101,16 @@ impl App {
                 let _ = self.network_tx.send(ClientRequest::GetAlbum { id });
             }
             Route::LikedSongs(_) => {
-                let _ = self.network_tx.send(ClientRequest::GetUserLikedSongs { limit: 50, offset: 0 });
+                let _ = self.network_tx.send(ClientRequest::GetUserLikedSongs { limit: self.page_limit, offset: 0 });
             }
             Route::SavedAlbums(_) => {
-                let _ = self.network_tx.send(ClientRequest::GetUserSavedAlbums { limit: 50, offset: 0 });
+                let _ = self.network_tx.send(ClientRequest::GetUserSavedAlbums { limit: self.page_limit, offset: 0 });
             }
             Route::SavedArtists(_) => {
-                let _ = self.network_tx.send(ClientRequest::GetUserSavedArtists { limit: 50, after: None });
+                let _ = self.network_tx.send(ClientRequest::GetUserSavedArtists { limit: self.page_limit, after: None });
             }
             Route::SavedPodcasts(_) => {
-                let _ = self.network_tx.send(ClientRequest::GetUserSavedPodcasts { limit: 50, offset: 0 });
+                let _ = self.network_tx.send(ClientRequest::GetUserSavedPodcasts { limit: self.page_limit, offset: 0 });
             }
             _ => {}
         }
@@ -141,46 +148,69 @@ impl App {
                 self.playlists_menu.items = shared_state.playlists.items.drain(..).collect();
             }
 
+            #[allow(clippy::collapsible_match)]
             match &mut self.route {
                 Route::Home(home_state) => {
 
                     if !shared_state.recent_tracks.items.is_empty() {
-                        home_state.recent_tracks.items = shared_state.recent_tracks.items.drain(..).collect();
+                        assign_or_append_payload(
+                            &mut home_state.recent_tracks.list.items,
+                            &mut shared_state.recent_tracks
+                        );
                     }
 
                     if !shared_state.top_tracks.items.is_empty() {
-                        home_state.top_tracks.items = shared_state.top_tracks.items.drain(..).collect();
+                        assign_or_append_payload(
+                            &mut home_state.top_tracks.list.items,
+                            &mut shared_state.top_tracks
+                        );
+                        home_state.top_tracks.is_loading = false;
+                        home_state.top_tracks.is_end = shared_state.top_tracks.is_end;
                     }
 
                     if !shared_state.top_artists.items.is_empty() {
-                        home_state.top_artists.items = shared_state.top_artists.items.drain(..).collect();
+                        assign_or_append_payload(
+                            &mut home_state.top_artists.list.items,
+                            &mut shared_state.top_artists
+                        );
+                        home_state.top_artists.is_loading = false;
+                        home_state.top_artists.is_end = shared_state.top_artists.is_end;
                     }
                 }
 
-                Route::PlaylistDetail(playlist_state) => {
-                    if !shared_state.playlist_items.items.is_empty() {
-                        playlist_state.tracks.items = shared_state.playlist_items.items.drain(..).collect();
-                    }
+                Route::PlaylistDetail(playlist_state) if !shared_state.playlist_items.items.is_empty() => {
+                    assign_or_append_payload(
+                        &mut playlist_state.tracks.items,
+                        &mut shared_state.playlist_items
+                    );
+                    playlist_state.is_loading = false;
+                    playlist_state.is_end = shared_state.playlist_items.is_end;
                 }
 
                 Route::Search(search_state) => {
-                    let results = &mut shared_state.search_results;
-
-                    let has_tracks = results.tracks.as_ref().is_some_and(|t| !t.items.is_empty());
-                    let has_artists = results.artists.as_ref().is_some_and(|a| !a.items.is_empty());
+                    let has_tracks = shared_state.search_results.tracks
+                        .as_ref().is_some_and(|t| !t.items.is_empty());
+                    let has_artists = shared_state.search_results.artists
+                        .as_ref().is_some_and(|a| !a.items.is_empty());
 
                     if has_tracks || has_artists {
-                        if let Some(page) = results.tracks.take() {
-                            search_state.tracks_state.items = page.items;
+                        if let Some(page) = shared_state.search_results.tracks.take() {
+                            assign_or_append_payload(&mut search_state.tracks_state.list.items, &mut page.into());
                         }
-                        if let Some(page) = results.artists.take() {
-                            search_state.artists_state.items = page.items;
+                        if let Some(page) = shared_state.search_results.artists.take() {
+                            assign_or_append_payload(&mut search_state.artists_state.list.items, &mut page.into());
+                            search_state.artists_state.is_loading = false;
+                            search_state.artists_state.is_end = true;
                         }
-                        if let Some(page) = results.albums.take() {
-                            search_state.albums_state.items = page.items;
+                        if let Some(page) = shared_state.search_results.albums.take() {
+                            assign_or_append_payload(&mut search_state.albums_state.list.items, &mut page.into());
+                            search_state.albums_state.is_loading = false;
+                            search_state.albums_state.is_end = true;
                         }
-                        if let Some(page) = results.playlists.take() {
-                            search_state.playlists_state.items = page.items;
+                        if let Some(page) = shared_state.search_results.playlists.take() {
+                            assign_or_append_payload(&mut search_state.playlists_state.list.items, &mut page.into());
+                            search_state.playlists_state.is_loading = false;
+                            search_state.playlists_state.is_end = true;
                         }
                     }
                 }
@@ -204,43 +234,71 @@ impl App {
 
                 Route::AlbumDetail(album_state) => {
                     if let Some(album) = shared_state.album_detail.take() {
-                        album_state.album = Some(album.clone());
-
-                        if let Some(page) = album.tracks {
-                            album_state.tracks.items = page.items;
-                            if album_state.tracks.state.selected().is_none() && !album_state.tracks.items.is_empty() {
-                                album_state.tracks.state.select(Some(0));
-                            }
+                        if let Some(ref tracks) = album.tracks {
+                            album_state.tracks.items = tracks.items.clone();
                         }
+                        album_state.album = Some(album);
                     }
                 }
 
-                Route::LikedSongs(like_songs_state) => {
+                Route::LikedSongs(liked_songs_state) => {
                     if !shared_state.liked_songs.items.is_empty() {
-                        like_songs_state.tracks.items = shared_state.liked_songs.items.drain(..).collect();
+                        assign_or_append_payload(
+                            &mut liked_songs_state.tracks.items,
+                            &mut shared_state.liked_songs
+                        );
+                        liked_songs_state.is_loading = false;
+                        liked_songs_state.is_end = shared_state.liked_songs.is_end;
                     }
                 }
 
                 Route::SavedAlbums(saved_albums_state) => {
                     if !shared_state.saved_albums.items.is_empty() {
-                        saved_albums_state.albums.items = shared_state.saved_albums.items.drain(..).collect();
+                        assign_or_append_payload(
+                            &mut saved_albums_state.albums.items,
+                            &mut shared_state.saved_albums
+                        );
+                        saved_albums_state.is_loading = false;
+                        saved_albums_state.is_end = shared_state.saved_albums.is_end;
                     }
                 }
 
                 Route::SavedArtists(saved_artists_state) => {
                     if !shared_state.saved_artists.items.is_empty() {
-                        saved_artists_state.artists.items = shared_state.saved_artists.items.drain(..).collect();
+                        assign_or_append_payload(
+                            &mut saved_artists_state.artists.items,
+                            &mut shared_state.saved_artists
+                        );
+                        saved_artists_state.is_loading = false;
+                        saved_artists_state.is_end = shared_state.saved_artists.is_end;
                     }
                 }
 
                 Route::SavedPodcasts(saved_podcasts_state) => {
                     if !shared_state.saved_podcasts.items.is_empty() {
-                        saved_podcasts_state.podcasts.items = shared_state.saved_podcasts.items.drain(..).collect();
+                        assign_or_append_payload(
+                            &mut saved_podcasts_state.podcasts.items,
+                            &mut shared_state.saved_podcasts
+                        );
+                        saved_podcasts_state.is_loading = false;
+                        saved_podcasts_state.is_end = shared_state.saved_podcasts.is_end;
                     }
                 }
 
                 _ => {}
             }
         }
+    }
+}
+
+pub fn assign_or_append_payload<T>(into: &mut Vec<T>, payload: &mut DataPayload<T>) {
+    if payload.items.is_empty() {
+        return;
+    }
+
+    if payload.should_append {
+        into.append(&mut payload.items);
+    } else {
+        *into = std::mem::take(&mut payload.items);
     }
 }

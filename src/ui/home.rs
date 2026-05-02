@@ -91,7 +91,7 @@ pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, ar
                 &state.recent_tracks
             };
 
-            let rows: Vec<Row> = target_table.items.iter().map(|t| {
+            let rows: Vec<Row> = target_table.list.items.iter().map(|t| {
                 let trunc_title = truncate(&t.name, title_max);
                 
                 let artist = t.artists.first()
@@ -117,9 +117,9 @@ pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, ar
                 .highlight_spacing(HighlightSpacing::Always);
 
             let state_to_use = if state.active_tab == HomeTab::TopTracks {
-                &mut state.top_tracks.state
+                &mut state.top_tracks.list.state
             } else {
-                &mut state.recent_tracks.state
+                &mut state.recent_tracks.list.state
             };
 
             f.render_stateful_widget(table, chunks[1], state_to_use);
@@ -130,7 +130,7 @@ pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, ar
             let widths = [Constraint::Percentage(40), Constraint::Percentage(60)];
             let artist_max = ((table_width as f32 * 0.40) as u16).saturating_sub(6);
 
-            let rows: Vec<Row> = state.top_artists.items.iter().map(|a| {
+            let rows: Vec<Row> = state.top_artists.list.items.iter().map(|a| {
                 let trunc_name = truncate(&a.name, artist_max);
                 Row::new(vec![format!("  {}", trunc_name)])
             }).collect();
@@ -141,7 +141,7 @@ pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, ar
                 .highlight_symbol("▶ ")
                 .highlight_spacing(HighlightSpacing::Always);
 
-            f.render_stateful_widget(table, chunks[1], &mut state.top_artists.state);
+            f.render_stateful_widget(table, chunks[1], &mut state.top_artists.list.state);
         }
     }
 }

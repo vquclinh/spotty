@@ -348,7 +348,7 @@ impl WebApiClient {
             ("type", "artist"),
             ("limit", limit.as_str()),
         ]);
-        if let Some(ref cursor) = after {
+        if let Some(cursor) = after {
             params.insert("after", cursor);
         }
         

@@ -1,4 +1,4 @@
-use crate::app::state::{SharedState, DataPayload};
+use crate::app::state::SharedState;
 use crate::network::client::WebApiClient;
 use crate::network::request::{ClientRequest, PlayerRequest};
 use tokio::sync::mpsc;
@@ -50,7 +50,7 @@ pub async fn start_network_worker(
                 match client.get_user_top_tracks(time_range, limit, offset).await {
                     Ok(tracks) => {
                         if let Ok(mut state) = shared_state.lock() {
-                            state.top_tracks = tracks.into(); 
+                            state.top_tracks = tracks.into();
                         }
                     }
                     Err(_e) => {}
@@ -61,7 +61,7 @@ pub async fn start_network_worker(
                 match client.get_user_top_artists(time_range, limit, offset).await {
                     Ok(artists) => {
                         if let Ok(mut state) = shared_state.lock() {
-                            state.top_artists = artists.into(); 
+                            state.top_artists = artists.into();
                         }
                     }
                     Err(_e) => {}
@@ -72,7 +72,7 @@ pub async fn start_network_worker(
                 match client.get_playlist_items(&playlist_id, limit, offset).await {
                     Ok(items) => {
                         if let Ok(mut state) = shared_state.lock() {
-                            state.playlist_items = items.into(); 
+                            state.playlist_items = items.into();
                         }
                     }
                     Err(_e) => {}
@@ -118,10 +118,9 @@ pub async fn start_network_worker(
                 match client.add_items_to_playlist(&playlist_id, uris_ref).await {
                     Ok(_) => {
                         // Refetch the first page to sync metadata
-                        if let Ok(page) = client.get_user_playlists(50, 0).await {
-                            if let Ok(mut state) = shared_state.lock() {
-                                state.playlists = page.into();
-                            }
+                        if let Ok(page) = client.get_user_playlists(50, 0).await
+                            && let Ok(mut state) = shared_state.lock() {
+                            state.playlists = page.into();
                         }
                     }
                     Err(_e) => {}
@@ -133,10 +132,9 @@ pub async fn start_network_worker(
 
                 match client.remove_items_from_playlist(&playlist_id, uris_ref).await {
                     Ok(_) => {
-                        if let Ok(page) = client.get_user_playlists(50, 0).await {
-                            if let Ok(mut state) = shared_state.lock() {
-                                state.playlists = page.into();
-                            }
+                        if let Ok(page) = client.get_user_playlists(50, 0).await
+                            && let Ok(mut state) = shared_state.lock() {
+                            state.playlists = page.into();
                         }
                     }
                     Err(_e) => {}
@@ -198,14 +196,67 @@ pub async fn start_network_worker(
                 }
             }
 
-            ClientRequest::SaveItemsToLibrary( uris ) => {
+            #[allow(clippy::collapsible_if)]
+            ClientRequest::SaveItemsToLibrary(uris) => {
+                if uris.is_empty() { return; }
                 let uris: Vec<&str> = uris.iter().map(|u| u.as_str()).collect();
+                // Assuming all the items are of the same type
+                let first_uri = uris[0];
+
                 let _ = client.save_items_to_library(uris).await;
+
+                if first_uri.contains(":track:") {
+                    if let Ok(page) = client.get_user_liked_songs(50, 0).await
+                        && let Ok(mut state) = shared_state.lock() {
+                            state.liked_songs = page.into();
+                    }
+                } else if first_uri.contains(":album:") {
+                    if let Ok(page) = client.get_user_saved_albums(50, 0).await
+                        && let Ok(mut state) = shared_state.lock() {
+                            state.saved_albums = page.into();
+                    }
+                } else if first_uri.contains(":artist:") {
+                    if let Ok(page) = client.get_user_saved_artists(50, None).await
+                        && let Ok(mut state) = shared_state.lock() {
+                            state.saved_artists = page.into();
+                    }
+                } else if first_uri.contains(":episode:") {
+                    if let Ok(page) = client.get_user_saved_podcasts(50, 0).await
+                        && let Ok(mut state) = shared_state.lock() {
+                            state.saved_podcasts = page.into();
+                    }
+                }
             }
 
+            #[allow(clippy::collapsible_if)]
             ClientRequest::RemoveItemsFromLibrary( uris ) => {
                 let uris: Vec<&str> = uris.iter().map(|u| u.as_str()).collect();
+                // Assuming all the items are of the same type
+                let first_uri = uris[0];
+
                 let _ = client.remove_items_from_library(uris).await;
+
+                if first_uri.contains(":track:") {
+                    if let Ok(page) = client.get_user_liked_songs(50, 0).await
+                        && let Ok(mut state) = shared_state.lock() {
+                            state.liked_songs = page.into();
+                    }
+                } else if first_uri.contains(":album:") {
+                    if let Ok(page) = client.get_user_saved_albums(50, 0).await
+                        && let Ok(mut state) = shared_state.lock() {
+                            state.saved_albums = page.into();
+                    }
+                } else if first_uri.contains(":artist:") {
+                    if let Ok(page) = client.get_user_saved_artists(50, None).await
+                        && let Ok(mut state) = shared_state.lock() {
+                            state.saved_artists = page.into();
+                    }
+                } else if first_uri.contains(":episode:") {
+                    if let Ok(page) = client.get_user_saved_podcasts(50, 0).await
+                        && let Ok(mut state) = shared_state.lock() {
+                            state.saved_podcasts = page.into();
+                    }
+                }
             }
 
             #[allow(clippy::collapsible_if)]

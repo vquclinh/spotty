@@ -7,6 +7,9 @@ pub struct AlbumState {
     pub album_id: String,
     pub album: Option<Album>,
     pub tracks: StatefulTable<Track>,
+
+    pub is_loading: bool,
+    pub is_end: bool,
     pub last_area: Rect,
 }
 
@@ -16,6 +19,9 @@ impl Default for AlbumState {
             album_id: String::default(),
             album: None,
             tracks: StatefulTable::new(),
+
+            is_loading: false,
+            is_end: false,
             last_area: Rect::default(),
         }
     }
@@ -25,9 +31,7 @@ impl AlbumState {
     pub fn new(id: String) -> Self {
         Self {
             album_id: id,
-            album: None,
-            tracks: StatefulTable::default(),
-            last_area: Rect::default(),
+            ..Self::default()
         }
     }
 }
