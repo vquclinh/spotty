@@ -58,6 +58,15 @@ pub enum ClientRequest {
         limit: u32,
         offset: u32,
     },
+    
+    // Helper request to deal with Spotify's tight limit on search endpoint
+    // (only 10 items at a time)
+    SearchItemsUpTo {
+        query: String,
+        search_types: Vec<SearchType>,
+        total_limit: u32,
+        start_offset: u32,
+    },
 
     AddItemsToPlaylist {
         playlist_id: String,

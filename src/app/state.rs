@@ -43,7 +43,6 @@ pub struct IoSharedState {
     pub playlist_items: DataPayload<PlayableItem>,
 
     // search-results
-    // TODO: Handle paging for search result, this currently holds normal vector
     pub search_results: SearchResult,
 
     // queue-state

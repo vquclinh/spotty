@@ -1,6 +1,7 @@
 use crate::app::state::SharedState;
 use crate::network::client::SpotifyClient;
 use crate::network::request::{ClientRequest, PlayerRequest};
+use crate::network::models::SearchType;
 use crate::audio::player::*;
 use tokio::sync::mpsc;
 use std::sync::Arc;
@@ -97,10 +98,64 @@ pub async fn start_network_worker(
                 match client.search_items(&query, search_types, limit, offset).await {
                     Ok(results) => {
                         if let Ok(mut state) = shared_state.lock() {
-                            state.search_results = results; 
+                            state.search_results = results;
                         }
                     }
                     Err(_e) => {}
+                }
+            }
+            
+            ClientRequest::SearchItemsUpTo { query, search_types, total_limit, start_offset } => {
+                let page_size = 50;
+                let mut curr_offset = start_offset;
+                let mut search_types = search_types.clone();
+
+                while curr_offset < total_limit && !search_types.is_empty() {
+                    let mut batch_max_len = 0;
+
+                    match client
+                        .search_items(&query, search_types.clone(), page_size, curr_offset)
+                        .await
+                    {
+                        Ok(results) if let Ok(mut state) = shared_state.lock() => {
+                            if let Some(page) = results.tracks && !page.items.is_empty() {
+                                batch_max_len = std::cmp::max(batch_max_len, page.items.len());
+                                if page.next.is_none() {
+                                    search_types.retain(|t| *t != SearchType::Track);
+                                }
+                                state.search_results.tracks = Some(page);
+                            }
+                            if let Some(page) = results.artists && !page.items.is_empty() {
+                                batch_max_len = std::cmp::max(batch_max_len, page.items.len());
+                                if page.next.is_none() {
+                                    search_types.retain(|t| *t != SearchType::Artist);
+                                }
+                                state.search_results.artists = Some(page);
+                            }
+                            if let Some(page) = results.albums && !page.items.is_empty() {
+                                batch_max_len = std::cmp::max(batch_max_len, page.items.len());
+                                if page.next.is_none() {
+                                    search_types.retain(|t| *t != SearchType::Album);
+                                }
+                                state.search_results.albums = Some(page);
+                            }
+                            if let Some(page) = results.playlists && !page.items.is_empty() {
+                                batch_max_len = std::cmp::max(batch_max_len, page.items.len());
+                                if page.next.is_none() {
+                                    search_types.retain(|t| *t != SearchType::Playlist);
+                                }
+                                state.search_results.playlists = Some(page);
+                            }
+                        }
+
+                        _ => {}
+                    }
+
+                    curr_offset += batch_max_len as u32;
+                    if batch_max_len == 0 {
+                        // Avoid stalling the worker when the page is empty.
+                        break;
+                    }
                 }
             }
 

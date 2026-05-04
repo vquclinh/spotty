@@ -139,7 +139,7 @@ pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
     let track_max_width = tracks_area.width.saturating_sub(6);
     let tracks_items: Vec<ListItem> = search_state
         .tracks_state
-        .list.items
+        .items
         .iter()
         .map(|t| {
             let artist_names = t.artists.iter()
@@ -162,7 +162,7 @@ pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
     let artist_max_width = artists_area.width.saturating_sub(6);
     let artists_items: Vec<ListItem> = search_state
         .artists_state
-        .list.items
+        .items
         .iter()
         .map(|a| ListItem::new(format!("  {}", truncate(&a.name, artist_max_width))))
         .collect();
@@ -177,7 +177,7 @@ pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
     let album_max_width = albums_area.width.saturating_sub(6);
     let albums_items: Vec<ListItem> = search_state
         .albums_state
-        .list.items
+        .items
         .iter()
         .map(|a| {
             let date = a.release_date.as_deref().unwrap_or("Unknown");
@@ -196,7 +196,7 @@ pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
     let playlist_max_width = playlists_area.width.saturating_sub(6);
     let playlists_items: Vec<ListItem> = search_state
         .playlists_state
-        .list.items
+        .items
         .iter()
         .map(|p| {
             let full_text = format!("{} by {}", p.name, p.owner.display_name);
@@ -222,14 +222,14 @@ pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
 
         let mut lists = (Some(tracks_list), Some(artists_list), Some(albums_list), Some(playlists_list));
 
-        if tracks_area != results_chunks[0] { f.render_stateful_widget(lists.0.take().unwrap(), tracks_area, &mut search_state.tracks_state.list.state); }
-        if artists_area != results_chunks[0] { f.render_stateful_widget(lists.1.take().unwrap(), artists_area, &mut search_state.artists_state.list.state); }
-        if albums_area != results_chunks[0] { f.render_stateful_widget(lists.2.take().unwrap(), albums_area, &mut search_state.albums_state.list.state); }
-        if playlists_area != results_chunks[0] { f.render_stateful_widget(lists.3.take().unwrap(), playlists_area, &mut search_state.playlists_state.list.state); }
+        if tracks_area != results_chunks[0] { f.render_stateful_widget(lists.0.take().unwrap(), tracks_area, &mut search_state.tracks_state.state); }
+        if artists_area != results_chunks[0] { f.render_stateful_widget(lists.1.take().unwrap(), artists_area, &mut search_state.artists_state.state); }
+        if albums_area != results_chunks[0] { f.render_stateful_widget(lists.2.take().unwrap(), albums_area, &mut search_state.albums_state.state); }
+        if playlists_area != results_chunks[0] { f.render_stateful_widget(lists.3.take().unwrap(), playlists_area, &mut search_state.playlists_state.state); }
         
-        if let Some(w) = lists.0.take() { f.render_stateful_widget(w, tracks_area, &mut search_state.tracks_state.list.state); }
-        if let Some(w) = lists.1.take() { f.render_stateful_widget(w, artists_area, &mut search_state.artists_state.list.state); }
-        if let Some(w) = lists.2.take() { f.render_stateful_widget(w, albums_area, &mut search_state.albums_state.list.state); }
-        if let Some(w) = lists.3.take() { f.render_stateful_widget(w, playlists_area, &mut search_state.playlists_state.list.state); }
+        if let Some(w) = lists.0.take() { f.render_stateful_widget(w, tracks_area, &mut search_state.tracks_state.state); }
+        if let Some(w) = lists.1.take() { f.render_stateful_widget(w, artists_area, &mut search_state.artists_state.state); }
+        if let Some(w) = lists.2.take() { f.render_stateful_widget(w, albums_area, &mut search_state.albums_state.state); }
+        if let Some(w) = lists.3.take() { f.render_stateful_widget(w, playlists_area, &mut search_state.playlists_state.state); }
     }
 }

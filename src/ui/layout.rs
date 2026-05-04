@@ -79,10 +79,10 @@ pub fn draw(f: &mut Frame, app: &mut App) {
 
             Route::Search(s) => {
                 let (idx, off) = match s.hovered_pane {
-                    SearchHoveredPane::Tracks => (s.tracks_state.list.state.selected(), s.tracks_state.list.state.offset()),
-                    SearchHoveredPane::Artists => (s.artists_state.list.state.selected(), s.artists_state.list.state.offset()),
-                    SearchHoveredPane::Albums => (s.albums_state.list.state.selected(), s.albums_state.list.state.offset()),
-                    SearchHoveredPane::Playlists => (s.playlists_state.list.state.selected(), s.playlists_state.list.state.offset()),
+                    SearchHoveredPane::Tracks => (s.tracks_state.state.selected(), s.tracks_state.state.offset()),
+                    SearchHoveredPane::Artists => (s.artists_state.state.selected(), s.artists_state.state.offset()),
+                    SearchHoveredPane::Albums => (s.albums_state.state.selected(), s.albums_state.state.offset()),
+                    SearchHoveredPane::Playlists => (s.playlists_state.state.selected(), s.playlists_state.state.offset()),
                     _ => (None, 0),
                 };
                 (s.last_area, idx.unwrap_or(0), off)
