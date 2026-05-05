@@ -134,7 +134,7 @@ pub fn handle_search_events(key: KeyEvent, app: &mut App) {
         let _ = app.network_tx.send(ClientRequest::SearchItemsUpTo {
             query,
             search_types: types,
-            total_limit: 10,
+            total_limit: 20,
             start_offset: 0
         });
     }

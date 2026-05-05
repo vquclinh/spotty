@@ -30,6 +30,7 @@ pub enum MenuAction {
     PlayNow,
     AddToQueue,
     AddToPlaylist,
+    RemoveFromThisPlaylist,
     GoToAlbum,
     GoToShow,
     SaveToLibrary,
@@ -45,6 +46,7 @@ impl MenuAction {
             MenuAction::PlayNow => "Play Now",
             MenuAction::AddToQueue => "Add to Queue",
             MenuAction::AddToPlaylist => "Add to Playlist",
+            MenuAction::RemoveFromThisPlaylist => "Remove from Playlist",
             MenuAction::GoToAlbum => "Go to Album",
             MenuAction::GoToShow => "Go to Podcast Show",
             MenuAction::SaveToLibrary => "Save to Library",
@@ -82,6 +84,9 @@ impl ActionMenu {
                 dynamic_actions.push(MenuAction::PlayNow);
                 dynamic_actions.push(MenuAction::AddToQueue);
                 dynamic_actions.push(MenuAction::AddToPlaylist);
+                if let Route::PlaylistDetail(_) = route {
+                    dynamic_actions.push(MenuAction::RemoveFromThisPlaylist);
+                }
                 if let Some(album) = &t.album &&
                     !album.id.is_empty() &&
                     album.album_type == "album"
@@ -126,6 +131,10 @@ impl ActionMenu {
             MenuTarget::Episode(e) => {
                 dynamic_actions.push(MenuAction::PlayNow);
                 dynamic_actions.push(MenuAction::AddToQueue);
+                dynamic_actions.push(MenuAction::AddToPlaylist);
+                if let Route::PlaylistDetail(_) = route {
+                    dynamic_actions.push(MenuAction::RemoveFromThisPlaylist);
+                }
                 if let Route::SavedPodcasts(_) = route {
                     dynamic_actions.push(MenuAction::RemoveFromLibrary);
                 } else {

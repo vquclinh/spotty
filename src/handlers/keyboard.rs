@@ -56,7 +56,7 @@ pub fn handle_key_events(key: KeyEvent, app: &mut App) {
         }
         return;
     }
-    
+
     if app.active_block == ActiveBlock::SearchInput {
         search::handle_search_events(key, app);
         return;
@@ -117,7 +117,7 @@ fn execute_action_menu_command(app: &mut App) -> bool {
             MenuTarget::Album(a) => Some(a.uri.clone()),
             MenuTarget::Playlist(p) => Some(p.uri.clone()),
         };
-        
+
         match action {
             MenuAction::PlayNow => {
                 if let Some(u) = uri {
@@ -125,7 +125,7 @@ fn execute_action_menu_command(app: &mut App) -> bool {
                         MenuTarget::Track(_) | MenuTarget::Episode(_) => PlayerRequest::Play(u),
                         MenuTarget::Album(_) | MenuTarget::Playlist(_) | MenuTarget::Artist(_) => PlayerRequest::PlayContext(u),
                     };
-                    
+
                     let _ = app.network_tx.send(ClientRequest::Player(player_req));
                 }
                 true
@@ -144,7 +144,7 @@ fn execute_action_menu_command(app: &mut App) -> bool {
                     .filter(|p| {
                         let is_owner = p.owner.id == *my_id;
                         let is_collaborator = p.collaborative;
-                        
+
                         is_owner || is_collaborator
                     })
                     .cloned()
@@ -154,11 +154,20 @@ fn execute_action_menu_command(app: &mut App) -> bool {
                     app.playlist_selector.playlists = writable_playlists;
                     app.playlist_selector.is_open = true;
                     app.playlist_selector.state.select(Some(0));
-                    
-                    false 
+
+                    false
                 } else {
                     true
                 }
+            }
+            MenuAction::RemoveFromThisPlaylist => {
+                if let Route::PlaylistDetail(route) = &app.route
+                    && let Some(uri) = uri && !uri.is_empty() {
+                    let _ = app.network_tx.send(ClientRequest::RemoveItemsFromPlaylist {
+                        playlist_id: route.playlist.id.clone(), uris: vec![uri]
+                    });
+                }
+                true
             }
             MenuAction::GoToAlbum => {
                 let album_id = match target {
