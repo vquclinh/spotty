@@ -70,7 +70,6 @@ pub fn handle_key_events(key: KeyEvent, app: &mut App) {
     match app.active_block {
         ActiveBlock::PlaylistsMenu | ActiveBlock::LibraryMenu => {
             sidebar::handle_sidebar_events(key, app);
-            return;
         }
         ActiveBlock::HomeBlock => {
             home::handle_home_events(key, app);
@@ -78,19 +77,15 @@ pub fn handle_key_events(key: KeyEvent, app: &mut App) {
         }
         ActiveBlock::PlaylistTracks => {
             playlist::handle_playlist_events(key, app);
-            return;
         }
         ActiveBlock::SearchResults => {
             search::handle_search_events(key, app);
-            return;
         }
         ActiveBlock::QueueBlock => {
             queue::handle_queue_events(key, app);
-            return;
         }
         ActiveBlock::AlbumBlock => {
             album::handle_album_events(key, app);
-            return;
         }
         ActiveBlock::LikedSongs => {
             library::handle_liked_songs_events(key, app);

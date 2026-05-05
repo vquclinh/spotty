@@ -10,26 +10,32 @@ pub fn handle_home_events(key: KeyEvent, app: &mut App) {
         match key.code {
             KeyCode::Char('1') => {
                 home_state.active_tab = HomeTab::TopTracks;
-                let _ = network_tx.send(ClientRequest::GetUserTopTracks {
-                    time_range: TimeRange::ShortTerm,
-                    limit: app.page_limit,
-                    offset: 0,
-                });
+                if home_state.top_tracks.list.items.is_empty() {
+                    let _ = network_tx.send(ClientRequest::GetUserTopTracks {
+                        time_range: TimeRange::ShortTerm,
+                        limit: app.page_limit,
+                        offset: 0,
+                    });
+                }
             }
             KeyCode::Char('2') => {
                 home_state.active_tab = HomeTab::TopArtists;
-                let _ = network_tx.send(ClientRequest::GetUserTopArtists {
-                    time_range: TimeRange::ShortTerm,
-                    limit: app.page_limit,
-                    offset: 0,
-                });
+                if home_state.top_artists.list.items.is_empty() {
+                    let _ = network_tx.send(ClientRequest::GetUserTopArtists {
+                        time_range: TimeRange::ShortTerm,
+                        limit: app.page_limit,
+                        offset: 0,
+                    });
+                }
             }
             KeyCode::Char('3') => {
                 home_state.active_tab = HomeTab::RecentlyPlayed;
-                let _ = network_tx.send(ClientRequest::GetRecentlyPlayed {
-                    limit: app.page_limit,
-                    after: None,
-                });
+                if home_state.recent_tracks.list.items.is_empty() {
+                    let _ = network_tx.send(ClientRequest::GetRecentlyPlayed {
+                        limit: app.page_limit,
+                        after: None,
+                    });
+                }
             }
 
             KeyCode::Right | KeyCode::Char('l') => {
@@ -163,7 +169,7 @@ pub fn handle_home_events(key: KeyEvent, app: &mut App) {
                 };
 
                 if let Some(t) = target {
-                    action_menu.open(t, &route);
+                    action_menu.open(t, route);
                 }
             }
             _ => {}

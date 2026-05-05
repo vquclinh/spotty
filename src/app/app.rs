@@ -200,6 +200,9 @@ impl App {
                             &mut home_state.recent_tracks.list.items,
                             &mut shared_state.recent_tracks
                         );
+                        home_state.recent_tracks.is_loading = false;
+                        home_state.recent_tracks.is_end = shared_state.recent_tracks.is_end
+                            || home_state.recent_tracks.list.items.len() >= 100;
                     }
 
                     if !shared_state.top_tracks.items.is_empty() {
@@ -208,7 +211,8 @@ impl App {
                             &mut shared_state.top_tracks
                         );
                         home_state.top_tracks.is_loading = false;
-                        home_state.top_tracks.is_end = shared_state.top_tracks.is_end;
+                        home_state.top_tracks.is_end = shared_state.top_tracks.is_end
+                            || home_state.top_tracks.list.items.len() >= 100;
                     }
 
                     if !shared_state.top_artists.items.is_empty() {
@@ -217,7 +221,8 @@ impl App {
                             &mut shared_state.top_artists
                         );
                         home_state.top_artists.is_loading = false;
-                        home_state.top_artists.is_end = shared_state.top_artists.is_end;
+                        home_state.top_artists.is_end = shared_state.top_artists.is_end
+                            || home_state.top_artists.list.items.len() >= 100;
                     }
                 }
 
