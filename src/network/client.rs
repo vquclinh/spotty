@@ -8,59 +8,20 @@ use rspotify::{
 };
 use anyhow::{Result, Context};
 use std::collections::HashMap;
-use std::time::{Instant, Duration};
+use std::time::Duration;
 use serde_json::{Value, json};
 use serde::Deserialize;
 use core::iter::IntoIterator;
 
-// -------------------------------------- CACHE ---------------------------------------
-#[allow(dead_code)]
-pub struct CacheItem<T> {
-    item: T,
-    fetched_at: Instant
-}
-
-// Cache data queries for some time to reduce API calls
-pub struct Cache {
-    pub tracks: HashMap<String, CacheItem<Track>>,
-    pub albums: HashMap<String, CacheItem<Album>>,
-    pub artists: HashMap<String, CacheItem<Artist>>,
-    pub ttl: Duration, // time to live
-}
-
-impl Cache {
-    pub fn new(ttl_seconds: u64) -> Self {
-        Self {
-            tracks: HashMap::new(),
-            albums: HashMap::new(),
-            artists: HashMap::new(),
-            ttl: Duration::from_secs(ttl_seconds),
-        }
-    }
-
-    pub fn is_expired<T>(&self, item: &CacheItem<T>) -> bool {
-        item.fetched_at.elapsed() > self.ttl
-    }
-}
-
-impl Default for Cache {
-    fn default() -> Self {
-        // Default tll: 30 mins
-        Self::new(30 * 60)
-    }
-}
-
-// ---------------------------------------- WEB API CLIENT ----------------------------
-#[allow(dead_code)]
+// ---------------------------------------- WEB API + AUDIO CLIENT ----------------------------
 pub struct SpotifyClient {
     pub client: AuthCodePkceSpotify,
-    pub cache: Cache,
     pub session: librespot_core::session::Session,
     pub creds: librespot_core::authentication::Credentials
 }
 
 impl SpotifyClient {
-    pub async fn new(cache_ttl_sec: Option<u64>) -> Result<Self> {
+    pub async fn new() -> Result<Self> {
         let mut client = auth::create_auth_client().await?;
         auth::authenticate(&mut client).await?;
 
@@ -80,7 +41,6 @@ impl SpotifyClient {
         Ok(Self {
             client,
             session,
-            cache: cache_ttl_sec.map_or(Cache::default(), Cache::new),
             creds
         })
     }
@@ -370,14 +330,14 @@ impl SpotifyClient {
         if let Some(cursor) = after {
             params.insert("after", cursor);
         }
-        
+
         #[derive(Deserialize, Default)]
         struct FollowedArtists {
             artists: Page<Artist>,
         }
 
         let res: FollowedArtists = helper::get(&self.client, "me/following", &params).await?.data();
-        
+
         Ok(res.artists)
     }
 
