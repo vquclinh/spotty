@@ -1,5 +1,5 @@
 use crate::app::{App, route::Route, home_state::HomeTab};
-use crossterm::event::{KeyCode, KeyEvent};
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use crate::ClientRequest;
 use crate::network::models::*;
 
@@ -7,8 +7,8 @@ pub fn handle_home_events(key: KeyEvent, app: &mut App) {
     let App { route, network_tx, action_menu, .. } = app;
 
     if let Route::Home(home_state) = route {
-        match key.code {
-            KeyCode::Char('1') => {
+        match key {
+            KeyEvent { code: KeyCode::Char('1'), .. } => {
                 home_state.active_tab = HomeTab::TopTracks;
                 if home_state.top_tracks.list.items.is_empty() {
                     let _ = network_tx.send(ClientRequest::GetUserTopTracks {
@@ -18,7 +18,8 @@ pub fn handle_home_events(key: KeyEvent, app: &mut App) {
                     });
                 }
             }
-            KeyCode::Char('2') => {
+
+            KeyEvent { code: KeyCode::Char('2'), .. } => {
                 home_state.active_tab = HomeTab::TopArtists;
                 if home_state.top_artists.list.items.is_empty() {
                     let _ = network_tx.send(ClientRequest::GetUserTopArtists {
@@ -28,7 +29,8 @@ pub fn handle_home_events(key: KeyEvent, app: &mut App) {
                     });
                 }
             }
-            KeyCode::Char('3') => {
+
+            KeyEvent { code: KeyCode::Char('3'), .. } => {
                 home_state.active_tab = HomeTab::RecentlyPlayed;
                 if home_state.recent_tracks.list.items.is_empty() {
                     let _ = network_tx.send(ClientRequest::GetRecentlyPlayed {
@@ -38,7 +40,7 @@ pub fn handle_home_events(key: KeyEvent, app: &mut App) {
                 }
             }
 
-            KeyCode::Right | KeyCode::Char('l') => {
+            KeyEvent { code: KeyCode::Right, .. } | KeyEvent { code: KeyCode::Char('l'), .. } => {
                 home_state.active_tab = match home_state.active_tab {
                     HomeTab::TopTracks => HomeTab::TopArtists,
                     HomeTab::TopArtists => HomeTab::RecentlyPlayed,
@@ -68,7 +70,7 @@ pub fn handle_home_events(key: KeyEvent, app: &mut App) {
                 }
             }
 
-            KeyCode::Left | KeyCode::Char('h') => {
+            KeyEvent { code: KeyCode::Left, .. } | KeyEvent { code: KeyCode::Char('h'), .. } => {
                 home_state.active_tab = match home_state.active_tab {
                     HomeTab::TopTracks => HomeTab::RecentlyPlayed,
                     HomeTab::TopArtists => HomeTab::TopTracks,
@@ -98,12 +100,19 @@ pub fn handle_home_events(key: KeyEvent, app: &mut App) {
                 }
             }
 
-            KeyCode::Down | KeyCode::Char('j') => {
+            KeyEvent { code: KeyCode::Down, .. }
+            | KeyEvent { code: KeyCode::Char('j'), .. }
+            | KeyEvent {
+                code: KeyCode::Char('d'),
+                modifiers: KeyModifiers::CONTROL,
+                ..
+            } => {
                 let threshold = 20;
+                let steps = if key.code == KeyCode::Char('d') { 10 } else { 1 };
 
                 match home_state.active_tab {
                     HomeTab::TopTracks => {
-                        home_state.top_tracks.list.next(false);
+                        home_state.top_tracks.list.next(steps, false);
 
                         if let Some(selected) = home_state.top_tracks.list.state.selected()
                             && home_state.top_tracks.list.items.len() - selected <= threshold
@@ -119,7 +128,7 @@ pub fn handle_home_events(key: KeyEvent, app: &mut App) {
                         }
                     }
                     HomeTab::TopArtists => {
-                        home_state.top_artists.list.next(false);
+                        home_state.top_artists.list.next(steps, false);
 
                         if let Some(selected) = home_state.top_artists.list.state.selected()
                             && home_state.top_artists.list.items.len() - selected <= threshold
@@ -136,33 +145,45 @@ pub fn handle_home_events(key: KeyEvent, app: &mut App) {
                     }
                     // Currently this endpoint works with a time-based cursor, while we only
                     // handle index-based and id-based cursor for now
-                    HomeTab::RecentlyPlayed => home_state.recent_tracks.list.next(false),
+                    HomeTab::RecentlyPlayed => home_state.recent_tracks.list.next(steps, false),
                 }
             }
-            KeyCode::Up | KeyCode::Char('k') => {
+
+            KeyEvent { code: KeyCode::Up, .. }
+            | KeyEvent { code: KeyCode::Char('k'), .. }
+            | KeyEvent {
+                code: KeyCode::Char('u'),
+                modifiers: KeyModifiers::CONTROL,
+                ..
+            } => {
+                let steps = if key.code == KeyCode::Char('u') { 10 } else { 1 };
                 match home_state.active_tab {
-                    HomeTab::TopTracks => home_state.top_tracks.list.previous(false),
-                    HomeTab::TopArtists => home_state.top_artists.list.previous(false),
-                    HomeTab::RecentlyPlayed => home_state.recent_tracks.list.previous(false),
+                    HomeTab::TopTracks => home_state.top_tracks.list.previous(steps, false),
+                    HomeTab::TopArtists => home_state.top_artists.list.previous(steps, false),
+                    HomeTab::RecentlyPlayed => home_state.recent_tracks.list.previous(steps, false)
                 }
             }
-            KeyCode::Char('t') => {
+
+            KeyEvent { code: KeyCode::Char('t'), .. } => {
                 let target = match home_state.active_tab {
                     HomeTab::TopTracks => home_state
                         .top_tracks
-                        .list.state
+                        .list
+                        .state
                         .selected()
                         .and_then(|idx| home_state.top_tracks.list.items.get(idx))
                         .map(|t| MenuTarget::Track(t.clone())),
                     HomeTab::RecentlyPlayed => home_state
                         .recent_tracks
-                        .list.state
+                        .list
+                        .state
                         .selected()
                         .and_then(|idx| home_state.recent_tracks.list.items.get(idx))
                         .map(|t| MenuTarget::Track(t.clone())),
                     HomeTab::TopArtists => home_state
                         .top_artists
-                        .list.state
+                        .list
+                        .state
                         .selected()
                         .and_then(|idx| home_state.top_artists.list.items.get(idx))
                         .map(|a| MenuTarget::Artist(a.clone())),

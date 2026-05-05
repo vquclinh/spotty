@@ -229,16 +229,21 @@ impl<T> StatefulList<T> {
         }
     }
 
-    pub fn next(&mut self, wrap_around: bool) {
+    pub fn next(&mut self, steps: usize, wrap_around: bool) {
         if self.items.is_empty() {
             return;
         }
+        let len = self.items.len();
         let i = match self.state.selected() {
             Some(i) => {
-                if i >= self.items.len() - 1 {
-                    if wrap_around { 0 } else { self.items.len() - 1 }
+                if i + steps >= len {
+                    if wrap_around {
+                        (i + steps) % len
+                    } else {
+                        len - 1
+                    }
                 } else {
-                    i + 1
+                    i + steps
                 }
             }
             None => 0,
@@ -246,16 +251,21 @@ impl<T> StatefulList<T> {
         self.state.select(Some(i));
     }
 
-    pub fn previous(&mut self, wrap_around: bool) {
+    pub fn previous(&mut self, steps: usize, wrap_around: bool) {
         if self.items.is_empty() {
             return;
         }
+        let len = self.items.len();
         let i = match self.state.selected() {
             Some(i) => {
-                if i == 0 {
-                    if wrap_around { self.items.len() - 1 } else { 0 }
+                if i < steps {
+                    if wrap_around {
+                        (i + len - (steps % len)) % len
+                    } else {
+                        0
+                    }
                 } else {
-                    i - 1
+                    i - steps
                 }
             }
             None => 0,
@@ -286,16 +296,21 @@ impl<T> StatefulTable<T> {
         }
     }
 
-    pub fn next(&mut self, wrap_around: bool) {
+    pub fn next(&mut self, steps: usize, wrap_around: bool) {
         if self.items.is_empty() {
             return;
         }
+        let len = self.items.len();
         let i = match self.state.selected() {
             Some(i) => {
-                if i >= self.items.len() - 1 {
-                    if wrap_around { 0 } else { self.items.len() - 1 }
+                if i + steps >= len {
+                    if wrap_around {
+                        (i + steps) % len
+                    } else {
+                        len - 1
+                    }
                 } else {
-                    i + 1
+                    i + steps
                 }
             }
             None => 0,
@@ -303,16 +318,21 @@ impl<T> StatefulTable<T> {
         self.state.select(Some(i));
     }
 
-    pub fn previous(&mut self, wrap_around: bool) {
+    pub fn previous(&mut self, steps: usize, wrap_around: bool) {
         if self.items.is_empty() {
             return;
         }
+        let len = self.items.len();
         let i = match self.state.selected() {
             Some(i) => {
-                if i == 0 {
-                    if wrap_around { self.items.len() - 1 } else { 0 }
+                if i < steps {
+                    if wrap_around {
+                        (i + len - (steps % len)) % len
+                    } else {
+                        0
+                    }
                 } else {
-                    i - 1
+                    i - steps
                 }
             }
             None => 0,

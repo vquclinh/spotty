@@ -1,4 +1,4 @@
-use crossterm::event::{KeyCode, KeyEvent};
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use crate::app::{ActiveBlock, App, route::Route};
 use crate::app::search_state::SearchHoveredPane;
 use crate::network::request::ClientRequest;
@@ -33,8 +33,8 @@ pub fn handle_search_events(key: KeyEvent, app: &mut App) {
             }
 
             ActiveBlock::SearchResults => {
-                match key.code {
-                    KeyCode::Tab => {
+                match key {
+                    KeyEvent { code: KeyCode::Tab, .. } => {
                         match search_state.hovered_pane {
                             SearchHoveredPane::Tracks => search_state.hovered_pane = SearchHoveredPane::Artists,
                             SearchHoveredPane::Artists => search_state.hovered_pane = SearchHoveredPane::Albums,
@@ -47,27 +47,41 @@ pub fn handle_search_events(key: KeyEvent, app: &mut App) {
                         }
                     }
 
-                    KeyCode::Down | KeyCode::Char('j') => {
+                    KeyEvent{ code: KeyCode::Down, .. }
+                    | KeyEvent { code: KeyCode::Char('j'), ..}
+                    | KeyEvent {
+                        code: KeyCode::Char('d'),
+                        modifiers: KeyModifiers::CONTROL,
+                        ..
+                    } => {
+                        let steps = if key.code == KeyCode::Char('d') { 10 } else { 1 };
                         match search_state.hovered_pane {
-                            SearchHoveredPane::Tracks => search_state.tracks_state.next(false),
-                            SearchHoveredPane::Artists => search_state.artists_state.next(false),
-                            SearchHoveredPane::Albums => search_state.albums_state.next(false),
-                            SearchHoveredPane::Playlists => search_state.playlists_state.next(false),
+                            SearchHoveredPane::Tracks => search_state.tracks_state.next(steps, false),
+                            SearchHoveredPane::Artists => search_state.artists_state.next(steps, false),
+                            SearchHoveredPane::Albums => search_state.albums_state.next(steps, false),
+                            SearchHoveredPane::Playlists => search_state.playlists_state.next(steps, false),
                             _ => {}
                         }
                     }
 
-                    KeyCode::Up | KeyCode::Char('k') => {
+                    KeyEvent { code: KeyCode::Up, .. }
+                    | KeyEvent { code: KeyCode::Char('k'), .. }
+                    | KeyEvent {
+                        code: KeyCode::Char('u'),
+                        modifiers: KeyModifiers::CONTROL,
+                        ..
+                    } => {
+                        let steps = if key.code == KeyCode::Char('u') { 10 } else { 1 };
                         match search_state.hovered_pane {
-                            SearchHoveredPane::Tracks => search_state.tracks_state.previous(false),
-                            SearchHoveredPane::Artists => search_state.artists_state.previous(false),
-                            SearchHoveredPane::Albums => search_state.albums_state.previous(false),
-                            SearchHoveredPane::Playlists => search_state.playlists_state.previous(false),
+                            SearchHoveredPane::Tracks => search_state.tracks_state.previous(steps, false),
+                            SearchHoveredPane::Artists => search_state.artists_state.previous(steps, false),
+                            SearchHoveredPane::Albums => search_state.albums_state.previous(steps, false),
+                            SearchHoveredPane::Playlists => search_state.playlists_state.previous(steps, false),
                             _ => {}
                         }
                     }
 
-                    KeyCode::Char('t') => {
+                    KeyEvent { code: KeyCode::Char('t'), .. } => {
                         target_to_open = match search_state.hovered_pane {
                             SearchHoveredPane::Tracks => search_state
                                 .tracks_state
@@ -101,7 +115,7 @@ pub fn handle_search_events(key: KeyEvent, app: &mut App) {
                         };
                     }
 
-                    KeyCode::Esc => {
+                    KeyEvent { code: KeyCode::Esc, .. } => {
                         app.active_block = ActiveBlock::SearchInput;
                     }
                     _ => {}
