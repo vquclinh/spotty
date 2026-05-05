@@ -175,7 +175,7 @@ pub async fn start_network_worker(
 
                 match client.add_items_to_playlist(&playlist_id, uris_ref).await {
                     Ok(_) => {
-                        // Refetch the first page to sync metadata
+                        // FIXME
                         if let Ok(page) = client.get_user_playlists(50, 0).await
                             && let Ok(mut state) = shared_state.lock() {
                             state.playlists = page.into();
@@ -188,15 +188,7 @@ pub async fn start_network_worker(
             ClientRequest::RemoveItemsFromPlaylist { playlist_id, uris } => {
                 let uris_ref: Vec<&str> = uris.iter().map(|s| s.as_str()).collect();
 
-                match client.remove_items_from_playlist(&playlist_id, uris_ref).await {
-                    Ok(_) => {
-                        if let Ok(page) = client.get_user_playlists(50, 0).await
-                            && let Ok(mut state) = shared_state.lock() {
-                            state.playlists = page.into();
-                        }
-                    }
-                    Err(_e) => {}
-                }
+                let _ = client.remove_items_from_playlist(&playlist_id, uris_ref).await;
             }
 
             ClientRequest::GetAlbum { id } => {
@@ -256,6 +248,7 @@ pub async fn start_network_worker(
 
             #[allow(clippy::collapsible_if)]
             ClientRequest::SaveItemsToLibrary(uris) => {
+                // FIXME
                 if uris.is_empty() { return; }
                 let uris: Vec<&str> = uris.iter().map(|u| u.as_str()).collect();
                 // Assuming all the items are of the same type
@@ -289,32 +282,8 @@ pub async fn start_network_worker(
             #[allow(clippy::collapsible_if)]
             ClientRequest::RemoveItemsFromLibrary( uris ) => {
                 let uris: Vec<&str> = uris.iter().map(|u| u.as_str()).collect();
-                // Assuming all the items are of the same type
-                let first_uri = uris[0];
 
                 let _ = client.remove_items_from_library(uris).await;
-
-                if first_uri.contains(":track:") {
-                    if let Ok(page) = client.get_user_liked_songs(50, 0).await
-                        && let Ok(mut state) = shared_state.lock() {
-                            state.liked_songs = page.into();
-                    }
-                } else if first_uri.contains(":album:") {
-                    if let Ok(page) = client.get_user_saved_albums(50, 0).await
-                        && let Ok(mut state) = shared_state.lock() {
-                            state.saved_albums = page.into();
-                    }
-                } else if first_uri.contains(":artist:") {
-                    if let Ok(page) = client.get_user_saved_artists(50, None).await
-                        && let Ok(mut state) = shared_state.lock() {
-                            state.saved_artists = page.into();
-                    }
-                } else if first_uri.contains(":episode:") {
-                    if let Ok(page) = client.get_user_saved_podcasts(50, 0).await
-                        && let Ok(mut state) = shared_state.lock() {
-                            state.saved_podcasts = page.into();
-                    }
-                }
             }
 
             #[allow(clippy::collapsible_if)]

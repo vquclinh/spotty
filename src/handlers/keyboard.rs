@@ -161,11 +161,24 @@ fn execute_action_menu_command(app: &mut App) -> bool {
                 }
             }
             MenuAction::RemoveFromThisPlaylist => {
-                if let Route::PlaylistDetail(route) = &app.route
+                if let Route::PlaylistDetail(route) = &mut app.route
                     && let Some(uri) = uri && !uri.is_empty() {
                     let _ = app.network_tx.send(ClientRequest::RemoveItemsFromPlaylist {
-                        playlist_id: route.playlist.id.clone(), uris: vec![uri]
+                        playlist_id: route.playlist.id.clone(), uris: vec![uri.clone()]
                     });
+                    // Update the list locally
+                    route.tracks.items.retain(|item| match item {
+                        PlayableItem::Track(i) => i.uri != uri,
+                        PlayableItem::Episode(i) => i.uri != uri
+                    });
+                    // Fix the selected index
+                    if let Some(idx) = route.tracks.state.selected() {
+                        let len = route.tracks.items.len();
+                        if idx >= len {
+                            route.tracks.state.select(Some(len - 1));
+                        }
+                    }
+
                 }
                 true
             }
@@ -214,26 +227,41 @@ fn execute_action_menu_command(app: &mut App) -> bool {
                 }
                 true
             }
+            #[allow(clippy::collapsible_if)]
             MenuAction::RemoveFromLibrary => {
                 if let Some(uri) = uri && !uri.is_empty() {
-                    match target {
-                        MenuTarget::Track(_) => {
-                            let _ = app.network_tx
-                                .send(ClientRequest::RemoveItemsFromLibrary(vec![uri]));
+                    if matches!(target, MenuTarget::Track(_))
+                    || matches!(target, MenuTarget::Album(_))
+                    || matches!(target, MenuTarget::Artist(_))
+                    || matches!(target, MenuTarget::Episode(_)) {
+                        let _ = app.network_tx
+                            .send(ClientRequest::RemoveItemsFromLibrary(vec![uri.clone()]));
+                        // Update the list locally
+                        let state_info = match &mut app.route {
+                            Route::LikedSongs(s) => {
+                                s.tracks.items.retain(|item| item.uri != uri);
+                                Some((s.tracks.items.len(), &mut s.tracks.state))
+                            }
+                            Route::SavedAlbums(s) => {
+                                s.albums.items.retain(|item| item.uri != uri);
+                                Some((s.albums.items.len(), &mut s.albums.state))
+                            }
+                            Route::SavedArtists(s) => {
+                                s.artists.items.retain(|item| item.uri != uri);
+                                Some((s.artists.items.len(), &mut s.artists.state))
+                            }
+                            Route::SavedPodcasts(s) => {
+                                s.podcasts.items.retain(|item| item.uri != uri);
+                                Some((s.podcasts.items.len(), &mut s.podcasts.state))
+                            }
+                            _ => None
+                        };
+                        // Fix the selected index
+                        if let Some((len, list_state)) = state_info
+                        && let Some(idx) = list_state.selected()
+                        && idx >= len {
+                            list_state.select(Some(len - 1));
                         }
-                        MenuTarget::Album(_) => {
-                            let _ = app.network_tx
-                                .send(ClientRequest::RemoveItemsFromLibrary(vec![uri]));
-                        }
-                        MenuTarget::Artist(_) => {
-                            let _ = app.network_tx
-                                .send(ClientRequest::RemoveItemsFromLibrary(vec![uri]));
-                        }
-                        MenuTarget::Episode(_) => {
-                            let _ = app.network_tx
-                                .send(ClientRequest::RemoveItemsFromLibrary(vec![uri]));
-                        }
-                        _ => {}
                     }
                 }
                 true
