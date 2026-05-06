@@ -1,6 +1,7 @@
 use crate::app::state::SharedState;
 use crate::network::client::SpotifyClient;
 use crate::network::request::{ClientRequest, PlayerRequest};
+use crate::network::models::SearchType;
 use crate::audio::player::*;
 use tokio::sync::mpsc;
 use std::sync::Arc;
@@ -97,10 +98,64 @@ pub async fn start_network_worker(
                 match client.search_items(&query, search_types, limit, offset).await {
                     Ok(results) => {
                         if let Ok(mut state) = shared_state.lock() {
-                            state.search_results = results; 
+                            state.search_results = results;
                         }
                     }
                     Err(_e) => {}
+                }
+            }
+            
+            ClientRequest::SearchItemsUpTo { query, search_types, total_limit, start_offset } => {
+                let page_size = 50;
+                let mut curr_offset = start_offset;
+                let mut search_types = search_types.clone();
+
+                while curr_offset < total_limit && !search_types.is_empty() {
+                    let mut batch_max_len = 0;
+
+                    match client
+                        .search_items(&query, search_types.clone(), page_size, curr_offset)
+                        .await
+                    {
+                        Ok(results) if let Ok(mut state) = shared_state.lock() => {
+                            if let Some(page) = results.tracks && !page.items.is_empty() {
+                                batch_max_len = std::cmp::max(batch_max_len, page.items.len());
+                                if page.next.is_none() {
+                                    search_types.retain(|t| *t != SearchType::Track);
+                                }
+                                state.search_results.tracks = Some(page);
+                            }
+                            if let Some(page) = results.artists && !page.items.is_empty() {
+                                batch_max_len = std::cmp::max(batch_max_len, page.items.len());
+                                if page.next.is_none() {
+                                    search_types.retain(|t| *t != SearchType::Artist);
+                                }
+                                state.search_results.artists = Some(page);
+                            }
+                            if let Some(page) = results.albums && !page.items.is_empty() {
+                                batch_max_len = std::cmp::max(batch_max_len, page.items.len());
+                                if page.next.is_none() {
+                                    search_types.retain(|t| *t != SearchType::Album);
+                                }
+                                state.search_results.albums = Some(page);
+                            }
+                            if let Some(page) = results.playlists && !page.items.is_empty() {
+                                batch_max_len = std::cmp::max(batch_max_len, page.items.len());
+                                if page.next.is_none() {
+                                    search_types.retain(|t| *t != SearchType::Playlist);
+                                }
+                                state.search_results.playlists = Some(page);
+                            }
+                        }
+
+                        _ => {}
+                    }
+
+                    curr_offset += batch_max_len as u32;
+                    if batch_max_len == 0 {
+                        // Avoid stalling the worker when the page is empty.
+                        break;
+                    }
                 }
             }
 
@@ -120,7 +175,7 @@ pub async fn start_network_worker(
 
                 match client.add_items_to_playlist(&playlist_id, uris_ref).await {
                     Ok(_) => {
-                        // Refetch the first page to sync metadata
+                        // FIXME
                         if let Ok(page) = client.get_user_playlists(50, 0).await
                             && let Ok(mut state) = shared_state.lock() {
                             state.playlists = page.into();
@@ -133,15 +188,7 @@ pub async fn start_network_worker(
             ClientRequest::RemoveItemsFromPlaylist { playlist_id, uris } => {
                 let uris_ref: Vec<&str> = uris.iter().map(|s| s.as_str()).collect();
 
-                match client.remove_items_from_playlist(&playlist_id, uris_ref).await {
-                    Ok(_) => {
-                        if let Ok(page) = client.get_user_playlists(50, 0).await
-                            && let Ok(mut state) = shared_state.lock() {
-                            state.playlists = page.into();
-                        }
-                    }
-                    Err(_e) => {}
-                }
+                let _ = client.remove_items_from_playlist(&playlist_id, uris_ref).await;
             }
 
             ClientRequest::GetAlbum { id } => {
@@ -201,6 +248,7 @@ pub async fn start_network_worker(
 
             #[allow(clippy::collapsible_if)]
             ClientRequest::SaveItemsToLibrary(uris) => {
+                // FIXME
                 if uris.is_empty() { return; }
                 let uris: Vec<&str> = uris.iter().map(|u| u.as_str()).collect();
                 // Assuming all the items are of the same type
@@ -234,32 +282,8 @@ pub async fn start_network_worker(
             #[allow(clippy::collapsible_if)]
             ClientRequest::RemoveItemsFromLibrary( uris ) => {
                 let uris: Vec<&str> = uris.iter().map(|u| u.as_str()).collect();
-                // Assuming all the items are of the same type
-                let first_uri = uris[0];
 
                 let _ = client.remove_items_from_library(uris).await;
-
-                if first_uri.contains(":track:") {
-                    if let Ok(page) = client.get_user_liked_songs(50, 0).await
-                        && let Ok(mut state) = shared_state.lock() {
-                            state.liked_songs = page.into();
-                    }
-                } else if first_uri.contains(":album:") {
-                    if let Ok(page) = client.get_user_saved_albums(50, 0).await
-                        && let Ok(mut state) = shared_state.lock() {
-                            state.saved_albums = page.into();
-                    }
-                } else if first_uri.contains(":artist:") {
-                    if let Ok(page) = client.get_user_saved_artists(50, None).await
-                        && let Ok(mut state) = shared_state.lock() {
-                            state.saved_artists = page.into();
-                    }
-                } else if first_uri.contains(":episode:") {
-                    if let Ok(page) = client.get_user_saved_podcasts(50, 0).await
-                        && let Ok(mut state) = shared_state.lock() {
-                            state.saved_podcasts = page.into();
-                    }
-                }
             }
 
             #[allow(clippy::collapsible_if)]

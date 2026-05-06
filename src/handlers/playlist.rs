@@ -1,5 +1,5 @@
 use crate::app::{ActiveBlock, App, route::Route};
-use crossterm::event::{KeyCode, KeyEvent};
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use crate::network::models::*;
 use crate::network::request::ClientRequest;
 
@@ -7,9 +7,16 @@ pub fn handle_playlist_events(key: KeyEvent, app: &mut App) {
     let mut target_to_open = None;
 
     if let Route::PlaylistDetail(playlist_state) = &mut app.route {
-        match key.code {
-            KeyCode::Down | KeyCode::Char('j') => {
-                playlist_state.tracks.next(false);
+        match key {
+            KeyEvent{ code: KeyCode::Down, .. }
+            | KeyEvent { code: KeyCode::Char('j'), ..}
+            | KeyEvent {
+                code: KeyCode::Char('d'),
+                modifiers: KeyModifiers::CONTROL,
+                ..
+            } => {
+                let steps = if key.code == KeyCode::Char('d') { 10 } else { 1 };
+                playlist_state.tracks.next(steps, false);
                 // Fetch more if the cursor is near the end at this threshold
                 let threshold = 20;
 
@@ -26,9 +33,19 @@ pub fn handle_playlist_events(key: KeyEvent, app: &mut App) {
                     playlist_state.is_loading = true;
                 }
             }
-            KeyCode::Up | KeyCode::Char('k') => playlist_state.tracks.previous(false),
+
+            KeyEvent { code: KeyCode::Up, .. }
+            | KeyEvent { code: KeyCode::Char('k'), .. }
+            | KeyEvent {
+                code: KeyCode::Char('u'),
+                modifiers: KeyModifiers::CONTROL,
+                ..
+            } => {
+                let steps = if key.code == KeyCode::Char('u') { 10 } else { 1 };
+                playlist_state.tracks.previous(steps, false);
+            }
             
-            KeyCode::Char('t') => {
+            KeyEvent { code: KeyCode::Char('t'), .. } => {
                 target_to_open = playlist_state.tracks.state.selected()
                     .and_then(|idx| playlist_state.tracks.items.get(idx))
                     .map(|item| match item {
@@ -37,7 +54,8 @@ pub fn handle_playlist_events(key: KeyEvent, app: &mut App) {
                     });
             }
 
-            KeyCode::Backspace | KeyCode::Char('b') => {
+            KeyEvent { code: KeyCode::Backspace, .. }
+            | KeyEvent{ code: KeyCode::Char('b'), .. } => {
                 app.active_block = ActiveBlock::PlaylistsMenu;
             }
             _ => {}

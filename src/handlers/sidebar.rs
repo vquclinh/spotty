@@ -1,5 +1,5 @@
 use crate::app::{ActiveBlock, App, library_state::*, playlist_state::PlaylistState, route::Route};
-use crossterm::event::{KeyCode, KeyEvent};
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use crate::ClientRequest;
 
 pub fn handle_sidebar_events(key: KeyEvent, app: &mut App) {
@@ -7,10 +7,30 @@ pub fn handle_sidebar_events(key: KeyEvent, app: &mut App) {
 
     match *active_block {
         ActiveBlock::PlaylistsMenu => {
-            match key.code {
-                KeyCode::Down | KeyCode::Char('j') => playlists_menu.next(true),
-                KeyCode::Up | KeyCode::Char('k') => playlists_menu.previous(true),
-                KeyCode::Enter => {
+            match key {
+                KeyEvent{ code: KeyCode::Down, .. }
+                | KeyEvent { code: KeyCode::Char('j'), ..}
+                | KeyEvent {
+                    code: KeyCode::Char('d'),
+                    modifiers: KeyModifiers::CONTROL,
+                    ..
+                } => {
+                    let steps = if key.code == KeyCode::Char('d') { 10 } else { 1 };
+                    playlists_menu.next(steps, false);
+                }
+
+                KeyEvent { code: KeyCode::Up, .. }
+                | KeyEvent { code: KeyCode::Char('k'), .. }
+                | KeyEvent {
+                    code: KeyCode::Char('u'),
+                    modifiers: KeyModifiers::CONTROL,
+                    ..
+                } => {
+                    let steps = if key.code == KeyCode::Char('u') { 10 } else { 1 };
+                    playlists_menu.previous(steps, false);
+                }
+
+                KeyEvent { code: KeyCode::Enter, .. } => {
                     if let Some(selected_idx) = playlists_menu.state.selected()
                     && let Some(playlist) = playlists_menu.items.get(selected_idx).cloned() {
                         *route = Route::PlaylistDetail(PlaylistState::new(playlist.clone()));
@@ -29,8 +49,10 @@ pub fn handle_sidebar_events(key: KeyEvent, app: &mut App) {
 
         ActiveBlock::LibraryMenu => {
             match key.code {
-                KeyCode::Down | KeyCode::Char('j') => library_menu.next(true),
-                KeyCode::Up | KeyCode::Char('k') => library_menu.previous(true),
+                KeyCode::Down | KeyCode::Char('j') => library_menu.next(1, true),
+
+                KeyCode::Up | KeyCode::Char('k') => library_menu.previous(1, true),
+
                 KeyCode::Enter => {
                     if let Some(selected_idx) = library_menu.state.selected()
                     && let Some(library_item) = library_menu.items.get(selected_idx).cloned() {

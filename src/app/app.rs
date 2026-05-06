@@ -200,6 +200,9 @@ impl App {
                             &mut home_state.recent_tracks.list.items,
                             &mut shared_state.recent_tracks
                         );
+                        home_state.recent_tracks.is_loading = false;
+                        home_state.recent_tracks.is_end = shared_state.recent_tracks.is_end
+                            || home_state.recent_tracks.list.items.len() >= 100;
                     }
 
                     if !shared_state.top_tracks.items.is_empty() {
@@ -208,7 +211,8 @@ impl App {
                             &mut shared_state.top_tracks
                         );
                         home_state.top_tracks.is_loading = false;
-                        home_state.top_tracks.is_end = shared_state.top_tracks.is_end;
+                        home_state.top_tracks.is_end = shared_state.top_tracks.is_end
+                            || home_state.top_tracks.list.items.len() >= 100;
                     }
 
                     if !shared_state.top_artists.items.is_empty() {
@@ -217,7 +221,8 @@ impl App {
                             &mut shared_state.top_artists
                         );
                         home_state.top_artists.is_loading = false;
-                        home_state.top_artists.is_end = shared_state.top_artists.is_end;
+                        home_state.top_artists.is_end = shared_state.top_artists.is_end
+                            || home_state.top_artists.list.items.len() >= 100;
                     }
                 }
 
@@ -231,23 +236,37 @@ impl App {
                 }
 
                 Route::Search(search_state) => {
-                    let has_tracks = shared_state.search_results.tracks
-                        .as_ref().is_some_and(|t| !t.items.is_empty());
-                    let has_artists = shared_state.search_results.artists
-                        .as_ref().is_some_and(|a| !a.items.is_empty());
+                    let results = &mut shared_state.search_results;
 
-                    if has_tracks || has_artists {
-                        if let Some(page) = shared_state.search_results.tracks.take() {
-                            assign_or_append_payload(&mut search_state.tracks_state.list.items, &mut page.into());
+                    if let Some(mut page) = results.tracks.take() && !page.items.is_empty() {
+                        if page.offset.unwrap_or(0) == 0 {
+                            search_state.tracks_state.items = std::mem::take(&mut page.items);
+                        } else {
+                            search_state.tracks_state.items.append(&mut page.items);
                         }
-                        if let Some(page) = shared_state.search_results.artists.take() {
-                            assign_or_append_payload(&mut search_state.artists_state.list.items, &mut page.into());
+                    }
+
+                    if let Some(mut page) = results.artists.take() && !page.items.is_empty() {
+                        if page.offset.unwrap_or(0) == 0 {
+                            search_state.artists_state.items = std::mem::take(&mut page.items);
+                        } else {
+                            search_state.artists_state.items.append(&mut page.items);
                         }
-                        if let Some(page) = shared_state.search_results.albums.take() {
-                            assign_or_append_payload(&mut search_state.albums_state.list.items, &mut page.into());
+                    }
+
+                    if let Some(mut page) = results.albums.take() && !page.items.is_empty() {
+                        if page.offset.unwrap_or(0) == 0 {
+                            search_state.albums_state.items = std::mem::take(&mut page.items);
+                        } else {
+                            search_state.albums_state.items.append(&mut page.items);
                         }
-                        if let Some(page) = shared_state.search_results.playlists.take() {
-                            assign_or_append_payload(&mut search_state.playlists_state.list.items, &mut page.into());
+                    }
+
+                    if let Some(mut page) = results.playlists.take() && !page.items.is_empty() {
+                        if page.offset.unwrap_or(0) == 0 {
+                            search_state.playlists_state.items = std::mem::take(&mut page.items);
+                        } else {
+                            search_state.playlists_state.items.append(&mut page.items);
                         }
                     }
                 }
@@ -328,7 +347,7 @@ impl App {
     }
 }
 
-pub fn assign_or_append_payload<T>(into: &mut Vec<T>, payload: &mut DataPayload<T>) {
+fn assign_or_append_payload<T>(into: &mut Vec<T>, payload: &mut DataPayload<T>) {
     if payload.items.is_empty() {
         return;
     }

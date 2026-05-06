@@ -44,18 +44,18 @@ pub async fn run() -> Result<()> {
     let (audio_cmd_tx, audio_cmd_rx) = mpsc::unbounded_channel::<AudioCommand>();
     let (audio_event_tx, audio_event_rx) = mpsc::unbounded_channel::<AudioEvent>();
 
-    let spotify_client = Arc::new(SpotifyClient::new(Some(1800)).await?);
+    let spotify_client = Arc::new(SpotifyClient::new().await?);
 
     // shared_state
     let shared_state = Arc::new(Mutex::new(IoSharedState::default()));
-    
+
     // network
     let network_client = Arc::clone(&spotify_client);
     let audio_cmd_tx_for_net = audio_cmd_tx.clone();
     let network_shared_state = Arc::clone(&shared_state);
-    
+
     tokio::spawn(async move {
-        start_network_worker(network_client, network_rx, audio_cmd_tx_for_net, network_shared_state).await;   
+        start_network_worker(network_client, network_rx, audio_cmd_tx_for_net, network_shared_state).await;
     });
 
     // audio
@@ -76,7 +76,7 @@ pub async fn run() -> Result<()> {
     let mut terminal = Terminal::new(backend)?;
 
     let mut app = App::new(network_tx, audio_event_rx, Arc::clone(&shared_state));
-    
+
     let tick_rate = Duration::from_millis(50);
     let mut last_tick = Instant::now();
 

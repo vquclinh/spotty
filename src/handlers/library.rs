@@ -1,5 +1,5 @@
 use crate::app::{ActiveBlock, App, route::Route};
-use crossterm::event::{KeyCode, KeyEvent};
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use crate::network::models::*;
 use crate::network::request::ClientRequest;
 
@@ -7,9 +7,16 @@ pub fn handle_liked_songs_events(key: KeyEvent, app: &mut App) {
     let mut target_to_open = None;
 
     if let Route::LikedSongs(liked_songs) = &mut app.route {
-        match key.code {
-            KeyCode::Down | KeyCode::Char('j') => {
-                liked_songs.tracks.next(false);
+        match key {
+            KeyEvent{ code: KeyCode::Down, .. }
+            | KeyEvent { code: KeyCode::Char('j'), ..}
+            | KeyEvent {
+                code: KeyCode::Char('d'),
+                modifiers: KeyModifiers::CONTROL,
+                ..
+            } => {
+                let steps = if key.code == KeyCode::Char('d') { 10 } else { 1 };
+                liked_songs.tracks.next(steps, false);
                 let threshold = 20;
 
                 if let Some(selected) = liked_songs.tracks.state.selected()
@@ -24,15 +31,26 @@ pub fn handle_liked_songs_events(key: KeyEvent, app: &mut App) {
                     liked_songs.is_loading = true;
                 }
             }
-            KeyCode::Up | KeyCode::Char('k') => liked_songs.tracks.previous(false),
             
-            KeyCode::Char('t') => {
+            KeyEvent { code: KeyCode::Up, .. }
+            | KeyEvent { code: KeyCode::Char('k'), .. }
+            | KeyEvent {
+                code: KeyCode::Char('u'),
+                modifiers: KeyModifiers::CONTROL,
+                ..
+            } => {
+                let steps = if key.code == KeyCode::Char('u') { 10 } else { 1 };
+                liked_songs.tracks.previous(steps, false);
+            }
+            
+            KeyEvent { code: KeyCode::Char('t'), .. } => {
                 target_to_open = liked_songs.tracks.state.selected()
                     .and_then(|idx| liked_songs.tracks.items.get(idx))
                     .map(|track| MenuTarget::Track(track.clone()));
             }
 
-            KeyCode::Backspace | KeyCode::Char('b') => {
+            KeyEvent { code: KeyCode::Backspace, .. }
+            | KeyEvent{ code: KeyCode::Char('b'), .. } => {
                 app.active_block = ActiveBlock::LikedSongs;
             }
             _ => {}
@@ -48,9 +66,16 @@ pub fn handle_saved_albums_events(key: KeyEvent, app: &mut App) {
     let mut target_to_open = None;
 
     if let Route::SavedAlbums(saved_albums) = &mut app.route {
-        match key.code {
-            KeyCode::Down | KeyCode::Char('j') => {
-                saved_albums.albums.next(false);
+        match key {
+            KeyEvent{ code: KeyCode::Down, .. }
+            | KeyEvent { code: KeyCode::Char('j'), ..}
+            | KeyEvent {
+                code: KeyCode::Char('d'),
+                modifiers: KeyModifiers::CONTROL,
+                ..
+            } => {
+                let steps = if key.code == KeyCode::Char('d') { 10 } else { 1 };
+                saved_albums.albums.next(steps, false);
                 let threshold = 20;
 
                 if let Some(selected) = saved_albums.albums.state.selected()
@@ -65,15 +90,26 @@ pub fn handle_saved_albums_events(key: KeyEvent, app: &mut App) {
                     saved_albums.is_loading = true;
                 }
             }
-            KeyCode::Up | KeyCode::Char('k') => saved_albums.albums.previous(false),
+
+            KeyEvent { code: KeyCode::Up, .. }
+            | KeyEvent { code: KeyCode::Char('k'), .. }
+            | KeyEvent {
+                code: KeyCode::Char('u'),
+                modifiers: KeyModifiers::CONTROL,
+                ..
+            } => {
+                let steps = if key.code == KeyCode::Char('u') { 10 } else { 1 };
+                saved_albums.albums.previous(steps, false);
+            }
             
-            KeyCode::Char('t') => {
+            KeyEvent { code: KeyCode::Char('t'), .. } => {
                 target_to_open = saved_albums.albums.state.selected()
                     .and_then(|idx| saved_albums.albums.items.get(idx))
                     .map(|album| MenuTarget::Album(album.clone()));
             }
 
-            KeyCode::Backspace | KeyCode::Char('b') => {
+            KeyEvent { code: KeyCode::Backspace, .. }
+            | KeyEvent{ code: KeyCode::Char('b'), .. } => {
                 app.active_block = ActiveBlock::SavedAlbums;
             }
             _ => {}
@@ -89,9 +125,16 @@ pub fn handle_saved_artists_events(key: KeyEvent, app: &mut App) {
     let mut target_to_open = None;
 
     if let Route::SavedArtists(saved_artists) = &mut app.route {
-        match key.code {
-            KeyCode::Down | KeyCode::Char('j') => {
-                saved_artists.artists.next(false);
+        match key {
+            KeyEvent{ code: KeyCode::Down, .. }
+            | KeyEvent { code: KeyCode::Char('j'), ..}
+            | KeyEvent {
+                code: KeyCode::Char('d'),
+                modifiers: KeyModifiers::CONTROL,
+                ..
+            } => {
+                let steps = if key.code == KeyCode::Char('d') { 10 } else { 1 };
+                saved_artists.artists.next(steps, false);
                 let threshold = 20;
 
                 if let Some(selected) = saved_artists.artists.state.selected()
@@ -107,15 +150,26 @@ pub fn handle_saved_artists_events(key: KeyEvent, app: &mut App) {
                     saved_artists.is_loading = true;
                 }
             }
-            KeyCode::Up | KeyCode::Char('k') => saved_artists.artists.previous(false),
+
+            KeyEvent { code: KeyCode::Up, .. }
+            | KeyEvent { code: KeyCode::Char('k'), .. }
+            | KeyEvent {
+                code: KeyCode::Char('u'),
+                modifiers: KeyModifiers::CONTROL,
+                ..
+            } => {
+                let steps = if key.code == KeyCode::Char('u') { 10 } else { 1 };
+                saved_artists.artists.previous(steps, false);
+            }
             
-            KeyCode::Char('t') => {
+            KeyEvent { code: KeyCode::Char('t'), .. } => {
                 target_to_open = saved_artists.artists.state.selected()
                     .and_then(|idx| saved_artists.artists.items.get(idx))
                     .map(|artist| MenuTarget::Artist(artist.clone()));
             }
 
-            KeyCode::Backspace | KeyCode::Char('b') => {
+            KeyEvent { code: KeyCode::Backspace, .. }
+            | KeyEvent{ code: KeyCode::Char('b'), .. } => {
                 app.active_block = ActiveBlock::SavedArtists;
             }
             _ => {}
@@ -131,9 +185,16 @@ pub fn handle_saved_podcasts_events(key: KeyEvent, app: &mut App) {
     let mut target_to_open = None;
 
     if let Route::SavedPodcasts(saved_podcasts) = &mut app.route {
-        match key.code {
-            KeyCode::Down | KeyCode::Char('j') => {
-                saved_podcasts.podcasts.next(false);
+        match key {
+            KeyEvent{ code: KeyCode::Down, .. }
+            | KeyEvent { code: KeyCode::Char('j'), ..}
+            | KeyEvent {
+                code: KeyCode::Char('d'),
+                modifiers: KeyModifiers::CONTROL,
+                ..
+            } => {
+                let steps = if key.code == KeyCode::Char('d') { 10 } else { 1 };
+                saved_podcasts.podcasts.next(steps, false);
                 let threshold = 20;
 
                 if let Some(selected) = saved_podcasts.podcasts.state.selected()
@@ -148,15 +209,26 @@ pub fn handle_saved_podcasts_events(key: KeyEvent, app: &mut App) {
                     saved_podcasts.is_loading = true;
                 }
             }
-            KeyCode::Up | KeyCode::Char('k') => saved_podcasts.podcasts.previous(false),
+
+            KeyEvent { code: KeyCode::Up, .. }
+            | KeyEvent { code: KeyCode::Char('k'), .. }
+            | KeyEvent {
+                code: KeyCode::Char('u'),
+                modifiers: KeyModifiers::CONTROL,
+                ..
+            } => {
+                let steps = if key.code == KeyCode::Char('u') { 10 } else { 1 };
+                saved_podcasts.podcasts.previous(steps, false);
+            }
             
-            KeyCode::Char('t') => {
+            KeyEvent { code: KeyCode::Char('t'), .. } => {
                 target_to_open = saved_podcasts.podcasts.state.selected()
                     .and_then(|idx| saved_podcasts.podcasts.items.get(idx))
                     .map(|episode| MenuTarget::Episode(episode.clone()));
             }
 
-            KeyCode::Backspace | KeyCode::Char('b') => {
+            KeyEvent { code: KeyCode::Backspace, .. }
+            | KeyEvent{ code: KeyCode::Char('b'), .. } => {
                 app.active_block = ActiveBlock::SavedPodcasts;
             }
             _ => {}

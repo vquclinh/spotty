@@ -56,7 +56,7 @@ pub fn handle_key_events(key: KeyEvent, app: &mut App) {
         }
         return;
     }
-    
+
     if app.active_block == ActiveBlock::SearchInput {
         search::handle_search_events(key, app);
         return;
@@ -70,7 +70,6 @@ pub fn handle_key_events(key: KeyEvent, app: &mut App) {
     match app.active_block {
         ActiveBlock::PlaylistsMenu | ActiveBlock::LibraryMenu => {
             sidebar::handle_sidebar_events(key, app);
-            return;
         }
         ActiveBlock::HomeBlock => {
             home::handle_home_events(key, app);
@@ -78,19 +77,15 @@ pub fn handle_key_events(key: KeyEvent, app: &mut App) {
         }
         ActiveBlock::PlaylistTracks => {
             playlist::handle_playlist_events(key, app);
-            return;
         }
         ActiveBlock::SearchResults => {
             search::handle_search_events(key, app);
-            return;
         }
         ActiveBlock::QueueBlock => {
             queue::handle_queue_events(key, app);
-            return;
         }
         ActiveBlock::AlbumBlock => {
             album::handle_album_events(key, app);
-            return;
         }
         ActiveBlock::LikedSongs => {
             library::handle_liked_songs_events(key, app);
@@ -122,7 +117,7 @@ fn execute_action_menu_command(app: &mut App) -> bool {
             MenuTarget::Album(a) => Some(a.uri.clone()),
             MenuTarget::Playlist(p) => Some(p.uri.clone()),
         };
-        
+
         match action {
             MenuAction::PlayNow => {
                 if let Some(u) = uri {
@@ -130,7 +125,7 @@ fn execute_action_menu_command(app: &mut App) -> bool {
                         MenuTarget::Track(_) | MenuTarget::Episode(_) => PlayerRequest::Play(u),
                         MenuTarget::Album(_) | MenuTarget::Playlist(_) | MenuTarget::Artist(_) => PlayerRequest::PlayContext(u),
                     };
-                    
+
                     let _ = app.network_tx.send(ClientRequest::Player(player_req));
                 }
                 true
@@ -149,7 +144,7 @@ fn execute_action_menu_command(app: &mut App) -> bool {
                     .filter(|p| {
                         let is_owner = p.owner.id == *my_id;
                         let is_collaborator = p.collaborative;
-                        
+
                         is_owner || is_collaborator
                     })
                     .cloned()
@@ -159,11 +154,33 @@ fn execute_action_menu_command(app: &mut App) -> bool {
                     app.playlist_selector.playlists = writable_playlists;
                     app.playlist_selector.is_open = true;
                     app.playlist_selector.state.select(Some(0));
-                    
-                    false 
+
+                    false
                 } else {
                     true
                 }
+            }
+            MenuAction::RemoveFromThisPlaylist => {
+                if let Route::PlaylistDetail(route) = &mut app.route
+                    && let Some(uri) = uri && !uri.is_empty() {
+                    let _ = app.network_tx.send(ClientRequest::RemoveItemsFromPlaylist {
+                        playlist_id: route.playlist.id.clone(), uris: vec![uri.clone()]
+                    });
+                    // Update the list locally
+                    route.tracks.items.retain(|item| match item {
+                        PlayableItem::Track(i) => i.uri != uri,
+                        PlayableItem::Episode(i) => i.uri != uri
+                    });
+                    // Fix the selected index
+                    if let Some(idx) = route.tracks.state.selected() {
+                        let len = route.tracks.items.len();
+                        if idx >= len {
+                            route.tracks.state.select(Some(len - 1));
+                        }
+                    }
+
+                }
+                true
             }
             MenuAction::GoToAlbum => {
                 let album_id = match target {
@@ -210,26 +227,41 @@ fn execute_action_menu_command(app: &mut App) -> bool {
                 }
                 true
             }
+            #[allow(clippy::collapsible_if)]
             MenuAction::RemoveFromLibrary => {
                 if let Some(uri) = uri && !uri.is_empty() {
-                    match target {
-                        MenuTarget::Track(_) => {
-                            let _ = app.network_tx
-                                .send(ClientRequest::RemoveItemsFromLibrary(vec![uri]));
+                    if matches!(target, MenuTarget::Track(_))
+                    || matches!(target, MenuTarget::Album(_))
+                    || matches!(target, MenuTarget::Artist(_))
+                    || matches!(target, MenuTarget::Episode(_)) {
+                        let _ = app.network_tx
+                            .send(ClientRequest::RemoveItemsFromLibrary(vec![uri.clone()]));
+                        // Update the list locally
+                        let state_info = match &mut app.route {
+                            Route::LikedSongs(s) => {
+                                s.tracks.items.retain(|item| item.uri != uri);
+                                Some((s.tracks.items.len(), &mut s.tracks.state))
+                            }
+                            Route::SavedAlbums(s) => {
+                                s.albums.items.retain(|item| item.uri != uri);
+                                Some((s.albums.items.len(), &mut s.albums.state))
+                            }
+                            Route::SavedArtists(s) => {
+                                s.artists.items.retain(|item| item.uri != uri);
+                                Some((s.artists.items.len(), &mut s.artists.state))
+                            }
+                            Route::SavedPodcasts(s) => {
+                                s.podcasts.items.retain(|item| item.uri != uri);
+                                Some((s.podcasts.items.len(), &mut s.podcasts.state))
+                            }
+                            _ => None
+                        };
+                        // Fix the selected index
+                        if let Some((len, list_state)) = state_info
+                        && let Some(idx) = list_state.selected()
+                        && idx >= len {
+                            list_state.select(Some(len - 1));
                         }
-                        MenuTarget::Album(_) => {
-                            let _ = app.network_tx
-                                .send(ClientRequest::RemoveItemsFromLibrary(vec![uri]));
-                        }
-                        MenuTarget::Artist(_) => {
-                            let _ = app.network_tx
-                                .send(ClientRequest::RemoveItemsFromLibrary(vec![uri]));
-                        }
-                        MenuTarget::Episode(_) => {
-                            let _ = app.network_tx
-                                .send(ClientRequest::RemoveItemsFromLibrary(vec![uri]));
-                        }
-                        _ => {}
                     }
                 }
                 true
