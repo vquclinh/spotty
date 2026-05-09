@@ -112,41 +112,45 @@ pub async fn start_network_worker(
 
                 while curr_offset < total_limit && !search_types.is_empty() {
                     let mut batch_max_len = 0;
-
+                    
+                    #[allow(clippy::single_match)]
                     match client
                         .search_items(&query, search_types.clone(), page_size, curr_offset)
                         .await
                     {
-                        Ok(results) if let Ok(mut state) = shared_state.lock() => {
-                            if let Some(page) = results.tracks && !page.items.is_empty() {
-                                batch_max_len = std::cmp::max(batch_max_len, page.items.len());
-                                if page.next.is_none() {
-                                    search_types.retain(|t| *t != SearchType::Track);
+                        Ok(results) => {
+                            if let Ok(mut state) = shared_state.lock() {
+                                if let Some(page) = results.tracks && !page.items.is_empty() {
+                                    batch_max_len = std::cmp::max(batch_max_len, page.items.len());
+                                    if page.next.is_none() {
+                                        search_types.retain(|t| *t != SearchType::Track);
+                                    }
+                                    state.search_results.tracks = Some(page);
                                 }
-                                state.search_results.tracks = Some(page);
-                            }
-                            if let Some(page) = results.artists && !page.items.is_empty() {
-                                batch_max_len = std::cmp::max(batch_max_len, page.items.len());
-                                if page.next.is_none() {
-                                    search_types.retain(|t| *t != SearchType::Artist);
+                                if let Some(page) = results.artists && !page.items.is_empty() {
+                                    batch_max_len = std::cmp::max(batch_max_len, page.items.len());
+                                    if page.next.is_none() {
+                                        search_types.retain(|t| *t != SearchType::Artist);
+                                    }
+                                    state.search_results.artists = Some(page);
                                 }
-                                state.search_results.artists = Some(page);
-                            }
-                            if let Some(page) = results.albums && !page.items.is_empty() {
-                                batch_max_len = std::cmp::max(batch_max_len, page.items.len());
-                                if page.next.is_none() {
-                                    search_types.retain(|t| *t != SearchType::Album);
+                                if let Some(page) = results.albums && !page.items.is_empty() {
+                                    batch_max_len = std::cmp::max(batch_max_len, page.items.len());
+                                    if page.next.is_none() {
+                                        search_types.retain(|t| *t != SearchType::Album);
+                                    }
+                                    state.search_results.albums = Some(page);
                                 }
-                                state.search_results.albums = Some(page);
-                            }
-                            if let Some(page) = results.playlists && !page.items.is_empty() {
-                                batch_max_len = std::cmp::max(batch_max_len, page.items.len());
-                                if page.next.is_none() {
-                                    search_types.retain(|t| *t != SearchType::Playlist);
+                                if let Some(page) = results.playlists && !page.items.is_empty() {
+                                    batch_max_len = std::cmp::max(batch_max_len, page.items.len());
+                                    if page.next.is_none() {
+                                        search_types.retain(|t| *t != SearchType::Playlist);
+                                    }
+                                    state.search_results.playlists = Some(page);
                                 }
-                                state.search_results.playlists = Some(page);
                             }
                         }
+                        
 
                         _ => {}
                     }
