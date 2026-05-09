@@ -28,13 +28,13 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
         // volume
         if key.code == KeyCode::Char('-') {
             let vol = &mut playback.device.volume;
-            *vol = vol.saturating_sub(10);
+            *vol = vol.saturating_sub(5);
             let _ = app.network_tx.send(ClientRequest::Player(PlayerRequest::SetVolume(*vol)));
             return true;
         }
         if key.code == KeyCode::Char('+') {
             let vol = &mut playback.device.volume;
-            *vol = vol.saturating_add(10).min(100);
+            *vol = vol.saturating_add(5).min(100);
             let _ = app.network_tx.send(ClientRequest::Player(PlayerRequest::SetVolume(*vol)));
             return true;
         }
