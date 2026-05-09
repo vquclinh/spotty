@@ -1,6 +1,6 @@
 use crate::app::{App, ActiveBlock};
+use crate::app::playbar_state::PlaybarItem;
 use crate::network::models::{PlayableItem, RepeatState};
-use ratatui::style::Stylize;
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect, Alignment},
@@ -29,7 +29,7 @@ pub fn draw_wide(f: &mut Frame, app: &mut App, area: Rect) {
     f.render_widget(outer_block, area);
 
     let Some(playback) = &app.playback else {
-        let empty = Paragraph::new("⏸ | No track currently playing")
+        let empty = Paragraph::new("󰏤 | No track currently playing")
             .alignment(Alignment::Center)
             .style(Style::default().fg(Color::DarkGray));
         f.render_widget(empty, inner_area);
@@ -37,11 +37,12 @@ pub fn draw_wide(f: &mut Frame, app: &mut App, area: Rect) {
     };
 
     // Try to extract spotify data
-    let (is_playing, track_name, artist_name, progress_ms, duration_ms, repeat, shuffle) = {
+    let (is_playing, track_name, artist_name, progress_ms, duration_ms, repeat, shuffle, volume) = {
         let is_playing = playback.is_playing;
         let progress = playback.progress.as_millis() as u32; 
         let repeat = playback.repeat_state;
         let shuffle = playback.shuffle_state;
+        let volume = playback.device.volume;
 
         if let Some(PlayableItem::Track(track)) = &playback.item {
             let artist_names = track.artists
@@ -54,24 +55,23 @@ pub fn draw_wide(f: &mut Frame, app: &mut App, area: Rect) {
             } else {
                 artist_names
             };
-            (is_playing, track.name.clone(), artist, progress, track.duration.as_millis() as u32, repeat, shuffle)
+            (is_playing, track.name.clone(), artist, progress, track.duration.as_millis() as u32, repeat, shuffle, volume)
         } else {
-            (is_playing, "Podcast / Episode".to_string(), "Unknown".to_string(), progress, 0, repeat, shuffle)
+            (is_playing, "Podcast / Episode".to_string(), "Unknown".to_string(), progress, 0, repeat, shuffle, volume)
         }
     };
 
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([
-            Constraint::Percentage(33),
-            Constraint::Percentage(34),
-            Constraint::Percentage(18),
-            Constraint::Percentage(15),
+            Constraint::Percentage(30),
+            Constraint::Percentage(45),
+            Constraint::Percentage(25),
         ])
         .split(inner_area);
 
-    // Song info (left)
-    let status = if is_playing { "⏸" } else { "▶" };
+    let status = if is_playing { "󰐊" } else { "󰏤" }; 
+    
     let info_line = Line::from(vec![
         Span::styled(format!(" {} ", status), Style::default().fg(Color::Green)),
         Span::styled(format!("{} ", track_name), Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
@@ -80,7 +80,7 @@ pub fn draw_wide(f: &mut Frame, app: &mut App, area: Rect) {
     let info_widget = Paragraph::new(info_line);
     f.render_widget(info_widget, chunks[0]);
 
-    // Progress bar (middle)
+    // Progress bar
     let percent = if duration_ms > 0 {
         (progress_ms as f64 / duration_ms as f64).clamp(0.0, 1.0)
     } else {
@@ -102,42 +102,60 @@ pub fn draw_wide(f: &mut Frame, app: &mut App, area: Rect) {
     };
     f.render_widget(gauge, gauge_area);
 
-    // Playback state (right)
     let mut spans = Vec::new();
+    let is_playbar_active = app.active_block == ActiveBlock::Playbar;
+    let hovered_item = app.playbar.hovered_item;
 
-    spans.push(Span::styled("R", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)));
-    spans.push(Span::raw("epeat: "));
-    match repeat {
-        RepeatState::Off => spans.push(Span::raw("Off")),
-        RepeatState::Track => spans.push(Span::raw("Track")),
-        RepeatState::Context => spans.push(Span::raw("Context")),
+    if is_playbar_active {
+        let (first_char, rest_text) = match hovered_item {
+            PlaybarItem::Volume => ("V", format!("olume ({}%)", volume)),
+            PlaybarItem::Lyrics => ("L", "yrics".to_string()),
+            PlaybarItem::Queue => ("Q", "ueue".to_string()),
+            PlaybarItem::Shuffle => ("S", format!("huffle ({})", if shuffle { "On" } else { "Off" })),
+            PlaybarItem::Repeat => {
+                let state_str = match repeat {
+                    RepeatState::Off => "Off",
+                    RepeatState::Context => "Context",
+                    RepeatState::Track => "Track",
+                };
+                ("R", format!("epeat ({})", state_str))
+            }
+        };
+
+        spans.push(Span::styled(first_char, Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)));
+        spans.push(Span::styled(format!("{} | ", rest_text), Style::default().fg(Color::White)));
     }
-    spans.push(Span::raw(" | "));
 
-    spans.push(Span::styled("S", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)));
-    spans.push(Span::raw("huffle: "));
-    if shuffle {
-        spans.push(Span::raw("On"));
-    } else {
-        spans.push(Span::raw("Off"));
-    }
+    let create_icon = |item: PlaybarItem, icon: &str, is_on: bool, default_color: Color| -> Span<'static> {
+        let mut style = Style::default();
+        
+        if is_playbar_active && hovered_item == item {
+            if is_on {
+                style = style.fg(Color::LightGreen).add_modifier(Modifier::BOLD);
+            } else {
+                style = style.fg(Color::Cyan).add_modifier(Modifier::BOLD);
+            }
+        } else {
+            style = style.fg(if is_on { Color::Green } else { default_color });
+        }
+        
+        Span::styled(format!(" {} ", icon), style)
+    };
 
-    let playback_state = Line::from(spans).add_modifier(Modifier::ITALIC);
-    f.render_widget(Paragraph::new(playback_state).alignment(Alignment::Center), chunks[2]);
+    spans.push(create_icon(PlaybarItem::Volume, "󰕾", false, Color::White));
+    spans.push(create_icon(PlaybarItem::Lyrics, "󰎆", false, Color::White));
+    spans.push(create_icon(PlaybarItem::Queue, "󰲹", false, Color::White));
+    spans.push(create_icon(PlaybarItem::Shuffle, "󰒟", shuffle, Color::DarkGray));
 
-    // Keybind hints (right most)
-    let hints_line = Line::from(vec![
-        Span::raw("Vol "),
-        Span::styled("-/+", Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
-        Span::raw(" | "),
-        Span::styled("L", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
-        Span::raw("yrics | "),
-        Span::styled("Q", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
-        Span::raw("ueue "),
-    ]);
-    let hints_widget = Paragraph::new(hints_line).alignment(Alignment::Right);
-    
-    f.render_widget(hints_widget, chunks[3]);
+    let (repeat_icon, repeat_on) = match repeat {
+        RepeatState::Off => ("󰑖", false),
+        RepeatState::Context => ("󰑖", true),
+        RepeatState::Track => ("󰑘", true),
+    };
+    spans.push(create_icon(PlaybarItem::Repeat, repeat_icon, repeat_on, Color::DarkGray));
+
+    let controls_line = Line::from(spans);
+    f.render_widget(Paragraph::new(controls_line).alignment(Alignment::Right), chunks[2]);
 }
 
 pub fn draw_narrow(f: &mut Frame, app: &mut App, area: Rect) {
@@ -151,19 +169,19 @@ pub fn draw_narrow(f: &mut Frame, app: &mut App, area: Rect) {
     f.render_widget(outer_block, area);
 
     let Some(playback) = &app.playback else {
-        let empty = Paragraph::new("⏸ | No track currently playing")
+        let empty = Paragraph::new("󰏤 | No track currently playing")
             .alignment(Alignment::Center)
             .style(Style::default().fg(Color::DarkGray));
         f.render_widget(empty, inner_area);
         return;
     };
 
-    // Try to extract spotify data
-    let (is_playing, track_name, artist_name, progress_ms, duration_ms, _repeat, _shuffle) = {
+    let (is_playing, track_name, artist_name, progress_ms, duration_ms, repeat, shuffle, volume) = {
         let is_playing = playback.is_playing;
         let progress = playback.progress.as_millis() as u32; 
         let repeat = playback.repeat_state;
         let shuffle = playback.shuffle_state;
+        let volume = playback.device.volume;
 
         if let Some(PlayableItem::Track(track)) = &playback.item {
             let artist_names = track.artists
@@ -176,23 +194,22 @@ pub fn draw_narrow(f: &mut Frame, app: &mut App, area: Rect) {
             } else {
                 artist_names
             };
-            (is_playing, track.name.clone(), artist, progress, track.duration.as_millis() as u32, repeat, shuffle)
+            (is_playing, track.name.clone(), artist, progress, track.duration.as_millis() as u32, repeat, shuffle, volume)
         } else {
-            (is_playing, "Podcast / Episode".to_string(), "Unknown".to_string(), progress, 0, repeat, shuffle)
+            (is_playing, "Podcast / Episode".to_string(), "Unknown".to_string(), progress, 0, repeat, shuffle, volume)
         }
     };
 
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([
-            Constraint::Percentage(33),
-            Constraint::Percentage(34),
-            Constraint::Percentage(33),
+            Constraint::Percentage(30),
+            Constraint::Percentage(40),
+            Constraint::Percentage(30),
         ])
         .split(inner_area);
 
-    // Song info (left)
-    let status = if is_playing { "⏸" } else { "▶" };
+    let status = if is_playing { "󰐊" } else { "󰏤" };
     let info_line = Line::from(vec![
         Span::styled(format!(" {} ", status), Style::default().fg(Color::Green)),
         Span::styled(format!("{} ", track_name), Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
@@ -201,7 +218,6 @@ pub fn draw_narrow(f: &mut Frame, app: &mut App, area: Rect) {
     let info_widget = Paragraph::new(info_line);
     f.render_widget(info_widget, chunks[0]);
 
-    // Progress bar (middle)
     let percent = if duration_ms > 0 {
         (progress_ms as f64 / duration_ms as f64).clamp(0.0, 1.0)
     } else {
@@ -223,17 +239,58 @@ pub fn draw_narrow(f: &mut Frame, app: &mut App, area: Rect) {
     };
     f.render_widget(gauge, gauge_area);
 
-    // Keybind hints (right most)
-    let hints_line = Line::from(vec![
-        Span::raw("Vol "),
-        Span::styled("-/+", Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
-        Span::raw(" | "),
-        Span::styled("L", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
-        Span::raw("yrics | "),
-        Span::styled("Q", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
-        Span::raw("ueue "),
-    ]);
-    let hints_widget = Paragraph::new(hints_line).alignment(Alignment::Right);
+    let mut spans = Vec::new();
+    let is_playbar_active = app.active_block == ActiveBlock::Playbar;
+    let hovered_item = app.playbar.hovered_item;
+
+    if is_playbar_active {
+        let (first_char, rest_text) = match hovered_item {
+            PlaybarItem::Volume => ("V", format!("ol ({}%)", volume)),
+            PlaybarItem::Lyrics => ("L", "yr".to_string()),
+            PlaybarItem::Queue => ("Q", "ue".to_string()),
+            PlaybarItem::Shuffle => ("S", format!("hu ({})", if shuffle { "On" } else { "Off" })),
+            PlaybarItem::Repeat => {
+                let state_str = match repeat {
+                    RepeatState::Off => "Off",
+                    RepeatState::Context => "Ctx",
+                    RepeatState::Track => "Trk",
+                };
+                ("R", format!("ep ({})", state_str))
+            }
+        };
+
+        spans.push(Span::styled(first_char, Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)));
+        spans.push(Span::styled(format!("{} | ", rest_text), Style::default().fg(Color::White)));
+    }
+
+    let create_icon = |item: PlaybarItem, icon: &str, is_on: bool, default_color: Color| -> Span<'static> {
+        let mut style = Style::default();
+        
+        if is_playbar_active && hovered_item == item {
+            if is_on {
+                style = style.fg(Color::LightGreen).add_modifier(Modifier::BOLD);
+            } else {
+                style = style.fg(Color::Cyan).add_modifier(Modifier::BOLD);
+            }
+        } else {
+            style = style.fg(if is_on { Color::Green } else { default_color });
+        }
+        
+        Span::styled(format!(" {} ", icon), style)
+    };
+
+    spans.push(create_icon(PlaybarItem::Volume, "󰕾", false, Color::White));
+    spans.push(create_icon(PlaybarItem::Lyrics, "󰎆", false, Color::White));
+    spans.push(create_icon(PlaybarItem::Queue, "󰲹", false, Color::White));
+    spans.push(create_icon(PlaybarItem::Shuffle, "󰒟", shuffle, Color::DarkGray));
     
-    f.render_widget(hints_widget, chunks[2]);
+    let (repeat_icon, repeat_on) = match repeat {
+        RepeatState::Off => ("󰑖", false),
+        RepeatState::Context => ("󰑖", true),
+        RepeatState::Track => ("󰑘", true),
+    };
+    spans.push(create_icon(PlaybarItem::Repeat, repeat_icon, repeat_on, Color::DarkGray));
+
+    let controls_line = Line::from(spans);
+    f.render_widget(Paragraph::new(controls_line).alignment(Alignment::Right), chunks[2]);
 }

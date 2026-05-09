@@ -11,6 +11,8 @@ pub mod playlist_state;
 pub mod queue_state;
 pub mod album_state;
 pub mod library_state;
+pub mod playbar_state;
+pub mod lyrics_state;
 
 pub use types::ActiveBlock;
 pub use search_state::SearchState;

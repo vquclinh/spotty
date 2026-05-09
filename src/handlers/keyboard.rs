@@ -1,5 +1,5 @@
 use crate::app::{ActiveBlock, App, Route};
-use crate::handlers::{album, library, queue, search, sidebar};
+use crate::handlers::{album, library, playbar, queue, search, sidebar};
 use crate::network::models::*;
 use crate::network::request::{PlayerRequest, ClientRequest};
 use crossterm::event::{KeyEvent, KeyCode};
@@ -98,6 +98,9 @@ pub fn handle_key_events(key: KeyEvent, app: &mut App) {
         }
         ActiveBlock::SavedPodcasts => {
             library::handle_saved_podcasts_events(key, app);
+        }
+        ActiveBlock::Playbar => {
+            playbar::handle_playbar_events(key, app);
         }
         _ => {}
     }

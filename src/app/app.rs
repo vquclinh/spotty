@@ -3,6 +3,7 @@ use std::time::Duration;
 
 use crate::app::home_state::HomeTab;
 use crate::app::splash_state::SplashState;
+use crate::app::playbar_state::PlaybarState;
 use crate::app::types::{ActionMenu, ActiveBlock, PlaylistSelector, StatefulList, StatefulTable};
 use crate::app::route::Route;
 use crate::app::state::SharedState;
@@ -35,6 +36,8 @@ pub struct App {
     pub show_help: bool, // Signal to turn on pop-up help
     pub action_menu: ActionMenu,
     pub playlist_selector: PlaylistSelector,
+
+    pub playbar: PlaybarState,
 }
 
 impl App {
@@ -77,6 +80,8 @@ impl App {
 
             action_menu: ActionMenu::new(),
             playlist_selector: PlaylistSelector::new(),
+
+            playbar: PlaybarState::new(),
         }
     }
 

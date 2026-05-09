@@ -3,10 +3,11 @@ use crate::app::home_state::HomeState;
 use crate::app::search_state::{SearchState, SearchHoveredPane};
 use crate::app::queue_state::QueueState;
 use crossterm::event::{KeyCode, KeyModifiers, KeyEvent};
-use crate::handlers::playbar;
+use crate::network::request::{ClientRequest, PlayerRequest};
+use crate::network::models::*;
 
 pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
-    // quit
+    // -------------------------------------- quit ----------------------------------------
     if key.code == KeyCode::Char('q') 
         || (key.code == KeyCode::Char('c') && key.modifiers.contains(KeyModifiers::CONTROL)) 
     {
@@ -14,12 +15,68 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
         return true;
     }
 
-    // Playbar events
-    if playbar::handle_playbar_events(key, app) {
-        return true;
+    // ----------------------------------- playbar -------------------------------------
+    if let Some(playback) = &mut app.playback {
+        // pause/resume
+        if key.code == KeyCode::Char(' ') {
+            let is_playing = playback.is_playing;
+            playback.is_playing = !is_playing;
+            let _ = app.network_tx.send(ClientRequest::Player(PlayerRequest::TogglePlayback(is_playing)));
+            return true;
+        }
+
+        // volume
+        if key.code == KeyCode::Char('-') {
+            let vol = &mut playback.device.volume;
+            *vol = vol.saturating_sub(10);
+            let _ = app.network_tx.send(ClientRequest::Player(PlayerRequest::SetVolume(*vol)));
+            return true;
+        }
+        if key.code == KeyCode::Char('+') {
+            let vol = &mut playback.device.volume;
+            *vol = vol.saturating_add(10).min(100);
+            let _ = app.network_tx.send(ClientRequest::Player(PlayerRequest::SetVolume(*vol)));
+            return true;
+        }
+        
+        // next
+        if key.code == KeyCode::Char('n') {
+            let _ = app.network_tx.send(ClientRequest::Player(PlayerRequest::NextTrack));
+            return true;
+        }
+
+        // prev
+        if key.code == KeyCode::Char('p') {
+            let _ = app.network_tx.send(ClientRequest::Player(PlayerRequest::PreviousTrack));
+            return true;
+        }
+
+        // cycle repeat
+        if key.code == KeyCode::Char('r') {
+            let state = match playback.repeat_state {
+                RepeatState::Off => RepeatState::Context,
+                RepeatState::Context => RepeatState::Track,
+                RepeatState::Track => RepeatState::Off,
+            };
+            playback.repeat_state = state;
+            let _ = app.network_tx.send(ClientRequest::Player(
+                PlayerRequest::SetRepeatMode(state))
+            );
+            return true;
+        }
+
+        // toggle shuffle
+        if key.code == KeyCode::Char('s') {
+            let shuffling = playback.shuffle_state;
+            playback.shuffle_state = !shuffling;
+            let _ = app.network_tx.send(ClientRequest::Player(
+                PlayerRequest::ToggleShuffle(shuffling))
+            );
+            return true;
+        }
     }
 
-    // home
+    // ----------------------------------- home -------------------------------------
     if key.code == KeyCode::Char('H') {
         if matches!(app.route, Route::Home(_)) {
             return true; 
