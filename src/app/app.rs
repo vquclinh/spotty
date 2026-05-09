@@ -134,7 +134,7 @@ impl App {
         if let Some(next_route) = self.route.update() {
             self.set_current_route(next_route);
         }
-
+        
         // update progress
         while let Ok(event) = self.audio_event_rx.try_recv() {
             match event {

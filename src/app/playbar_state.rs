@@ -33,10 +33,21 @@ impl PlaybarItem {
 #[derive(Clone, Default)]
 pub struct PlaybarState {
     pub hovered_item: PlaybarItem,
+
+    pub scroll_offset: usize,
+    pub scroll_forward: bool,
+    pub scroll_wait: usize,
+    pub tick_count: usize,
 }
 
 impl PlaybarState {
     pub fn new() -> Self {
-        Self::default()
+        Self {
+            hovered_item: PlaybarItem::default(),
+            scroll_offset: 0,
+            scroll_forward: true,
+            scroll_wait: 10,
+            tick_count: 0,
+        }
     }
 }
