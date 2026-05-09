@@ -39,7 +39,7 @@ fn draw_library(f: &mut Frame, app: &mut App, area: Rect) {
     let list = List::new(items)
         .block(
             Block::default()
-                .title(" Library ")
+                .title(" [1] Library ")
                 .borders(Borders::ALL)
                 .border_style(Style::default().fg(border_color)),
         )
@@ -75,7 +75,7 @@ fn draw_playlists(f: &mut Frame, app: &mut App, area: Rect) {
     let table = Table::new(rows, [Constraint::Percentage(100)])
         .block(
             Block::default()
-                .title(" Playlists ")
+                .title(" [2] Playlists ")
                 .borders(Borders::ALL)
                 .border_style(Style::default().fg(border_color)),
         )

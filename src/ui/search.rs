@@ -28,7 +28,7 @@ pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
     
     let input_widget = Paragraph::new(input_text.clone()).block(
         Block::default()
-            .title(" 🔍 Search ")
+            .title(if is_input_active {" 🔍 Search "} else {" [1] 🔍 Search "})
             .borders(Borders::ALL)
             .border_type(BorderType::Rounded)
             .border_style(Style::default().fg(input_color))
@@ -128,8 +128,17 @@ pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
     };
 
     let build_block = |title: &str, pane: SearchHoveredPane| {
+        let is_big_pane = match hovered_pane {
+            SearchHoveredPane::Artists => pane == SearchHoveredPane::Artists,
+            SearchHoveredPane::Albums => pane == SearchHoveredPane::Albums,
+            SearchHoveredPane::Playlists => pane == SearchHoveredPane::Playlists,
+            _ => pane == SearchHoveredPane::Tracks,
+        };
+
+        let prefix = if is_big_pane && !is_input_active { "[2] " } else { "" };
+
         Block::default()
-            .title(format!(" {} ", title))
+            .title(format!(" {}{} ", prefix, title))
             .borders(Borders::ALL)
             .border_type(BorderType::Plain) 
             .border_style(Style::default().fg(get_color(pane)))
