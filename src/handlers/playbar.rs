@@ -13,6 +13,20 @@ pub fn handle_playbar_events(key: KeyEvent, app: &mut App) {
         KeyCode::Right | KeyCode::Char('l') => {
             app.playbar.hovered_item = app.playbar.hovered_item.next();
         }
+        KeyCode::Down | KeyCode::Char('j') if app.playbar.hovered_item == PlaybarItem::Volume => {
+            if let Some(pb) = &mut app.playback {
+                let vol = &mut pb.device.volume;
+                *vol = vol.saturating_sub(5);
+                let _ = app.network_tx.send(ClientRequest::Player(PlayerRequest::SetVolume(*vol)));
+            }
+        }
+        KeyCode::Up | KeyCode::Char('k') => {
+            if let Some(pb) = &mut app.playback {
+                let vol = &mut pb.device.volume;
+                *vol = vol.saturating_add(5).min(100);
+                let _ = app.network_tx.send(ClientRequest::Player(PlayerRequest::SetVolume(*vol)));
+            }
+        }
         KeyCode::Enter => {
             let Some(playback) = &mut app.playback else { return };
 
