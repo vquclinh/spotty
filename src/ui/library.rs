@@ -13,7 +13,7 @@ pub fn draw_liked_songs(f: &mut Frame, state: &mut LikedSongsState, active_block
     let border_color = if is_focused { Color::LightCyan } else { Color::White };
 
     let outer_block = Block::default()
-        .title(" Liked Songs ")
+        .title(" [3] Liked Songs ")
         .borders(Borders::ALL)
         .border_style(Style::default().fg(border_color));
 
@@ -27,7 +27,11 @@ pub fn draw_liked_songs(f: &mut Frame, state: &mut LikedSongsState, active_block
     let artist_max = ((table_width as f32 * 0.35) as u16).saturating_sub(2);
 
     let header_style = Style::default().fg(Color::DarkGray).add_modifier(Modifier::BOLD);
-    let highlight_style = Style::default().fg(Color::LightMagenta).add_modifier(Modifier::BOLD);
+    let highlight_style = if is_focused {
+        Style::default().fg(Color::LightMagenta).add_modifier(Modifier::BOLD)
+    } else {
+        Style::default()
+    };
 
     let header = Row::new(vec!["  #title", "#artist", "#length"]).style(header_style);
     let widths = [Constraint::Percentage(45), Constraint::Percentage(35), Constraint::Percentage(20)];
@@ -53,7 +57,7 @@ pub fn draw_liked_songs(f: &mut Frame, state: &mut LikedSongsState, active_block
     let table = Table::new(rows, widths)
         .header(header)
         .row_highlight_style(highlight_style)
-        .highlight_symbol("▶ ")
+        .highlight_symbol(if is_focused { "▶ " } else { "  " })
         .highlight_spacing(HighlightSpacing::Always);
 
     f.render_stateful_widget(table, inner_area, &mut state.tracks.state);
@@ -64,7 +68,7 @@ pub fn draw_saved_albums(f: &mut Frame, state: &mut SavedAlbumsState, active_blo
     let border_color = if is_focused { Color::LightCyan } else { Color::White };
 
     let outer_block = Block::default()
-        .title(" Saved Albums ")
+        .title(" [3] Saved Albums ")
         .borders(Borders::ALL)
         .border_style(Style::default().fg(border_color));
 
@@ -78,7 +82,11 @@ pub fn draw_saved_albums(f: &mut Frame, state: &mut SavedAlbumsState, active_blo
     let artist_max = ((table_width as f32 * 0.35) as u16).saturating_sub(2);
 
     let header_style = Style::default().fg(Color::DarkGray).add_modifier(Modifier::BOLD);
-    let highlight_style = Style::default().fg(Color::LightMagenta).add_modifier(Modifier::BOLD);
+    let highlight_style = if is_focused {
+        Style::default().fg(Color::LightMagenta).add_modifier(Modifier::BOLD)
+    } else {
+        Style::default()
+    };
 
     // Columns: Album Title, Artists, Release Date
     let header = Row::new(vec!["  #album", "#artist", "#release"]).style(header_style);
@@ -104,7 +112,7 @@ pub fn draw_saved_albums(f: &mut Frame, state: &mut SavedAlbumsState, active_blo
     let table = Table::new(rows, widths)
         .header(header)
         .row_highlight_style(highlight_style)
-        .highlight_symbol("▶ ")
+        .highlight_symbol(if is_focused { "▶ " } else { "  " })
         .highlight_spacing(HighlightSpacing::Always);
 
     f.render_stateful_widget(table, inner_area, &mut state.albums.state);
@@ -115,7 +123,7 @@ pub fn draw_saved_artists(f: &mut Frame, state: &mut SavedArtistsState, active_b
     let border_color = if is_focused { Color::LightCyan } else { Color::White };
 
     let outer_block = Block::default()
-        .title(" Saved Artists ")
+        .title(" [3] Saved Artists ")
         .borders(Borders::ALL)
         .border_style(Style::default().fg(border_color));
 
@@ -129,7 +137,11 @@ pub fn draw_saved_artists(f: &mut Frame, state: &mut SavedArtistsState, active_b
     let genre_max = ((table_width as f32 * 0.55) as u16).saturating_sub(2);
 
     let header_style = Style::default().fg(Color::DarkGray).add_modifier(Modifier::BOLD);
-    let highlight_style = Style::default().fg(Color::LightMagenta).add_modifier(Modifier::BOLD);
+    let highlight_style = if is_focused {
+        Style::default().fg(Color::LightMagenta).add_modifier(Modifier::BOLD)
+    } else {
+        Style::default()
+    };
 
     let header = Row::new(vec!["  #artist", "#genres"]).style(header_style);
     let widths = [Constraint::Percentage(45), Constraint::Percentage(55)];
@@ -150,7 +162,7 @@ pub fn draw_saved_artists(f: &mut Frame, state: &mut SavedArtistsState, active_b
     let table = Table::new(rows, widths)
         .header(header)
         .row_highlight_style(highlight_style)
-        .highlight_symbol("▶ ")
+        .highlight_symbol(if is_focused { "▶ " } else { "  " })
         .highlight_spacing(HighlightSpacing::Always);
 
     f.render_stateful_widget(table, inner_area, &mut state.artists.state);
@@ -161,7 +173,7 @@ pub fn draw_saved_podcasts(f: &mut Frame, state: &mut SavedPodcastsState, active
     let border_color = if is_focused { Color::LightCyan } else { Color::White };
 
     let outer_block = Block::default()
-        .title(" Saved Podcasts ")
+        .title(" [3] Saved Podcasts ")
         .borders(Borders::ALL)
         .border_style(Style::default().fg(border_color));
 
@@ -175,7 +187,11 @@ pub fn draw_saved_podcasts(f: &mut Frame, state: &mut SavedPodcastsState, active
     let show_max = ((table_width as f32 * 0.30) as u16).saturating_sub(2);
 
     let header_style = Style::default().fg(Color::DarkGray).add_modifier(Modifier::BOLD);
-    let highlight_style = Style::default().fg(Color::LightMagenta).add_modifier(Modifier::BOLD);
+    let highlight_style = if is_focused {
+        Style::default().fg(Color::LightMagenta).add_modifier(Modifier::BOLD)
+    } else {
+        Style::default()
+    };
 
     let header = Row::new(vec!["  #name", "#show", "#length", "#release"]).style(header_style);
     let widths = [
@@ -203,7 +219,7 @@ pub fn draw_saved_podcasts(f: &mut Frame, state: &mut SavedPodcastsState, active
     let table = Table::new(rows, widths)
         .header(header)
         .row_highlight_style(highlight_style)
-        .highlight_symbol("▶ ")
+        .highlight_symbol(if is_focused { "▶ " } else { "  " })
         .highlight_spacing(HighlightSpacing::Always);
 
     f.render_stateful_widget(table, inner_area, &mut state.podcasts.state);

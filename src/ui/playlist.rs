@@ -15,7 +15,7 @@ pub fn draw(f: &mut Frame, state: &mut PlaylistState, active_block: &ActiveBlock
 
     // block
     let outer_block = Block::default()
-        .title(format!(" Playlists: {} ", state.playlist.name)) 
+        .title(format!(" [3] Playlists: {} ", state.playlist.name)) 
         .borders(Borders::ALL)
         .border_style(Style::default().fg(border_color));
 
@@ -32,7 +32,11 @@ pub fn draw(f: &mut Frame, state: &mut PlaylistState, active_block: &ActiveBlock
 
     // table
     let header_style = Style::default().fg(Color::DarkGray).add_modifier(Modifier::BOLD);
-    let highlight_style = Style::default().fg(Color::LightMagenta).add_modifier(Modifier::BOLD);
+    let highlight_style = if is_focused {
+        Style::default().fg(Color::LightMagenta).add_modifier(Modifier::BOLD)
+    } else {
+        Style::default()
+    };
 
     let header = Row::new(vec!["  #title", "#artist", "#length"]).style(header_style);
     let widths = [Constraint::Percentage(45), Constraint::Percentage(35), Constraint::Percentage(20)];
@@ -58,7 +62,7 @@ pub fn draw(f: &mut Frame, state: &mut PlaylistState, active_block: &ActiveBlock
     let table = Table::new(rows, widths)
         .header(header)
         .row_highlight_style(highlight_style)
-        .highlight_symbol("▶ ")
+        .highlight_symbol(if is_focused { "▶ " } else { "  " })
         .highlight_spacing(HighlightSpacing::Always);
 
     f.render_stateful_widget(table, inner_area, &mut state.tracks.state);

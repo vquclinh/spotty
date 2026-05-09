@@ -14,7 +14,7 @@ pub fn draw(f: &mut Frame, state: &mut QueueState, active_block: &ActiveBlock, a
     let border_color = if is_focused { Color::LightCyan } else { Color::White };
 
     let block = Block::default()
-        .title(" Queue ")
+        .title(" [3] Queue ")
         .borders(Borders::ALL)
         .border_style(Style::default().fg(border_color));
 
@@ -74,7 +74,11 @@ pub fn draw(f: &mut Frame, state: &mut QueueState, active_block: &ActiveBlock, a
     let show_extra_column = table_width > 60;
 
     let header_style = Style::default().fg(Color::DarkGray).add_modifier(Modifier::BOLD);
-    let highlight_style = Style::default().fg(Color::LightMagenta).add_modifier(Modifier::BOLD);
+    let highlight_style = if is_focused {
+        Style::default().fg(Color::LightMagenta).add_modifier(Modifier::BOLD)
+    } else {
+        Style::default()
+    };
 
     let (header_cells, widths) = if show_extra_column {
         (
@@ -139,7 +143,7 @@ pub fn draw(f: &mut Frame, state: &mut QueueState, active_block: &ActiveBlock, a
     let table = Table::new(rows, widths)
         .header(header)
         .block(table_block)
-        .highlight_symbol("▶ ")
+        .highlight_symbol(if is_focused { "▶ " } else { "  " })
         .highlight_spacing(HighlightSpacing::Always)
         .row_highlight_style(highlight_style);
 

@@ -14,7 +14,7 @@ pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, ar
 
     // draw outer block
     let outer_block = Block::default()
-        .title(format!(" {} ", state.greeting))
+        .title(format!(" [3] {} ", state.greeting))
         .borders(Borders::ALL)
         .border_style(Style::default().fg(border_color));
 
@@ -30,7 +30,7 @@ pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, ar
         ])
         .split(inner_area);
 
-    let tab_titles: Vec<Line> = vec!["🔥 Top Tracks [1]", "🎤 Top Artists [2]", "🕒 Recently Played [3]"]
+    let tab_titles: Vec<Line> = vec!["🔥 Top Tracks", "🎤 Top Artists", "🕒 Recently Played"]
         .into_iter()
         .map(Line::from)
         .collect();
@@ -53,7 +53,11 @@ pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, ar
     let table_width = chunks[1].width;
     let show_extra_column = table_width > 60;
 
-    let highlight_style = Style::default().fg(Color::LightMagenta).add_modifier(Modifier::BOLD);
+    let highlight_style = if is_home_focused {
+        Style::default().fg(Color::LightMagenta).add_modifier(Modifier::BOLD)
+    } else {
+        Style::default()
+    };
     let header_style = Style::default().fg(Color::DarkGray).add_modifier(Modifier::BOLD);
 
     state.last_area = chunks[1];
@@ -113,7 +117,7 @@ pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, ar
             let table = Table::new(rows, widths)
                 .header(header)
                 .row_highlight_style(highlight_style)
-                .highlight_symbol("▶ ")
+                .highlight_symbol(if is_home_focused { "▶ " } else { "  " })
                 .highlight_spacing(HighlightSpacing::Always);
 
             let state_to_use = if state.active_tab == HomeTab::TopTracks {

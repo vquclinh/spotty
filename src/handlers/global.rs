@@ -165,6 +165,71 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
         return true; 
     }
 
+    // Number keys
+    match key.code {
+        KeyCode::Char('1') => {
+            match app.route {
+                Route::Search(_) => {
+                    app.active_block = ActiveBlock::SearchInput;
+                }
+                _ => {
+                    app.active_block = ActiveBlock::LibraryMenu;
+                }
+            }
+
+        },
+        KeyCode::Char('2') => {
+            match app.route {
+                Route::Search(_) => {
+                    app.active_block = ActiveBlock::SearchResults;
+                }
+                _ => {
+                    app.active_block = ActiveBlock::PlaylistsMenu;
+                }
+            }
+        },
+        KeyCode::Char('3') => {
+            match app.route {
+                Route::Home(_) => {
+                    app.active_block = ActiveBlock::HomeBlock;
+                },
+                Route::AlbumDetail(_) => {
+                    app.active_block = ActiveBlock::AlbumBlock;
+                },
+                Route::PlaylistDetail(_) => {
+                    app.active_block = ActiveBlock::PlaylistTracks;
+                },
+                Route::LikedSongs(_) => {
+                    app.active_block = ActiveBlock::LikedSongs;
+                },
+                Route::SavedAlbums(_) => {
+                    app.active_block = ActiveBlock::SavedAlbums;
+                },
+                Route::SavedArtists(_) => {
+                    app.active_block = ActiveBlock::SavedArtists;
+                },
+                Route::SavedPodcasts(_) => {
+                    app.active_block = ActiveBlock::SavedPodcasts;
+                },
+                Route::Queue(_) => {
+                    app.active_block = ActiveBlock::QueueBlock;
+                },
+                Route::Lyrics => {
+                    app.active_block = ActiveBlock::LyricsInfo;
+                },
+                Route::Search(_) => {
+                    app.active_block = ActiveBlock::Playbar;
+                }
+                _ => {}
+            }
+        },
+        KeyCode::Char('4') if !matches!(app.route, Route::Search(_)) => {
+            app.active_block = ActiveBlock::Playbar;
+        }
+
+        _ => {}
+    }
+
     if key.code == KeyCode::Char('?') {
         app.show_help = true;
         return true;

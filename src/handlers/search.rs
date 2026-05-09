@@ -27,6 +27,9 @@ pub fn handle_search_events(key: KeyEvent, app: &mut App) {
                         app.active_block = ActiveBlock::SearchResults;
                         search_state.hovered_pane = SearchHoveredPane::Tracks;
                     }
+                    KeyCode::Esc => {
+                        app.active_block = ActiveBlock::SearchResults;
+                    }
 
                     _ => {}
                 }
@@ -39,10 +42,7 @@ pub fn handle_search_events(key: KeyEvent, app: &mut App) {
                             SearchHoveredPane::Tracks => search_state.hovered_pane = SearchHoveredPane::Artists,
                             SearchHoveredPane::Artists => search_state.hovered_pane = SearchHoveredPane::Albums,
                             SearchHoveredPane::Albums => search_state.hovered_pane = SearchHoveredPane::Playlists,
-                            SearchHoveredPane::Playlists => {
-                                app.active_block = ActiveBlock::Playbar;
-                                search_state.hovered_pane = SearchHoveredPane::Tracks;
-                            }
+                            SearchHoveredPane::Playlists => search_state.hovered_pane = SearchHoveredPane::Tracks,
                             _ => search_state.hovered_pane = SearchHoveredPane::Tracks,
                         }
                     }

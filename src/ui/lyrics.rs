@@ -14,7 +14,7 @@ pub fn draw_text(f: &mut Frame, app: &mut App, area: Rect) {
 
     let block = Paragraph::new(text)
         .block(
-            Block::default().title(" LYRICS ").borders(Borders::ALL).border_style(Style::default().fg(border_color)),
+            Block::default().title(" [3] LYRICS ").borders(Borders::ALL).border_style(Style::default().fg(border_color)),
         )
         .alignment(Alignment::Center);
     

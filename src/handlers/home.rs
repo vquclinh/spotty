@@ -8,38 +8,6 @@ pub fn handle_home_events(key: KeyEvent, app: &mut App) {
 
     if let Route::Home(home_state) = route {
         match key {
-            KeyEvent { code: KeyCode::Char('1'), .. } => {
-                home_state.active_tab = HomeTab::TopTracks;
-                if home_state.top_tracks.list.items.is_empty() {
-                    let _ = network_tx.send(ClientRequest::GetUserTopTracks {
-                        time_range: TimeRange::ShortTerm,
-                        limit: app.page_limit,
-                        offset: 0,
-                    });
-                }
-            }
-
-            KeyEvent { code: KeyCode::Char('2'), .. } => {
-                home_state.active_tab = HomeTab::TopArtists;
-                if home_state.top_artists.list.items.is_empty() {
-                    let _ = network_tx.send(ClientRequest::GetUserTopArtists {
-                        time_range: TimeRange::ShortTerm,
-                        limit: app.page_limit,
-                        offset: 0,
-                    });
-                }
-            }
-
-            KeyEvent { code: KeyCode::Char('3'), .. } => {
-                home_state.active_tab = HomeTab::RecentlyPlayed;
-                if home_state.recent_tracks.list.items.is_empty() {
-                    let _ = network_tx.send(ClientRequest::GetRecentlyPlayed {
-                        limit: app.page_limit,
-                        after: None,
-                    });
-                }
-            }
-
             KeyEvent { code: KeyCode::Right, .. } | KeyEvent { code: KeyCode::Char('l'), .. } => {
                 home_state.active_tab = match home_state.active_tab {
                     HomeTab::TopTracks => HomeTab::TopArtists,
@@ -47,26 +15,27 @@ pub fn handle_home_events(key: KeyEvent, app: &mut App) {
                     HomeTab::RecentlyPlayed => HomeTab::TopTracks,
                 };
                 match home_state.active_tab {
-                    HomeTab::TopTracks => {
+                    HomeTab::TopTracks if home_state.top_tracks.list.items.is_empty() => {
                         let _ = network_tx.send(ClientRequest::GetUserTopTracks {
                             time_range: TimeRange::ShortTerm,
                             limit: app.page_limit,
                             offset: 0,
                         });
                     }
-                    HomeTab::RecentlyPlayed => {
+                    HomeTab::RecentlyPlayed if home_state.recent_tracks.list.items.is_empty() => {
                         let _ = network_tx.send(ClientRequest::GetRecentlyPlayed {
                             limit: app.page_limit,
                             after: None,
                         });
                     }
-                    HomeTab::TopArtists => {
+                    HomeTab::TopArtists if home_state.top_artists.list.items.is_empty() => {
                         let _ = network_tx.send(ClientRequest::GetUserTopArtists {
                             time_range: TimeRange::ShortTerm,
                             limit: app.page_limit,
                             offset: 0,
                         });
                     }
+                    _ => {}
                 }
             }
 
@@ -77,26 +46,27 @@ pub fn handle_home_events(key: KeyEvent, app: &mut App) {
                     HomeTab::RecentlyPlayed => HomeTab::TopArtists,
                 };
                 match home_state.active_tab {
-                    HomeTab::TopTracks => {
+                    HomeTab::TopTracks if home_state.top_tracks.list.items.is_empty() => {
                         let _ = network_tx.send(ClientRequest::GetUserTopTracks {
                             time_range: TimeRange::ShortTerm,
                             limit: app.page_limit,
                             offset: 0,
                         });
                     }
-                    HomeTab::RecentlyPlayed => {
+                    HomeTab::RecentlyPlayed if home_state.recent_tracks.list.items.is_empty() => {
                         let _ = network_tx.send(ClientRequest::GetRecentlyPlayed {
                             limit: app.page_limit,
                             after: None,
                         });
                     }
-                    HomeTab::TopArtists => {
+                    HomeTab::TopArtists if home_state.top_artists.list.items.is_empty() => {
                         let _ = network_tx.send(ClientRequest::GetUserTopArtists {
                             time_range: TimeRange::ShortTerm,
                             limit: app.page_limit,
                             offset: 0,
                         });
                     }
+                    _ => {}
                 }
             }
 
