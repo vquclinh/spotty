@@ -27,6 +27,9 @@ pub fn handle_search_events(key: KeyEvent, app: &mut App) {
                         app.active_block = ActiveBlock::SearchResults;
                         search_state.hovered_pane = SearchHoveredPane::Tracks;
                     }
+                    KeyCode::Esc => {
+                        app.active_block = ActiveBlock::SearchResults;
+                    }
 
                     _ => {}
                 }
