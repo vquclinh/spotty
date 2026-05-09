@@ -106,8 +106,8 @@ pub fn draw_wide(f: &mut Frame, app: &mut App, area: Rect) {
     let is_playbar_active = app.active_block == ActiveBlock::Playbar;
     let hovered_item = app.playbar.hovered_item;
 
-    if is_playbar_active {
-        let (first_char, rest_text) = match hovered_item {
+    let (first_char, rest_text) = if is_playbar_active {
+        match hovered_item {
             PlaybarItem::Volume => ("V", format!("olume ({}%)", volume)),
             PlaybarItem::Lyrics => ("L", "yrics".to_string()),
             PlaybarItem::Queue => ("Q", "ueue".to_string()),
@@ -120,11 +120,13 @@ pub fn draw_wide(f: &mut Frame, app: &mut App, area: Rect) {
                 };
                 ("R", format!("epeat ({})", state_str))
             }
-        };
+        }
+    } else {
+        ("V", format!("olume ({}%)", volume))
+    };
 
-        spans.push(Span::styled(first_char, Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)));
-        spans.push(Span::styled(format!("{} | ", rest_text), Style::default().fg(Color::White)));
-    }
+    spans.push(Span::styled(first_char, Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)));
+    spans.push(Span::styled(format!("{} | ", rest_text), Style::default().fg(Color::White)));
 
     let create_icon = |item: PlaybarItem, icon: &str, is_on: bool, default_color: Color| -> Span<'static> {
         let mut style = Style::default();
@@ -142,7 +144,8 @@ pub fn draw_wide(f: &mut Frame, app: &mut App, area: Rect) {
         Span::styled(format!(" {} ", icon), style)
     };
 
-    spans.push(create_icon(PlaybarItem::Volume, "󰕾", false, Color::White));
+    let vol_icon = if volume == 0 { "󰝟" } else { "󰕾" };
+    spans.push(create_icon(PlaybarItem::Volume, vol_icon, false, Color::White));
     spans.push(create_icon(PlaybarItem::Lyrics, "󰎆", false, Color::White));
     spans.push(create_icon(PlaybarItem::Queue, "󰲹", false, Color::White));
     spans.push(create_icon(PlaybarItem::Shuffle, "󰒟", shuffle, Color::DarkGray));
@@ -243,8 +246,8 @@ pub fn draw_narrow(f: &mut Frame, app: &mut App, area: Rect) {
     let is_playbar_active = app.active_block == ActiveBlock::Playbar;
     let hovered_item = app.playbar.hovered_item;
 
-    if is_playbar_active {
-        let (first_char, rest_text) = match hovered_item {
+    let (first_char, rest_text) = if is_playbar_active {
+        match hovered_item {
             PlaybarItem::Volume => ("V", format!("ol ({}%)", volume)),
             PlaybarItem::Lyrics => ("L", "yr".to_string()),
             PlaybarItem::Queue => ("Q", "ue".to_string()),
@@ -257,11 +260,13 @@ pub fn draw_narrow(f: &mut Frame, app: &mut App, area: Rect) {
                 };
                 ("R", format!("ep ({})", state_str))
             }
-        };
+        }
+    } else {
+        ("V", format!("ol ({}%)", volume))
+    };
 
-        spans.push(Span::styled(first_char, Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)));
-        spans.push(Span::styled(format!("{} | ", rest_text), Style::default().fg(Color::White)));
-    }
+    spans.push(Span::styled(first_char, Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)));
+    spans.push(Span::styled(format!("{} | ", rest_text), Style::default().fg(Color::White)));
 
     let create_icon = |item: PlaybarItem, icon: &str, is_on: bool, default_color: Color| -> Span<'static> {
         let mut style = Style::default();
@@ -279,7 +284,8 @@ pub fn draw_narrow(f: &mut Frame, app: &mut App, area: Rect) {
         Span::styled(format!(" {} ", icon), style)
     };
 
-    spans.push(create_icon(PlaybarItem::Volume, "󰕾", false, Color::White));
+    let vol_icon = if volume == 0 { "󰝟" } else { "󰕾" };
+    spans.push(create_icon(PlaybarItem::Volume, vol_icon, false, Color::White));
     spans.push(create_icon(PlaybarItem::Lyrics, "󰎆", false, Color::White));
     spans.push(create_icon(PlaybarItem::Queue, "󰲹", false, Color::White));
     spans.push(create_icon(PlaybarItem::Shuffle, "󰒟", shuffle, Color::DarkGray));
