@@ -1,5 +1,7 @@
 use tokio::sync::mpsc;
 use std::time::Duration;
+use rspotify::model::TrackId;
+use rspotify::prelude::Id;
 
 use crate::app::home_state::HomeTab;
 use crate::app::splash_state::SplashState;
@@ -155,10 +157,20 @@ impl App {
         // update progress
         while let Ok(event) = self.audio_event_rx.try_recv() {
             match event {
-                AudioEvent::Changed { .. } => {
+                AudioEvent::Changed { uri } => {
                     self.track_ended = false;
                     if let Some(pb) = &mut self.playback {
                         pb.progress = Duration::from_millis(0);
+
+                        if let Route::Queue(_) = &self.route {
+                            let _ = self.network_tx.send(ClientRequest::GetQueue);
+                        }
+
+                        if let Route::Lyrics(_) = &mut self.route
+                        && let Ok(track_id) = TrackId::from_uri(uri.as_str()) {
+                            let track_id = track_id.id().to_string();
+                            let _ = self.network_tx.send(ClientRequest::GetLyrics { track_id });
+                        }
                     }
                 }
 

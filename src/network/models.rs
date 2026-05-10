@@ -160,6 +160,13 @@ impl PlayableItem {
         }
     }
 
+    pub fn id(&self) -> &str {
+        match self {
+            PlayableItem::Track(i) => i.id.as_str(),
+            PlayableItem::Episode(i) => i.id.as_str()
+        }
+    }
+
     pub fn uri(&self) -> &str {
         match self {
             PlayableItem::Track(i) => i.uri.as_str(),
