@@ -45,37 +45,47 @@ pub fn draw_text(f: &mut Frame, app: &mut App, area: Rect) {
 
     match &state.data {
         Some(lyrics_data) => {
-            let mut active_idx: usize = 0;
+            let is_synced = lyrics_data.lyrics.sync_type != librespot_metadata::lyrics::SyncType::Unsynced;
+            let mut active_idx: Option<usize> = None;
 
-            for (i, line) in lyrics_data.lyrics.lines.iter().enumerate() {
-                let time_ms: u32 = line.start_time_ms.parse().unwrap_or(0);
+            if is_synced {
+                let mut idx = 0;
+                for (i, line) in lyrics_data.lyrics.lines.iter().enumerate() {
+                    let time_ms: u32 = line.start_time_ms.parse().unwrap_or(0);
 
-                if time_ms <= progress_ms {
-                    active_idx = i;
-                } else {
-                    break;
+                    if time_ms <= progress_ms {
+                        idx = i;
+                    } else {
+                        break;
+                    }
                 }
+                active_idx = Some(idx);
             }
 
             let mut spans = Vec::new();
             for (i, line) in lyrics_data.lyrics.lines.iter().enumerate() {
                 let text = &line.words;
 
-                if i == active_idx {
+                if active_idx == Some(i) {
                     spans.push(TuiLine::from(Span::styled(
                         text.clone(),
                         Style::default().fg(Color::LightGreen).add_modifier(Modifier::BOLD),
                     )));
                 } else {
+                    let color = if is_synced { Color::DarkGray } else { Color::White };
                     spans.push(TuiLine::from(Span::styled(
                         text.clone(),
-                        Style::default().fg(Color::DarkGray),
+                        Style::default().fg(color),
                     )));
                 }
             }
 
-            let half_screen = (area.height / 2).saturating_sub(1) as usize;
-            let scroll_y = active_idx.saturating_sub(half_screen) as u16;
+            let scroll_y = if is_synced {
+                let half_screen = (area.height / 2).saturating_sub(1) as usize;
+                active_idx.unwrap_or(0).saturating_sub(half_screen) as u16
+            } else {
+                state.scroll_offset
+            };
 
             let paragraph = Paragraph::new(spans)
                 .block(block)
