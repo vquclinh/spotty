@@ -146,6 +146,11 @@ impl App {
         if let Some(next_route) = self.route.update() {
             self.set_current_route(next_route);
         }
+
+        // increment lyrics animation tick
+        if let Route::Lyrics(state) = &mut self.route {
+            state.tick = state.tick.wrapping_add(1);
+        }
         
         // update progress
         while let Ok(event) = self.audio_event_rx.try_recv() {

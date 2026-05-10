@@ -6,7 +6,10 @@ pub struct LyricsState {
     
     pub is_loading: bool,     
     
-    pub scroll_offset: u16,   
+    pub scroll_offset: u16,
+
+    /// animation tick counter
+    pub tick: u64,
 }
 
 impl LyricsState {
@@ -15,6 +18,7 @@ impl LyricsState {
             data: None,
             is_loading: true,
             scroll_offset: 0,
+            tick: 0,
         }
     }
 }
