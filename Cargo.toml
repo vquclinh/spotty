@@ -30,6 +30,7 @@ librespot-connect = "0.8.0"
 # fix for https://github.com/aome510/spotify-player/issues/914
 vergen = "=9.0.6"
 librespot-oauth = "0.8.0"
+librespot-metadata = "0.8.0"
 
 [[bin]]
 path = "src/main.rs"

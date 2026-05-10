@@ -1,6 +1,8 @@
 use std::sync::{Arc, Mutex};
 use crate::network::models::*;
 
+use librespot_metadata::Lyrics;
+
 #[derive(Default)]
 pub struct DataPayload<T> {
     pub items: Vec<T>,
@@ -58,7 +60,10 @@ pub struct IoSharedState {
     pub liked_songs: DataPayload<Track>,
     pub saved_albums: DataPayload<Album>,
     pub saved_artists: DataPayload<Artist>,
-    pub saved_podcasts: DataPayload<Episode>
+    pub saved_podcasts: DataPayload<Episode>,
+
+    // lyrics data 
+    pub lyrics_data: Option<Lyrics>,
 }
 
 // SharedState uses Arc and Mutex to ensure thread-safe,

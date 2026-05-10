@@ -350,6 +350,17 @@ pub async fn start_network_worker(
                     }
                 }
             }
+
+            ClientRequest::GetLyrics { track_id } => {
+                match client.get_lyrics(&track_id).await {
+                    Ok(lyrics_opt) => {
+                        if let Ok(mut state) = shared_state.lock() {
+                            state.lyrics_data = lyrics_opt;
+                        }
+                    }
+                    Err(_e) => {}
+                }
+            }
         }
     }
 }

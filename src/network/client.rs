@@ -13,6 +13,9 @@ use serde_json::{Value, json};
 use serde::Deserialize;
 use core::iter::IntoIterator;
 
+use librespot_core::spotify_id::SpotifyId;
+use librespot_metadata::Lyrics;
+
 // ---------------------------------------- WEB API + AUDIO CLIENT ----------------------------
 pub struct SpotifyClient {
     pub client: AuthCodePkceSpotify,
@@ -357,5 +360,27 @@ impl SpotifyClient {
         let res: Page<SavedEpisode> = helper::get(&self.client, "me/episodes", &params).await?.data();
 
         Ok(res.map(|se| se.episode))
+    }
+
+    pub async fn get_lyrics(&self, track_id: &str) -> Result<Option<Lyrics>> {
+        let base62_id = track_id.strip_prefix("spotify::track:").unwrap_or(track_id);
+
+        let id = SpotifyId::from_base62(base62_id)
+            .map_err(|_| anyhow::anyhow!("Track ID is not valid: {}", track_id))?;
+
+        match Lyrics::get(&self.session, &id).await {
+            Ok(lyrics) => {
+                Ok(Some(lyrics))
+            }
+            Err(err) => {
+                let err_msg = err.to_string().to_lowercase();
+
+                if err_msg.contains("not found") || err_msg.contains("404") {
+                    Ok(None)
+                } else {
+                    Err(anyhow::anyhow!("Fail to get lyrics from Spotify: {}", err))
+                }
+            }
+        }    
     }
 }

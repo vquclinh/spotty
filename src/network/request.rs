@@ -107,4 +107,8 @@ pub enum ClientRequest {
         limit: u32,
         offset: u32
     },
+
+    GetLyrics {
+        track_id: String,
+    },
 }
