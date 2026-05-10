@@ -38,6 +38,8 @@ pub struct App {
     pub playlist_selector: PlaylistSelector,
 
     pub playbar: PlaybarState,
+
+    track_ended: bool,
 }
 
 impl App {
@@ -82,6 +84,8 @@ impl App {
             playlist_selector: PlaylistSelector::new(),
 
             playbar: PlaybarState::new(),
+
+            track_ended: false,
         }
     }
 
@@ -147,12 +151,14 @@ impl App {
         while let Ok(event) = self.audio_event_rx.try_recv() {
             match event {
                 AudioEvent::Changed { .. } => {
+                    self.track_ended = false;
                     if let Some(pb) = &mut self.playback {
                         pb.progress = Duration::from_millis(0);
                     }
                 }
 
                 AudioEvent::Playing { position_ms, .. } => {
+                    self.track_ended = false;
                     if let Some(pb) = &mut self.playback {
                         pb.is_playing = true;
                         pb.progress = Duration::from_millis(position_ms as u64);
@@ -167,6 +173,7 @@ impl App {
                 }
 
                 AudioEvent::EndOfTrack { .. } => {
+                    self.track_ended = true;
                     if let Some(pb) = &mut self.playback {
                         pb.is_playing = false;
                     }
@@ -196,7 +203,10 @@ impl App {
                 self.user = shared_state.user.clone();
             }
 
-            if let Some(playback) = shared_state.playback.take() {
+            if let Some(mut playback) = shared_state.playback.take() {
+                if self.track_ended {
+                    playback.is_playing = false;
+                }
                 self.playback = Some(playback);
             }
 

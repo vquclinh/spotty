@@ -348,7 +348,7 @@ fn render_scrolling_info(
     for &c in &sep_chars { all_chars.push((c, Style::default().fg(Color::DarkGray))); }
     for &c in &artist_chars { all_chars.push((c, Style::default().fg(Color::DarkGray))); }
 
-    let status = if is_playing { "󰐊" } else { "󰏤" };
+    let status = if is_playing { "󰏤" } else { "󰐊" };
     let mut spans = vec![Span::styled(format!(" {}  ", status), Style::default().fg(Color::Green))];
 
     if total_len <= available_width || available_width == 0 {
