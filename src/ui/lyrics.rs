@@ -12,13 +12,13 @@ use crate::network::models::PlayableItem;
 
 pub fn draw_text(f: &mut Frame, app: &mut App, area: Rect) {
     let border_color = if app.active_block == ActiveBlock::LyricsText { 
-        Color::Green 
+        Color::LightCyan 
     } else { 
         Color::White 
     };
 
     let block = Block::default()
-        .title(" [3] LYRICS ")
+        .title(" [1] LYRICS ")
         .borders(Borders::ALL)
         .border_style(Style::default().fg(border_color));
 
@@ -96,13 +96,13 @@ pub fn draw_text(f: &mut Frame, app: &mut App, area: Rect) {
 
 pub fn draw_info(f: &mut Frame, app: &mut App, area: Rect) {
     let border_color = if app.active_block == ActiveBlock::LyricsInfo { 
-        Color::Green 
+        Color::LightCyan
     } else { 
         Color::White 
     };
 
     let block = Block::default()
-        .title(" EQUALIZER ")
+        .title(" [2] EQUALIZER ")
         .borders(Borders::ALL)
         .border_style(Style::default().fg(border_color));
 

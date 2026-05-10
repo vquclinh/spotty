@@ -21,15 +21,20 @@ pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
 pub fn draw_wide(f: &mut Frame, app: &mut App, area: Rect) {
     let border_color = if app.active_block == ActiveBlock::Playbar { Color::LightCyan } else { Color::White };
     
-    let title = if let Route::Search(_) = app.route {
-        if app.active_block == ActiveBlock::SearchInput {
-            ""
-        } else {
-            " [3] "
+    let title = match app.route {
+        Route::Search(_) => {
+            if app.active_block == ActiveBlock::SearchInput {
+                ""
+            } else {
+                " [3] "
+            }
         }
-    } else {
-        " [4] "
+
+        Route::Lyrics(_) => " [3] ",
+        
+        _ => " [4] ",
     };
+
     let outer_block = Block::default()
         .title(title)
         .borders(Borders::ALL)
