@@ -159,6 +159,9 @@ impl App {
                     self.track_ended = false;
                     if let Some(pb) = &mut self.playback {
                         pb.progress = Duration::from_millis(0);
+                        if let Route::Queue(_) = &self.route {
+                            let _ = self.network_tx.send(ClientRequest::GetQueue);
+                        }
                     }
                 }
 
