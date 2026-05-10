@@ -5,7 +5,7 @@ use ratatui::layout::Rect;
 #[derive(Clone)]
 pub struct AlbumState {
     pub album_id: String,
-    pub album: Option<Album>,
+    pub album: Album,
     pub tracks: StatefulTable<Track>,
 
     pub is_loading: bool,
@@ -17,7 +17,7 @@ impl Default for AlbumState {
     fn default() -> Self {
         Self {
             album_id: String::default(),
-            album: None,
+            album: Album::default(),
             tracks: StatefulTable::new(),
 
             is_loading: false,

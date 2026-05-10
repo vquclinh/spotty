@@ -6,7 +6,7 @@ use std::time::Duration;
 #[derive(Clone, Debug)]
 pub enum PlayerRequest {
     Play(String),
-    PlayContext(String),
+    PlayContext(String, Option<u32>),
     TogglePlayback(bool),
     NextTrack,
     PreviousTrack,

@@ -32,27 +32,24 @@ pub fn draw(f: &mut Frame, state: &mut AlbumState, active_block: &ActiveBlock, a
     let info_max = info_width.saturating_sub(20);
 
     // --------------------------------------- Album Info -----------------------------
-    let album_content = if let Some(album) = &state.album {
-        let artists_full = album.artists.iter().map(|a| a.name.as_str()).collect::<Vec<_>>().join(", ");
-        let release_date = album.release_date.as_deref().unwrap_or("Unknown Date");
+    // --------------------------------------- Album Info -----------------------------
+    let artists_full = state.album.artists.iter().map(|a| a.name.as_str()).collect::<Vec<_>>().join(", ");
+    let release_date = state.album.release_date.as_deref().unwrap_or("Unknown Date");
 
-        vec![
-            Line::from(vec![
-                Span::styled(" 💿 Album: ", Style::default().fg(Color::LightGreen).add_modifier(Modifier::BOLD)),
-                Span::styled(truncate(&album.name, info_max), Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
-            ]),
-            Line::from(vec![
-                Span::raw("    👤 Artist: "),
-                Span::styled(truncate(&artists_full, info_max), Style::default().fg(Color::White)),
-            ]),
-            Line::from(vec![
-                Span::raw("    📅 Released: "),
-                Span::styled(release_date.to_string(), Style::default().fg(Color::DarkGray)),
-            ]),
-        ]
-    } else {
-        vec![Line::from(Span::styled("   (No album data)", Style::default().fg(Color::DarkGray)))]
-    };
+    let album_content = vec![
+        Line::from(vec![
+            Span::styled(" 💿 Album: ", Style::default().fg(Color::LightGreen).add_modifier(Modifier::BOLD)),
+            Span::styled(truncate(&state.album.name, info_max), Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
+        ]),
+        Line::from(vec![
+            Span::raw("    👤 Artist: "),
+            Span::styled(truncate(&artists_full, info_max), Style::default().fg(Color::White)),
+        ]),
+        Line::from(vec![
+            Span::raw("    📅 Released: "),
+            Span::styled(release_date.to_string(), Style::default().fg(Color::DarkGray)),
+        ]),
+    ];
 
     let album_info_widget = Paragraph::new(album_content)
         .block(Block::default().padding(Padding::new(1, 1, 1, 0)));

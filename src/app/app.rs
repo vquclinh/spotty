@@ -298,7 +298,7 @@ impl App {
                         if let Some(ref tracks) = album.tracks {
                             album_state.tracks.items = tracks.items.clone();
                         }
-                        album_state.album = Some(album);
+                        album_state.album = album;
                     }
                 }
 
