@@ -79,13 +79,10 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
 
     // ----------------------------------- home -------------------------------------
     if key.code == KeyCode::Char('H') {
-        if matches!(app.route, Route::Home(_)) {
-            return true; 
+        if !matches!(app.route, Route::Home(_)) {
+            app.set_current_route(Route::Home(HomeState::default())); 
         }
-
-        app.set_current_route(Route::Home(HomeState::default())); 
         app.active_block = ActiveBlock::HomeBlock;
-
         return true;
     }
 
@@ -94,39 +91,29 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
         if !matches!(app.route, Route::Search(_)) {
             app.set_current_route(Route::Search(SearchState::default()));
         }
-
         app.active_block = ActiveBlock::SearchInput;
-        
         return true;
     }
 
     // ------------------------------------ queue -----------------------------------
     if key.code == KeyCode::Char('Q') {
-        if matches!(app.route, Route::Queue(_)) {
-            app.active_block = ActiveBlock::QueueBlock;
-            return true;
+        if !matches!(app.route, Route::Queue(_)) {
+            app.set_current_route(Route::Queue(QueueState::default()));
         }
-
-        app.set_current_route(Route::Queue(QueueState::default()));
         app.active_block = ActiveBlock::QueueBlock;
-        
         return true;
     }
 
     // ------------------------------------- lyrics ----------------------------------
     if key.code == KeyCode::Char('L') {
-        if matches!(app.route, Route::Lyrics(_)) {
-            app.active_block = ActiveBlock::LyricsInfo;
-            return true;
+        if !matches!(app.route, Route::Lyrics(_)) {
+            app.set_current_route(Route::Lyrics(LyricsState::default()));
         }
-
-        app.set_current_route(Route::Lyrics(LyricsState::default()));
         app.active_block = ActiveBlock::LyricsInfo;
-
         return true;
     }
 
-    // active block
+    // ----------------------------------- active block -------------------------------
     if key.code == KeyCode::Tab && !key.modifiers.contains(KeyModifiers::CONTROL) {
         if app.active_block == ActiveBlock::SearchResults {
             return false;
@@ -179,7 +166,7 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
         return true; 
     }
 
-    // Number keys
+    // -------------------------------- number keys ----------------------------------
     match key.code {
         KeyCode::Char('1') => {
             match app.route {
