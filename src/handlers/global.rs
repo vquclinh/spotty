@@ -2,6 +2,7 @@ use crate::app::{ActiveBlock, App, route::Route};
 use crate::app::home_state::HomeState;
 use crate::app::search_state::{SearchState, SearchHoveredPane};
 use crate::app::queue_state::QueueState;
+use crate::app::lyrics_state::LyricsState;
 use crossterm::event::{KeyCode, KeyModifiers, KeyEvent};
 use crate::network::request::{ClientRequest, PlayerRequest};
 use crate::network::models::*;
@@ -88,7 +89,7 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
         return true;
     }
 
-    // search
+    // ----------------------------------- search -----------------------------------
     if key.code == KeyCode::Char('S') {
         if !matches!(app.route, Route::Search(_)) {
             app.set_current_route(Route::Search(SearchState::default()));
@@ -99,7 +100,7 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
         return true;
     }
 
-    // queue
+    // ------------------------------------ queue -----------------------------------
     if key.code == KeyCode::Char('Q') {
         if matches!(app.route, Route::Queue(_)) {
             app.active_block = ActiveBlock::QueueBlock;
@@ -109,6 +110,19 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
         app.set_current_route(Route::Queue(QueueState::default()));
         app.active_block = ActiveBlock::QueueBlock;
         
+        return true;
+    }
+
+    // ------------------------------------- lyrics ----------------------------------
+    if key.code == KeyCode::Char('L') {
+        if matches!(app.route, Route::Lyrics(_)) {
+            app.active_block = ActiveBlock::LyricsInfo;
+            return true;
+        }
+
+        app.set_current_route(Route::Lyrics(LyricsState::default()));
+        app.active_block = ActiveBlock::LyricsInfo;
+
         return true;
     }
 
@@ -214,7 +228,7 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
                 Route::Queue(_) => {
                     app.active_block = ActiveBlock::QueueBlock;
                 },
-                Route::Lyrics => {
+                Route::Lyrics(_) => {
                     app.active_block = ActiveBlock::LyricsInfo;
                 },
                 Route::Search(_) => {

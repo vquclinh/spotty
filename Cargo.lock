@@ -3330,6 +3330,7 @@ dependencies = [
  "dotenv",
  "librespot-connect",
  "librespot-core",
+ "librespot-metadata",
  "librespot-oauth",
  "librespot-playback",
  "rand 0.10.1",

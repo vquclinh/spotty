@@ -122,6 +122,14 @@ impl App {
             Route::SavedPodcasts(_) => {
                 let _ = self.network_tx.send(ClientRequest::GetUserSavedPodcasts { limit: self.page_limit, offset: 0 });
             }
+            Route::Lyrics(_) => {
+                if let Some(playback) = &self.playback {
+                    if let Some(PlayableItem::Track(track)) = &playback.item {
+                        let track_id = track.id.clone();
+                        let _ = self.network_tx.send(ClientRequest::GetLyrics { track_id });
+                    }
+                }
+            }
             _ => {}
         }
 
@@ -343,6 +351,13 @@ impl App {
                         );
                         saved_podcasts_state.is_loading = false;
                         saved_podcasts_state.is_end = shared_state.saved_podcasts.is_end;
+                    }
+                }
+
+                Route::Lyrics(lyrics_state) => {
+                    if let Some(lyrics) = shared_state.lyrics_data.take() {
+                        lyrics_state.data = Some(lyrics);
+                        lyrics_state.is_loading = false;
                     }
                 }
 

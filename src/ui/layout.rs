@@ -23,7 +23,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     playbar::draw(f, app, main_chunks[1]);
 
     match &mut app.route {
-        Route::Lyrics => {
+        Route::Lyrics(_) => {
             let lyrics_chunks = Layout::default()
                 .direction(Direction::Horizontal)
                 .constraints([Constraint::Percentage(60), Constraint::Percentage(40)])
