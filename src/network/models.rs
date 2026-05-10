@@ -160,6 +160,13 @@ impl PlayableItem {
         }
     }
 
+    pub fn uri(&self) -> &str {
+        match self {
+            PlayableItem::Track(i) => i.uri.as_str(),
+            PlayableItem::Episode(i) => i.uri.as_str()
+        }
+    }
+
     pub fn artists(&self) -> String {
         match self {
             PlayableItem::Track(i) => {

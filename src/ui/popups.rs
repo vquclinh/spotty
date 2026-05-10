@@ -99,29 +99,11 @@ pub fn draw_action_menu(
 
     let items: Vec<ListItem> = app.action_menu.actions
         .iter()
-        .enumerate()
-        .map(|(i, action)| {
-            let action_str = action.as_str();
-            let shortcut_str = format!("⌨ {}", i + 1);
-            
-            let inner_width = (menu_width as usize).saturating_sub(4);
-            let text_width = action_str.chars().count() + shortcut_str.chars().count();
-            
-            let spaces_to_add = inner_width.saturating_sub(text_width + 2); 
-            let spaces = " ".repeat(spaces_to_add);
-            
-            let line = Line::from(vec![
-                Span::raw(format!(" {}", action_str)),
-                Span::raw(spaces),
-                Span::styled(
-                    format!("{} ", shortcut_str), 
-                    Style::default().fg(Color::DarkGray)
-                ), 
-            ]);
-
-            ListItem::new(line)
+        .map(|action| {
+            // Directly create the ListItem with the action string
+            ListItem::new(format!(" {}", action.as_str()))
         })
-        .collect();
+    .collect();
 
    let list = List::new(items)
         .block(block)

@@ -125,11 +125,30 @@ fn execute_action_menu_command(app: &mut App) -> bool {
             MenuAction::PlayNow => {
                 if let Some(u) = uri {
                     let player_req = match target {
-                        MenuTarget::Track(_) | MenuTarget::Episode(_) => PlayerRequest::Play(u),
-                        MenuTarget::Album(_) | MenuTarget::Playlist(_) | MenuTarget::Artist(_) => PlayerRequest::PlayContext(u),
+                        // If this is a playable item and we are in a playlist/album then
+                        // playing the item will also play the whole collection
+                        MenuTarget::Track(_) | MenuTarget::Episode(_) => {
+                            match &app.route {
+                                Route::PlaylistDetail(s) => {
+                                    let offset = s.tracks.state.selected().map(|i| i as u32);
+                                    PlayerRequest::PlayContext(s.playlist.uri.clone(), offset)
+                                }
+                                Route::AlbumDetail(s) => {
+                                    let offset = s.tracks.state.selected().map(|i| i as u32);
+                                    PlayerRequest::PlayContext(s.album.uri.clone(), offset)
+                                }
+                                _ => PlayerRequest::Play(u),
+                            }
+                        }
+                        MenuTarget::Album(_) | MenuTarget::Playlist(_) | MenuTarget::Artist(_)
+                            => PlayerRequest::PlayContext(u, None),
                     };
 
                     let _ = app.network_tx.send(ClientRequest::Player(player_req));
+                    
+                    if let Route::Queue(_) = &app.route {
+                        let _ = app.network_tx.send(ClientRequest::GetQueue);
+                    }
                 }
                 true
             }

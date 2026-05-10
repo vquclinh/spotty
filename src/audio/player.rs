@@ -1,5 +1,5 @@
 use anyhow::Context;
-use librespot_connect::{ConnectConfig, Spirc, LoadRequest, LoadRequestOptions};
+use librespot_connect::{ConnectConfig, Spirc, LoadRequest, LoadRequestOptions, PlayingTrack};
 use librespot_core::config::DeviceType;
 use librespot_playback::audio_backend;
 use librespot_playback::config::{AudioFormat, Bitrate, PlayerConfig};
@@ -17,7 +17,7 @@ use crate::network::request::ClientRequest;
 // audio commands
 pub enum AudioCommand {
     Play(String), // play a single track or episode by uri
-    PlayContext(String), // play a context (album, playlist, artist)
+    PlayContext(String, Option<u32>), // play a context (album, playlist, artist)
     Pause,
     Resume,
     NextTrack,
@@ -150,12 +150,14 @@ pub async fn start_audio_worker(
                             let _ = spirc.load(req);
                         }
 
-                        AudioCommand::PlayContext(uri) => {
+                        AudioCommand::PlayContext(context_uri, playing_track_index) => {
                             // use from_context_uri for playing context (album, playlist, artist)
+                            let playing_track = playing_track_index.map(PlayingTrack::Index);
                             let req = LoadRequest::from_context_uri(
-                                uri,
+                                context_uri,
                                 LoadRequestOptions {
                                     start_playing: true,
+                                    playing_track,
                                     ..Default::default()
                                 },
                             );

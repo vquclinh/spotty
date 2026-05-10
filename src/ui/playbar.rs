@@ -171,7 +171,17 @@ pub fn draw_wide(f: &mut Frame, app: &mut App, area: Rect) {
 pub fn draw_narrow(f: &mut Frame, app: &mut App, area: Rect) {
     let border_color = if app.active_block == ActiveBlock::Playbar { Color::LightCyan } else { Color::White };
     
+    let title = if let Route::Search(_) = app.route {
+        if app.active_block == ActiveBlock::SearchInput {
+            ""
+        } else {
+            " [3] "
+        }
+    } else {
+        " [4] "
+    };
     let outer_block = Block::default()
+        .title(title)
         .borders(Borders::ALL)
         .border_style(Style::default().fg(border_color));
         
