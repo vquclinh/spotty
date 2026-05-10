@@ -8,5 +8,6 @@ pub mod queue;
 pub mod album;
 pub mod playbar;
 pub mod library;
+pub mod lyrics;
 
 pub use keyboard::handle_key_events;
