@@ -353,7 +353,7 @@ fn render_scrolling_info(
 
     if total_len <= available_width || available_width == 0 {
         spans.push(Span::styled(track_name.to_string(), Style::default().fg(Color::White).add_modifier(Modifier::BOLD)));
-        spans.push(Span::styled(format!("- {}", artist_name), Style::default().fg(Color::DarkGray)));
+        spans.push(Span::styled(format!(" - {}", artist_name), Style::default().fg(Color::DarkGray)));
     } else {
         let offset = app.playbar.scroll_offset.min(total_len.saturating_sub(available_width));
         let end = std::cmp::min(offset + available_width, total_len);

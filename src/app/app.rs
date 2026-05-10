@@ -39,7 +39,7 @@ pub struct App {
 
     pub playbar: PlaybarState,
 
-    track_ended: bool,
+    pub track_ended: bool,
 }
 
 impl App {

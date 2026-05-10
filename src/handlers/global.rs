@@ -1,3 +1,4 @@
+use std::time::Duration;
 use crate::app::{ActiveBlock, App, route::Route};
 use crate::app::home_state::HomeState;
 use crate::app::search_state::{SearchState, SearchHoveredPane};
@@ -20,9 +21,22 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
     if let Some(playback) = &mut app.playback {
         // pause/resume
         if key.code == KeyCode::Char(' ') {
-            let is_playing = playback.is_playing;
-            playback.is_playing = !is_playing;
-            let _ = app.network_tx.send(ClientRequest::Player(PlayerRequest::TogglePlayback(is_playing)));
+            if app.track_ended {
+                if let Some(item) = &playback.item {
+                    let uri = match item {
+                        PlayableItem::Track(t) => t.uri.clone(),
+                        PlayableItem::Episode(e) => e.uri.clone(),
+                    };
+                    playback.is_playing = true;
+                    playback.progress = Duration::from_millis(0);
+                    app.track_ended = false;
+                    let _ = app.network_tx.send(ClientRequest::Player(PlayerRequest::Play(uri)));
+                }
+            } else {
+                let is_playing = playback.is_playing;
+                playback.is_playing = !is_playing;
+                let _ = app.network_tx.send(ClientRequest::Player(PlayerRequest::TogglePlayback(is_playing)));
+            }
             return true;
         }
 
