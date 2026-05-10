@@ -78,6 +78,9 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
             let _ = app.network_tx.send(ClientRequest::Player(
                 PlayerRequest::ToggleShuffle(shuffling))
             );
+            if let Route::Queue(_) = &app.route {
+                let _ = app.network_tx.send(ClientRequest::GetQueue);
+            }
             return true;
         }
     }
