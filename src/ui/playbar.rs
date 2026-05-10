@@ -21,15 +21,20 @@ pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
 pub fn draw_wide(f: &mut Frame, app: &mut App, area: Rect) {
     let border_color = if app.active_block == ActiveBlock::Playbar { Color::LightCyan } else { Color::White };
     
-    let title = if let Route::Search(_) = app.route {
-        if app.active_block == ActiveBlock::SearchInput {
-            ""
-        } else {
-            " [3] "
+    let title = match app.route {
+        Route::Search(_) => {
+            if app.active_block == ActiveBlock::SearchInput {
+                ""
+            } else {
+                " [3] "
+            }
         }
-    } else {
-        " [4] "
+
+        Route::Lyrics(_) => " [3] ",
+        
+        _ => " [4] ",
     };
+
     let outer_block = Block::default()
         .title(title)
         .borders(Borders::ALL)
@@ -348,12 +353,12 @@ fn render_scrolling_info(
     for &c in &sep_chars { all_chars.push((c, Style::default().fg(Color::DarkGray))); }
     for &c in &artist_chars { all_chars.push((c, Style::default().fg(Color::DarkGray))); }
 
-    let status = if is_playing { "󰐊" } else { "󰏤" };
+    let status = if is_playing { "󰏤" } else { "󰐊" };
     let mut spans = vec![Span::styled(format!(" {}  ", status), Style::default().fg(Color::Green))];
 
     if total_len <= available_width || available_width == 0 {
         spans.push(Span::styled(track_name.to_string(), Style::default().fg(Color::White).add_modifier(Modifier::BOLD)));
-        spans.push(Span::styled(format!("- {}", artist_name), Style::default().fg(Color::DarkGray)));
+        spans.push(Span::styled(format!(" - {}", artist_name), Style::default().fg(Color::DarkGray)));
     } else {
         let offset = app.playbar.scroll_offset.min(total_len.saturating_sub(available_width));
         let end = std::cmp::min(offset + available_width, total_len);

@@ -38,6 +38,8 @@ pub struct App {
     pub playlist_selector: PlaylistSelector,
 
     pub playbar: PlaybarState,
+
+    pub track_ended: bool,
 }
 
 impl App {
@@ -82,6 +84,8 @@ impl App {
             playlist_selector: PlaylistSelector::new(),
 
             playbar: PlaybarState::new(),
+
+            track_ended: false,
         }
     }
 
@@ -122,6 +126,14 @@ impl App {
             Route::SavedPodcasts(_) => {
                 let _ = self.network_tx.send(ClientRequest::GetUserSavedPodcasts { limit: self.page_limit, offset: 0 });
             }
+            Route::Lyrics(_) => {
+                if let Some(playback) = &self.playback {
+                    if let Some(PlayableItem::Track(track)) = &playback.item {
+                        let track_id = track.id.clone();
+                        let _ = self.network_tx.send(ClientRequest::GetLyrics { track_id });
+                    }
+                }
+            }
             _ => {}
         }
 
@@ -134,17 +146,24 @@ impl App {
         if let Some(next_route) = self.route.update() {
             self.set_current_route(next_route);
         }
+
+        // increment lyrics animation tick
+        if let Route::Lyrics(state) = &mut self.route {
+            state.tick = state.tick.wrapping_add(1);
+        }
         
         // update progress
         while let Ok(event) = self.audio_event_rx.try_recv() {
             match event {
                 AudioEvent::Changed { .. } => {
+                    self.track_ended = false;
                     if let Some(pb) = &mut self.playback {
                         pb.progress = Duration::from_millis(0);
                     }
                 }
 
                 AudioEvent::Playing { position_ms, .. } => {
+                    self.track_ended = false;
                     if let Some(pb) = &mut self.playback {
                         pb.is_playing = true;
                         pb.progress = Duration::from_millis(position_ms as u64);
@@ -159,6 +178,7 @@ impl App {
                 }
 
                 AudioEvent::EndOfTrack { .. } => {
+                    self.track_ended = true;
                     if let Some(pb) = &mut self.playback {
                         pb.is_playing = false;
                     }
@@ -188,7 +208,10 @@ impl App {
                 self.user = shared_state.user.clone();
             }
 
-            if let Some(playback) = shared_state.playback.take() {
+            if let Some(mut playback) = shared_state.playback.take() {
+                if self.track_ended {
+                    playback.is_playing = false;
+                }
                 self.playback = Some(playback);
             }
 
@@ -343,6 +366,13 @@ impl App {
                         );
                         saved_podcasts_state.is_loading = false;
                         saved_podcasts_state.is_end = shared_state.saved_podcasts.is_end;
+                    }
+                }
+
+                Route::Lyrics(lyrics_state) => {
+                    if let Some(lyrics) = shared_state.lyrics_data.take() {
+                        lyrics_state.data = Some(lyrics);
+                        lyrics_state.is_loading = false;
                     }
                 }
 

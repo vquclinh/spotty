@@ -1,7 +1,9 @@
+use std::time::Duration;
 use crate::app::{ActiveBlock, App, route::Route};
 use crate::app::home_state::HomeState;
 use crate::app::search_state::{SearchState, SearchHoveredPane};
 use crate::app::queue_state::QueueState;
+use crate::app::lyrics_state::LyricsState;
 use crossterm::event::{KeyCode, KeyModifiers, KeyEvent};
 use crate::network::request::{ClientRequest, PlayerRequest};
 use crate::network::models::*;
@@ -19,9 +21,22 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
     if let Some(playback) = &mut app.playback {
         // pause/resume
         if key.code == KeyCode::Char(' ') {
-            let is_playing = playback.is_playing;
-            playback.is_playing = !is_playing;
-            let _ = app.network_tx.send(ClientRequest::Player(PlayerRequest::TogglePlayback(is_playing)));
+            if app.track_ended {
+                if let Some(item) = &playback.item {
+                    let uri = match item {
+                        PlayableItem::Track(t) => t.uri.clone(),
+                        PlayableItem::Episode(e) => e.uri.clone(),
+                    };
+                    playback.is_playing = true;
+                    playback.progress = Duration::from_millis(0);
+                    app.track_ended = false;
+                    let _ = app.network_tx.send(ClientRequest::Player(PlayerRequest::Play(uri)));
+                }
+            } else {
+                let is_playing = playback.is_playing;
+                playback.is_playing = !is_playing;
+                let _ = app.network_tx.send(ClientRequest::Player(PlayerRequest::TogglePlayback(is_playing)));
+            }
             return true;
         }
 
@@ -78,41 +93,41 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
 
     // ----------------------------------- home -------------------------------------
     if key.code == KeyCode::Char('H') {
-        if matches!(app.route, Route::Home(_)) {
-            return true; 
+        if !matches!(app.route, Route::Home(_)) {
+            app.set_current_route(Route::Home(HomeState::default())); 
         }
-
-        app.set_current_route(Route::Home(HomeState::default())); 
         app.active_block = ActiveBlock::HomeBlock;
-
         return true;
     }
 
-    // search
+    // ----------------------------------- search -----------------------------------
     if key.code == KeyCode::Char('S') {
         if !matches!(app.route, Route::Search(_)) {
             app.set_current_route(Route::Search(SearchState::default()));
         }
-
         app.active_block = ActiveBlock::SearchInput;
-        
         return true;
     }
 
-    // queue
+    // ------------------------------------ queue -----------------------------------
     if key.code == KeyCode::Char('Q') {
-        if matches!(app.route, Route::Queue(_)) {
-            app.active_block = ActiveBlock::QueueBlock;
-            return true;
+        if !matches!(app.route, Route::Queue(_)) {
+            app.set_current_route(Route::Queue(QueueState::default()));
         }
-
-        app.set_current_route(Route::Queue(QueueState::default()));
         app.active_block = ActiveBlock::QueueBlock;
-        
         return true;
     }
 
-    // active block
+    // ------------------------------------- lyrics ----------------------------------
+    if key.code == KeyCode::Char('L') {
+        if !matches!(app.route, Route::Lyrics(_)) {
+            app.set_current_route(Route::Lyrics(LyricsState::default()));
+        }
+        app.active_block = ActiveBlock::LyricsText;
+        return true;
+    }
+
+    // ----------------------------------- active block -------------------------------
     if key.code == KeyCode::Tab && !key.modifiers.contains(KeyModifiers::CONTROL) {
         if app.active_block == ActiveBlock::SearchResults {
             return false;
@@ -140,37 +155,46 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
                 ActiveBlock::SearchResults
             },
 
+            ActiveBlock::LyricsText => ActiveBlock::LyricsInfo,
+
             ActiveBlock::HomeBlock 
             | ActiveBlock::PlaylistTracks 
             | ActiveBlock::QueueBlock 
-            | ActiveBlock::LyricsText
             | ActiveBlock::AlbumBlock
             | ActiveBlock::LikedSongs
             | ActiveBlock::SavedAlbums
             | ActiveBlock::SavedArtists
-            | ActiveBlock::SavedPodcasts => {
+            | ActiveBlock::SavedPodcasts
+            | ActiveBlock::LyricsInfo => {
                 ActiveBlock::Playbar
             },
 
-            ActiveBlock::Playbar => {
-                if matches!(app.route, Route::Search(_)) {
-                    ActiveBlock::SearchInput 
+            ActiveBlock::Playbar => match app.route {
+                Route::Search(_) => ActiveBlock::SearchInput,
+                Route::Lyrics(_) => ActiveBlock::LyricsText,
+                _ => ActiveBlock::LibraryMenu,
+            },
+
+            _ => {
+                if matches!(app.route, Route::Lyrics(_)) {
+                    ActiveBlock::LyricsText
                 } else {
                     ActiveBlock::LibraryMenu
                 }
             },
-
-            _ => ActiveBlock::LibraryMenu,
         };
         return true; 
     }
 
-    // Number keys
+    // -------------------------------- number keys ----------------------------------
     match key.code {
         KeyCode::Char('1') => {
             match app.route {
                 Route::Search(_) => {
                     app.active_block = ActiveBlock::SearchInput;
+                }
+                Route::Lyrics(_) => {
+                    app.active_block = ActiveBlock::LyricsText;
                 }
                 _ => {
                     app.active_block = ActiveBlock::LibraryMenu;
@@ -182,6 +206,9 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
             match app.route {
                 Route::Search(_) => {
                     app.active_block = ActiveBlock::SearchResults;
+                }
+                Route::Lyrics(_) => {
+                    app.active_block = ActiveBlock::LyricsInfo;
                 }
                 _ => {
                     app.active_block = ActiveBlock::PlaylistsMenu;
@@ -214,8 +241,8 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
                 Route::Queue(_) => {
                     app.active_block = ActiveBlock::QueueBlock;
                 },
-                Route::Lyrics => {
-                    app.active_block = ActiveBlock::LyricsInfo;
+                Route::Lyrics(_) => {
+                    app.active_block = ActiveBlock::Playbar;
                 },
                 Route::Search(_) => {
                     app.active_block = ActiveBlock::Playbar;
@@ -223,7 +250,7 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
                 _ => {}
             }
         },
-        KeyCode::Char('4') if !matches!(app.route, Route::Search(_)) => {
+        KeyCode::Char('4') if !matches!(app.route, Route::Search(_) | Route::Lyrics(_)) => {
             app.active_block = ActiveBlock::Playbar;
         }
 
