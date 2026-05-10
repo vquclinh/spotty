@@ -145,6 +145,10 @@ fn execute_action_menu_command(app: &mut App) -> bool {
                     };
 
                     let _ = app.network_tx.send(ClientRequest::Player(player_req));
+                    
+                    if let Route::Queue(_) = &app.route {
+                        let _ = app.network_tx.send(ClientRequest::GetQueue);
+                    }
                 }
                 true
             }

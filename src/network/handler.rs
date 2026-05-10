@@ -164,13 +164,21 @@ pub async fn start_network_worker(
             }
 
             ClientRequest::GetQueue => {
-                match client.get_queue().await {
-                    Ok(queue_res) => {
-                        if let Ok(mut state) = shared_state.lock() {
-                            state.queue_data = Some((queue_res.currently_playing, queue_res.queue));
-                        }
+                let Ok(mut res) = client.get_queue().await else { return };
+
+                // If the first item in queue_items is a duplicate of currently_playing
+                // then we remove it
+                if let Some(current) = &res.currently_playing {
+                    let is_dup = res.queue.first()
+                        .is_some_and(|first| current.uri() == first.uri());
+
+                    if is_dup {
+                        res.queue.remove(0);
                     }
-                    Err(_e) => {}
+                }
+
+                if let Ok(mut state) = shared_state.lock() {
+                    state.queue_data = Some((res.currently_playing, res.queue));
                 }
             }
 

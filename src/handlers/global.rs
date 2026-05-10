@@ -42,12 +42,18 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
         // next
         if key.code == KeyCode::Char('n') {
             let _ = app.network_tx.send(ClientRequest::Player(PlayerRequest::NextTrack));
+            if let Route::Queue(_) = &app.route {
+                let _ = app.network_tx.send(ClientRequest::GetQueue);
+            }
             return true;
         }
 
         // prev
         if key.code == KeyCode::Char('p') {
             let _ = app.network_tx.send(ClientRequest::Player(PlayerRequest::PreviousTrack));
+            if let Route::Queue(_) = &app.route {
+                let _ = app.network_tx.send(ClientRequest::GetQueue);
+            }
             return true;
         }
 
