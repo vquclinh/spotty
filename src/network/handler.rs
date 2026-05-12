@@ -314,9 +314,9 @@ pub async fn start_network_worker(
                     PlayerRequest::Play(uri) => {
                         let _ = audio_tx.send(AudioCommand::Play(uri));
                     }
-                    PlayerRequest::PlayContext(context_uri, playing_track_index) => {
+                    PlayerRequest::PlayContext(context_uri, options) => {
                         let _ = audio_tx.send(
-                            AudioCommand::PlayContext(context_uri, playing_track_index)
+                            AudioCommand::PlayContext(context_uri, options)
                         );
                     }
                     
