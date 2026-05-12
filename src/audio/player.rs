@@ -163,8 +163,27 @@ pub async fn start_audio_worker(
                         let vol = percent_to_librespot_volume(cache.volume);
                         mixer.set_volume(vol);
                         let _ = spirc.set_volume(vol);
+
+                    } else if let Some(track_uri) = &cache.playing_track_uri {
+                        // Fallback for single tracks without context
+                        let context_options = Some(cache.to_librespot_options());
+                        let req = LoadRequest::from_tracks(
+                            vec![track_uri.clone()],
+                            LoadRequestOptions {
+                                start_playing: false,
+                                seek_to: cache.progress.as_millis() as u32,
+                                context_options,
+                                ..Default::default()
+                            },
+                        );
+                        let _ = spirc.load(req);
+
+                        let vol = percent_to_librespot_volume(cache.volume);
+                        mixer.set_volume(vol);
+                        let _ = spirc.set_volume(vol);
+
                     } else {
-                        let _ = std::fs::write("cache_debug.log", "Cache read ok, but context_uri was empty");
+                        let _ = std::fs::write("cache_debug.log", "Cache read ok, but both context_uri and playing_track_uri were empty");
                     }
                 }
                 Err(e) => { let _ = std::fs::write("cache_debug.log", format!("Failed to parse JSON: {e}")); }
