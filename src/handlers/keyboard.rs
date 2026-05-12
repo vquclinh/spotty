@@ -11,6 +11,8 @@ use crate::app::types::MenuAction;
 
 use crate::app::album_state::AlbumState;
 
+use librespot_connect::{LoadRequestOptions, LoadContextOptions, PlayingTrack, Options};
+
 pub fn handle_key_events(key: KeyEvent, app: &mut App) {
     if app.show_help {
         app.show_help = false;
@@ -151,18 +153,42 @@ fn execute_action_menu_command(app: &mut App) -> bool {
                         MenuTarget::Track(_) | MenuTarget::Episode(_) => {
                             match &app.route {
                                 Route::PlaylistDetail(s) => {
-                                    let offset = s.tracks.state.selected().map(|i| i as u32);
-                                    PlayerRequest::PlayContext(s.playlist.uri.clone(), offset)
+                                    let index = s.tracks.state.selected().map(|i| i as u32);
+                                    let context_options = app.playback.as_ref()
+                                        .map(|pb| pb.to_librespot_options(false));
+                                    let opts = LoadRequestOptions {
+                                        start_playing: true,
+                                        playing_track: index.map(PlayingTrack::Index),
+                                        context_options,
+                                        ..Default::default()
+                                    };
+                                    PlayerRequest::PlayContext(s.playlist.uri.clone(), opts)
                                 }
                                 Route::AlbumDetail(s) => {
-                                    let offset = s.tracks.state.selected().map(|i| i as u32);
-                                    PlayerRequest::PlayContext(s.album.uri.clone(), offset)
+                                    let index = s.tracks.state.selected().map(|i| i as u32);
+                                    let context_options = app.playback.as_ref()
+                                        .map(|pb| pb.to_librespot_options(false));
+                                    let opts = LoadRequestOptions {
+                                        start_playing: true,
+                                        playing_track: index.map(PlayingTrack::Index),
+                                        context_options,
+                                        ..Default::default()
+                                    };
+                                    PlayerRequest::PlayContext(s.album.uri.clone(), opts)
                                 }
                                 _ => PlayerRequest::Play(u),
                             }
                         }
-                        MenuTarget::Album(_) | MenuTarget::Playlist(_) | MenuTarget::Artist(_)
-                            => PlayerRequest::PlayContext(u, None),
+                        MenuTarget::Album(_) | MenuTarget::Playlist(_) | MenuTarget::Artist(_) => {
+                            let context_options = app.playback.as_ref()
+                                .map(|pb| pb.to_librespot_options(false));
+                            let opts = LoadRequestOptions {
+                                start_playing: true,
+                                context_options,
+                                ..Default::default()
+                            };
+                            PlayerRequest::PlayContext(u, opts)
+                        }
                     };
 
                     let _ = app.network_tx.send(ClientRequest::Player(player_req));

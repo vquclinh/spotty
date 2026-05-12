@@ -1,10 +1,16 @@
 use anyhow::Context;
-use librespot_connect::{ConnectConfig, Spirc, LoadRequest, LoadRequestOptions, PlayingTrack};
+use librespot_connect::{
+    ConnectConfig,
+    LoadRequest,
+    LoadRequestOptions,
+    Spirc
+};
 use librespot_core::config::DeviceType;
 use librespot_playback::audio_backend;
 use librespot_playback::config::{AudioFormat, Bitrate, PlayerConfig};
 use librespot_playback::mixer::{softmixer::SoftMixer, Mixer, MixerConfig};
 use librespot_playback::player::Player;
+use librespot_connect::PlayingTrack;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::mpsc;
@@ -12,14 +18,14 @@ use tokio::sync::oneshot;
 
 use crate::app::state::SharedState;
 use crate::network::client::SpotifyClient;
-use crate::network::models::PlaybackCache;
+use crate::network::models::PlaybackContext;
 use super::events::AudioEvent;
-use crate::network::request::{ClientRequest, PlayerRequest};
+use crate::network::request::ClientRequest;
 
 // audio commands
 pub enum AudioCommand {
     Play(String), // play a single track or episode by uri
-    PlayContext(String, Option<u32>), // play a context (album, playlist, artist)
+    PlayContext(String, LoadRequestOptions),
     Pause,
     Resume,
     NextTrack,
@@ -29,7 +35,7 @@ pub enum AudioCommand {
 
     SetVolume(u16),
 
-    Shutdown(PlaybackCache, oneshot::Sender<()>),
+    Shutdown(PlaybackContext, oneshot::Sender<()>),
 }
 
 // convert volume to librespot volume
@@ -137,39 +143,47 @@ pub async fn start_audio_worker(
     // Restore local cache
     match std::fs::read_to_string(".spotty_cache/playback.json") {
         Ok(cache_data) => {
-            match serde_json::from_str::<PlaybackCache>(&cache_data) {
+            match serde_json::from_str::<PlaybackContext>(&cache_data) {
                 Ok(cache) => {
-                    if let Some(context_uri) = cache.context_uri {
+                    if let Some(context_uri) = &cache.context_uri {
+                        let context_options = Some(cache.to_librespot_options());
+                        let playing_track = cache.playing_track_uri.map(PlayingTrack::Uri);
                         let req = LoadRequest::from_context_uri(
-                            context_uri,
+                            context_uri.clone(),
                             LoadRequestOptions {
                                 start_playing: false,
-                                ..Default::default()
+                                seek_to: cache.progress.as_millis() as u32,
+                                playing_track,
+                                context_options,
                             },
                         );
+
                         let _ = spirc.load(req);
-                        let _ = spirc.set_position_ms(cache.progress.as_millis() as u32);
-                        
+
                         let vol = percent_to_librespot_volume(cache.volume);
                         mixer.set_volume(vol);
                         let _ = spirc.set_volume(vol);
 
-                        // Set shuffle and repeat
-                        let net_tx_delayed = net_tx_clone.clone();
-                        tokio::spawn(async move {
-                            // Wait for Spotify to recognize the active Spirc device
-                            tokio::time::sleep(Duration::from_millis(1000)).await;
+                    } else if let Some(track_uri) = &cache.playing_track_uri {
+                        // Fallback for single tracks without context
+                        let context_options = Some(cache.to_librespot_options());
+                        let req = LoadRequest::from_tracks(
+                            vec![track_uri.clone()],
+                            LoadRequestOptions {
+                                start_playing: false,
+                                seek_to: cache.progress.as_millis() as u32,
+                                context_options,
+                                ..Default::default()
+                            },
+                        );
+                        let _ = spirc.load(req);
 
-                            let _ = net_tx_delayed.send(ClientRequest::Player(PlayerRequest::SetRepeatMode(cache.repeat_state)));
-                            let _ = net_tx_delayed.send(ClientRequest::Player(PlayerRequest::ToggleShuffle(!cache.shuffle_state)));
-
-                            // Wait for states to propagate before fetching for UI
-                            tokio::time::sleep(Duration::from_millis(1000)).await;
-                            let _ = net_tx_delayed.send(ClientRequest::GetCurrentPlayback);
-                        });
+                        let vol = percent_to_librespot_volume(cache.volume);
+                        mixer.set_volume(vol);
+                        let _ = spirc.set_volume(vol);
 
                     } else {
-                        let _ = std::fs::write("cache_debug.log", "Cache read ok, but context_uri was empty");
+                        let _ = std::fs::write("cache_debug.log", "Cache read ok, but both context_uri and playing_track_uri were empty");
                     }
                 }
                 Err(e) => { let _ = std::fs::write("cache_debug.log", format!("Failed to parse JSON: {e}")); }
@@ -198,16 +212,11 @@ pub async fn start_audio_worker(
                             let _ = spirc.load(req);
                         }
 
-                        AudioCommand::PlayContext(context_uri, playing_track_index) => {
+                        AudioCommand::PlayContext(context_uri, options) => {
                             // use from_context_uri for playing context (album, playlist, artist)
-                            let playing_track = playing_track_index.map(PlayingTrack::Index);
                             let req = LoadRequest::from_context_uri(
                                 context_uri,
-                                LoadRequestOptions {
-                                    start_playing: true,
-                                    playing_track,
-                                    ..Default::default()
-                                },
+                                options
                             );
                             let _ = spirc.load(req);
                         }

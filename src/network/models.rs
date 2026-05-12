@@ -1,6 +1,7 @@
 use serde::{Serialize, Deserialize, Deserializer, de::DeserializeOwned};
 use serde_json::Value;
 use std::time::Duration;
+use librespot_connect::LoadContextOptions;
 
 mod duration_ms {
     use serde::{Deserialize, Deserializer};
@@ -154,8 +155,20 @@ where
     Ok(context.map(|c| c.uri))
 }
 
+impl Playback {
+    // Shuffle should be independent of playback state
+    pub fn to_librespot_options(&self, shuffle: bool) -> LoadContextOptions {
+        LoadContextOptions::Options(librespot_connect::Options {
+            shuffle,
+            repeat: self.repeat_state == RepeatState::Context,
+            repeat_track: self.repeat_state == RepeatState::Track,
+        })
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
-pub struct PlaybackCache {
+pub struct PlaybackContext {
+    pub playing_track_uri: Option<String>,
     pub context_uri: Option<String>,
     pub progress: Duration,
     pub repeat_state: RepeatState,
@@ -163,9 +176,10 @@ pub struct PlaybackCache {
     pub volume: u8
 }
 
-impl Default for PlaybackCache {
+impl Default for PlaybackContext {
     fn default() -> Self {
         Self {
+            playing_track_uri: None,
             context_uri: None,
             progress: Duration::ZERO,
             repeat_state: RepeatState::Off,
@@ -175,15 +189,24 @@ impl Default for PlaybackCache {
     }
 }
 
-impl PlaybackCache {
+impl PlaybackContext {
     pub fn from_playback(pb: &Playback) -> Self {
         Self {
+            playing_track_uri: pb.item.as_ref().map(|i| i.uri().to_string()),
             volume: pb.device.volume,
             context_uri: pb.context_uri.clone(),
             progress: pb.progress,
             repeat_state: pb.repeat_state,
             shuffle_state: pb.shuffle_state,
         }
+    }
+
+    pub fn to_librespot_options(&self) -> LoadContextOptions {
+        LoadContextOptions::Options(librespot_connect::Options {
+            shuffle: self.shuffle_state,
+            repeat: self.repeat_state == RepeatState::Context,
+            repeat_track: self.repeat_state == RepeatState::Track,
+        })
     }
 }
 

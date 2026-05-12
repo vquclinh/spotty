@@ -1,13 +1,14 @@
 use crate::network::models::{
-    TimeRange, SearchType, RepeatState, PlaybackCache
+    PlaybackContext, RepeatState, SearchType, TimeRange
 };
 use std::time::Duration;
+use librespot_connect::LoadRequestOptions;
 use tokio::sync::oneshot;
 
 #[derive(Debug)]
 pub enum PlayerRequest {
     Play(String),
-    PlayContext(String, Option<u32>),
+    PlayContext(String, LoadRequestOptions),
     TogglePlayback(bool),
     NextTrack,
     PreviousTrack,
@@ -16,7 +17,7 @@ pub enum PlayerRequest {
     SetVolume(u8),
     ToggleShuffle(bool),
     AddItemToQueue(String),
-    Shutdown(PlaybackCache, oneshot::Sender<()>)
+    Shutdown(PlaybackContext, oneshot::Sender<()>)
 }
 
 #[derive(Debug)]
