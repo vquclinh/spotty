@@ -36,6 +36,7 @@ pub struct App {
 
     pub should_quit: bool, // Signal to quit main loop
     pub show_help: bool, // Signal to turn on pop-up help
+    pub show_quick_actions: bool,
     pub action_menu: ActionMenu,
     pub playlist_selector: PlaylistSelector,
 
@@ -64,6 +65,7 @@ impl App {
             page_limit,
 
             show_help: false,
+            show_quick_actions: false,
             should_quit: false,
 
             network_tx,

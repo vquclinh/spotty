@@ -1,4 +1,6 @@
 use crate::app::{ActiveBlock, App, Route};
+use crate::app::home_state::HomeState;
+use crate::app::search_state::SearchState;
 use crate::handlers::{album, library, playbar, queue, search, sidebar, lyrics};
 use crate::network::models::*;
 use crate::network::request::{PlayerRequest, ClientRequest};
@@ -12,6 +14,22 @@ use crate::app::album_state::AlbumState;
 pub fn handle_key_events(key: KeyEvent, app: &mut App) {
     if app.show_help {
         app.show_help = false;
+        return;
+    }
+
+    if app.show_quick_actions {
+        match key.code {
+            KeyCode::Char('h') => {
+                app.set_current_route(Route::Home(HomeState::default()));
+                app.active_block = ActiveBlock::HomeBlock;
+            }
+            KeyCode::Char('s') => {
+                app.set_current_route(Route::Search(SearchState::default()));
+                app.active_block = ActiveBlock::SearchInput;
+            }
+            _ => {}
+        }
+        app.show_quick_actions = false;
         return;
     }
 

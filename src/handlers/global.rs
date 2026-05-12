@@ -262,6 +262,10 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
         return true;
     }
 
+    if key.code == KeyCode::Char('g') {
+        app.show_quick_actions = true;
+        return true;
+    }
 
     false
 }
