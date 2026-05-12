@@ -15,7 +15,7 @@ pub fn draw(f: &mut Frame, state: &mut PlaylistState, active_block: &ActiveBlock
 
     // block
     let outer_block = Block::default()
-        .title(format!(" [3] Playlists: {} ", state.playlist.name)) 
+        .title(format!(" [3] Playlist: {} ", state.playlist.name)) 
         .borders(Borders::ALL)
         .border_style(Style::default().fg(border_color));
 
