@@ -1,9 +1,10 @@
 use crate::network::models::{
-    TimeRange, SearchType, RepeatState
+    TimeRange, SearchType, RepeatState, PlaybackCache
 };
 use std::time::Duration;
+use tokio::sync::oneshot;
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub enum PlayerRequest {
     Play(String),
     PlayContext(String, Option<u32>),
@@ -15,9 +16,10 @@ pub enum PlayerRequest {
     SetVolume(u8),
     ToggleShuffle(bool),
     AddItemToQueue(String),
+    Shutdown(PlaybackCache, oneshot::Sender<()>)
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub enum ClientRequest {
     GetCurrentUser,
     GetCurrentPlayback,

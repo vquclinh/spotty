@@ -62,6 +62,8 @@ pub fn draw(f: &mut Frame, app: &mut App) {
 
     if app.show_help {
         popups::draw_help(f, f.area());
+    } else if app.show_quick_actions {
+        popups::draw_quick_actions(f, f.area());
     } else if app.action_menu.is_open {
         let (area, selected, offset) = match &app.route {
             Route::Home(h) => {

@@ -162,6 +162,62 @@ pub fn draw_playlist_selector(f: &mut Frame, app: &mut App, action_menu_area: Re
     f.render_stateful_widget(list, selector_area, &mut app.playlist_selector.state);
 }
 
+// ------------------------------------------- Quick Actions ------------------------------------
+pub fn draw_quick_actions(f: &mut Frame, area: Rect) {
+    let layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Min(0),      // Main application area
+            Constraint::Length(5),   // Popup area
+            Constraint::Length(4)   // Do not cover the playbar
+        ])
+        .split(area);
+    // Leave some space on the two ends
+    let layout = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Length(3),
+            Constraint::Min(0),
+            Constraint::Length(3)
+        ])
+        .split(layout[1]);
+        
+    let popup_area = layout[1];
+
+    let rows = vec![
+        Row::new(vec![
+            "h → Go to Home",
+            "n → Next track",
+        ]),
+        Row::new(vec![
+            "s → Go to Search",
+            "p → Previous track",
+        ]),
+    ];
+
+    let widths = [
+        Constraint::Ratio(1, 3),
+        Constraint::Ratio(1, 3),
+        Constraint::Ratio(1, 3),
+    ];
+
+    let block = Block::default()
+        .title(" Quick Actions ")
+        .title_alignment(Alignment::Center)
+        .borders(Borders::ALL)
+        .style(Style::default()
+        .bg(Color::Rgb(30, 30, 30)));
+
+    let table = Table::new(rows, widths)
+        .block(block)
+        .style(Style::default().fg(Color::Gray))
+        .column_spacing(2);
+
+    f.render_widget(Clear, popup_area);
+    f.render_widget(table, popup_area);
+}
+
+
 // ------------------------------------------- Helper ------------------------------------
 fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
     let popup_layout = Layout::default()

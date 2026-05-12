@@ -1,3 +1,4 @@
+use std::net::Shutdown;
 use std::time::Duration;
 use crate::app::{ActiveBlock, App, route::Route};
 use crate::app::home_state::HomeState;
@@ -262,6 +263,10 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
         return true;
     }
 
+    if key.code == KeyCode::Char('g') {
+        app.show_quick_actions = true;
+        return true;
+    }
 
     false
 }

@@ -348,6 +348,10 @@ pub async fn start_network_worker(
                     PlayerRequest::ToggleShuffle(shuffling) => {
                         let _ = client.toggle_shuffle(shuffling).await;
                     }
+
+                    PlayerRequest::Shutdown(playback_opt, sender) => {
+                        let _ = audio_tx.send(AudioCommand::Shutdown(playback_opt, sender));
+                    }
                 }
             }
 

@@ -1,4 +1,4 @@
-use serde::{Deserialize, Deserializer, de::DeserializeOwned};
+use serde::{Serialize, Deserialize, Deserializer, de::DeserializeOwned};
 use serde_json::Value;
 use std::time::Duration;
 
@@ -100,7 +100,7 @@ pub struct Playlist {
 }
 
 // ------------------------------------- Playback -----------------------------------
-#[derive(Debug, Deserialize, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum RepeatState {
     #[default]
@@ -130,12 +130,61 @@ pub struct Device {
 #[derive(Debug, Deserialize, Clone, Default)]
 pub struct Playback {
     pub item: Option<PlayableItem>,
+    #[serde(rename = "context", deserialize_with = "deserialize_context_uri", default)]
+    pub context_uri: Option<String>,
     pub is_playing: bool,
     #[serde(with = "duration_ms", rename = "progress_ms")]
     pub progress: Duration,
     pub device: Device,
     pub repeat_state: RepeatState,
     pub shuffle_state: bool,
+}
+
+// Custom deserializer to extract 'uri' from the nested 'context' object
+fn deserialize_context_uri<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    #[derive(Deserialize)]
+    struct ContextWrapper {
+        uri: String,
+    }
+
+    let context: Option<ContextWrapper> = Option::deserialize(deserializer)?;
+    Ok(context.map(|c| c.uri))
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
+pub struct PlaybackCache {
+    pub context_uri: Option<String>,
+    pub progress: Duration,
+    pub repeat_state: RepeatState,
+    pub shuffle_state: bool,
+    pub volume: u8
+}
+
+impl Default for PlaybackCache {
+    fn default() -> Self {
+        Self {
+            context_uri: None,
+            progress: Duration::ZERO,
+            repeat_state: RepeatState::Off,
+            shuffle_state: false,
+            volume: 50
+        }
+    }
+}
+
+impl PlaybackCache {
+    pub fn from_playback(pb: &Playback) -> Self {
+        Self {
+            volume: pb.device.volume,
+            context_uri: pb.context_uri.clone(),
+            progress: pb.progress,
+            repeat_state: pb.repeat_state,
+            shuffle_state: pb.shuffle_state,
+        }
+    }
 }
 
 // -------------------------------------- Playable Item ------------------------------

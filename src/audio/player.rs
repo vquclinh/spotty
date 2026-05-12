@@ -8,11 +8,13 @@ use librespot_playback::player::Player;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::mpsc;
+use tokio::sync::oneshot;
 
 use crate::app::state::SharedState;
 use crate::network::client::SpotifyClient;
+use crate::network::models::PlaybackCache;
 use super::events::AudioEvent;
-use crate::network::request::ClientRequest;
+use crate::network::request::{ClientRequest, PlayerRequest};
 
 // audio commands
 pub enum AudioCommand {
@@ -27,7 +29,7 @@ pub enum AudioCommand {
 
     SetVolume(u16),
 
-    Shutdown,
+    Shutdown(PlaybackCache, oneshot::Sender<()>),
 }
 
 // convert volume to librespot volume
@@ -47,7 +49,7 @@ pub async fn start_audio_worker(
     let mixer = Arc::new(
         SoftMixer::open(MixerConfig::default()).context("Failed to open SoftMixer")?,
     );
-    let initial_volume = percent_to_librespot_volume(100);
+    let initial_volume = percent_to_librespot_volume(50);
     mixer.set_volume(initial_volume);
 
     // backend + player
@@ -68,6 +70,7 @@ pub async fn start_audio_worker(
     // get player event by librespot
     let mut player_event_rx = player.get_player_event_channel();
     let event_tx_clone = event_tx.clone();
+    let net_tx_clone = net_tx.clone();
     let state_for_events = shared_state.clone();
 
     // a loop for converting to AudioEvent and send to ui
@@ -83,19 +86,17 @@ pub async fn start_audio_worker(
                         });
                     }
                     AudioEvent::Playing { position_ms, .. } => {
-                        if let Ok(mut state) = state_for_events.lock() {
-                            if let Some(pb) = state.playback.as_mut() {
-                                pb.is_playing = true;
-                                pb.progress = Duration::from_millis(*position_ms as u64);
-                            }
+                        if let Ok(mut state) = state_for_events.lock()
+                        && let Some(pb) = state.playback.as_mut() {
+                            pb.is_playing = true;
+                            pb.progress = Duration::from_millis(*position_ms as u64);
                         }
                     }
                     AudioEvent::Paused { position_ms, .. } => {
-                        if let Ok(mut state) = state_for_events.lock() {
-                            if let Some(pb) = state.playback.as_mut() {
-                                pb.is_playing = false;
-                                pb.progress = Duration::from_millis(*position_ms as u64);
-                            }
+                        if let Ok(mut state) = state_for_events.lock()
+                        && let Some(pb) = state.playback.as_mut() {
+                            pb.is_playing = false;
+                            pb.progress = Duration::from_millis(*position_ms as u64);
                         }
                     }
                     AudioEvent::EndOfTrack { .. } => {
@@ -129,6 +130,53 @@ pub async fn start_audio_worker(
 
     // activate the device so it accepts commands
     let _ = spirc.activate();
+
+    // Sync remote state for UI
+    let _ = net_tx_clone.send(ClientRequest::GetCurrentPlayback);
+
+    // Restore local cache
+    match std::fs::read_to_string(".spotty_cache/playback.json") {
+        Ok(cache_data) => {
+            match serde_json::from_str::<PlaybackCache>(&cache_data) {
+                Ok(cache) => {
+                    if let Some(context_uri) = cache.context_uri {
+                        let req = LoadRequest::from_context_uri(
+                            context_uri,
+                            LoadRequestOptions {
+                                start_playing: false,
+                                ..Default::default()
+                            },
+                        );
+                        let _ = spirc.load(req);
+                        let _ = spirc.set_position_ms(cache.progress.as_millis() as u32);
+                        
+                        let vol = percent_to_librespot_volume(cache.volume);
+                        mixer.set_volume(vol);
+                        let _ = spirc.set_volume(vol);
+
+                        // Set shuffle and repeat
+                        let net_tx_delayed = net_tx_clone.clone();
+                        tokio::spawn(async move {
+                            // Wait for Spotify to recognize the active Spirc device
+                            tokio::time::sleep(Duration::from_millis(1000)).await;
+
+                            let _ = net_tx_delayed.send(ClientRequest::Player(PlayerRequest::SetRepeatMode(cache.repeat_state)));
+                            let _ = net_tx_delayed.send(ClientRequest::Player(PlayerRequest::ToggleShuffle(!cache.shuffle_state)));
+
+                            // Wait for states to propagate before fetching for UI
+                            tokio::time::sleep(Duration::from_millis(1000)).await;
+                            let _ = net_tx_delayed.send(ClientRequest::GetCurrentPlayback);
+                        });
+
+                    } else {
+                        let _ = std::fs::write("cache_debug.log", "Cache read ok, but context_uri was empty");
+                    }
+                }
+                Err(e) => { let _ = std::fs::write("cache_debug.log", format!("Failed to parse JSON: {e}")); }
+            }
+        }
+        Err(e) => { let _ = std::fs::write("cache_debug.log", format!("Failed to read cache file: {e}")); }
+    }
 
     // command loop
     tokio::spawn(async move {
@@ -189,8 +237,26 @@ pub async fn start_audio_worker(
                             let _ = spirc.set_volume(vol); // sync data with server
                         }
 
-                        AudioCommand::Shutdown => {
+                        AudioCommand::Shutdown(pb, sender) => {
+                            // Extract state and save to cache
+                            if let Err(e) = std::fs::create_dir_all(".spotty_cache") {
+                                let _ = std::fs::write("cache_debug.log", format!("Failed to create dir: {e}"));
+                            }
+
+                            match serde_json::to_string(&pb) {
+                                Ok(cache_str) => {
+                                    if let Err(e) = std::fs::write(".spotty_cache/playback.json", cache_str) {
+                                        let _ = std::fs::write("cache_debug.log", format!("Failed to write cache: {e}"));
+                                    }
+                                }
+                                Err(e) => {
+                                    let _ = std::fs::write("cache_debug.log", format!("Failed to serialize cache: {e}"));
+                                }
+                            }
+
                             let _ = spirc.shutdown();
+                            // Send the signal back to the main loop
+                            let _ = sender.send(());
                             break;
                         }
                     }
