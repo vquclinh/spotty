@@ -168,6 +168,7 @@ impl Playback {
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct PlaybackContext {
+    pub playing_track_uri: Option<String>,
     pub context_uri: Option<String>,
     pub progress: Duration,
     pub repeat_state: RepeatState,
@@ -178,6 +179,7 @@ pub struct PlaybackContext {
 impl Default for PlaybackContext {
     fn default() -> Self {
         Self {
+            playing_track_uri: None,
             context_uri: None,
             progress: Duration::ZERO,
             repeat_state: RepeatState::Off,
@@ -190,6 +192,7 @@ impl Default for PlaybackContext {
 impl PlaybackContext {
     pub fn from_playback(pb: &Playback) -> Self {
         Self {
+            playing_track_uri: pb.item.as_ref().map(|i| i.uri().to_string()),
             volume: pb.device.volume,
             context_uri: pb.context_uri.clone(),
             progress: pb.progress,

@@ -10,6 +10,7 @@ use librespot_playback::audio_backend;
 use librespot_playback::config::{AudioFormat, Bitrate, PlayerConfig};
 use librespot_playback::mixer::{softmixer::SoftMixer, Mixer, MixerConfig};
 use librespot_playback::player::Player;
+use librespot_connect::PlayingTrack;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::mpsc;
@@ -146,17 +147,19 @@ pub async fn start_audio_worker(
                 Ok(cache) => {
                     if let Some(context_uri) = &cache.context_uri {
                         let context_options = Some(cache.to_librespot_options());
+                        let playing_track = cache.playing_track_uri.map(PlayingTrack::Uri);
                         let req = LoadRequest::from_context_uri(
                             context_uri.clone(),
                             LoadRequestOptions {
                                 start_playing: false,
                                 seek_to: cache.progress.as_millis() as u32,
+                                playing_track,
                                 context_options,
-                                ..Default::default()
                             },
                         );
+
                         let _ = spirc.load(req);
-                        
+
                         let vol = percent_to_librespot_volume(cache.volume);
                         mixer.set_volume(vol);
                         let _ = spirc.set_volume(vol);
