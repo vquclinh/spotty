@@ -47,7 +47,7 @@ pub async fn start_audio_worker(
     let mixer = Arc::new(
         SoftMixer::open(MixerConfig::default()).context("Failed to open SoftMixer")?,
     );
-    let initial_volume = percent_to_librespot_volume(100);
+    let initial_volume = percent_to_librespot_volume(50);
     mixer.set_volume(initial_volume);
 
     // backend + player
