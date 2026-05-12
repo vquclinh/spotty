@@ -23,8 +23,9 @@ use anyhow::Result;
 use std::sync::{Arc, Mutex};
 
 use tokio::sync::mpsc;
-use crate::network::client::SpotifyClient;
-use crate::network::request::ClientRequest;
+use tokio::sync::oneshot;
+use crate::network::{client::SpotifyClient, models::PlaybackCache};
+use crate::network::request::{ClientRequest, PlayerRequest};
 use crate::network::handler::start_network_worker;
 
 use crate::audio::events::*;
@@ -80,7 +81,18 @@ pub async fn run() -> Result<()> {
     let tick_rate = Duration::from_millis(50);
     let mut last_tick = Instant::now();
 
-    while !app.should_quit {
+    loop {
+        if app.should_quit {
+            if let Some(pb) = &app.playback {
+                // Send shutdown request to cache current playback
+                let (reply_tx, reply_rx) = oneshot::channel();
+                let _ = app.network_tx.send(ClientRequest::Player(PlayerRequest::Shutdown(PlaybackCache::from_playback(pb), reply_tx)));
+                let _ = reply_rx.await;
+            }
+
+            break;
+        }
+
         terminal.draw(|f| ui::draw(f, &mut app))?;
 
         let timeout = tick_rate.saturating_sub(last_tick.elapsed());
