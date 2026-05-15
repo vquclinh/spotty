@@ -94,6 +94,18 @@ pub async fn start_network_worker(
                 }
             }
 
+            ClientRequest::GetCurrentPlaybackReply(reply_rx) => {
+                match client.get_current_playback().await {
+                    Ok(playback) => {
+                        if let Ok(mut state) = shared_state.lock() {
+                            let _ = reply_rx.send(playback.clone());
+                            state.playback = playback; 
+                        }
+                    }
+                    Err(_e) => {}
+                }
+            }
+
             ClientRequest::SearchItems { query, search_types, limit, offset } => {
                 match client.search_items(&query, search_types, limit, offset).await {
                     Ok(results) => {
@@ -349,8 +361,8 @@ pub async fn start_network_worker(
                         let _ = client.toggle_shuffle(shuffling).await;
                     }
 
-                    PlayerRequest::Shutdown(playback_opt, sender) => {
-                        let _ = audio_tx.send(AudioCommand::Shutdown(playback_opt, sender));
+                    PlayerRequest::Shutdown(playback_opt, reply_rx) => {
+                        let _ = audio_tx.send(AudioCommand::Shutdown(playback_opt, reply_rx));
                     }
                 }
             }

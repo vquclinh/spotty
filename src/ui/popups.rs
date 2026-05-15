@@ -3,7 +3,6 @@ use ratatui::{
     layout::{Constraint, Direction, Layout, Rect, Alignment},
     style::{Color, Style, Modifier},
     widgets::{Block, Borders, BorderType, Clear, Table, Row, List, ListItem},
-    text::{Line, Span}, 
 };
 use crate::app::App;
 use crate::network::models::MenuTarget;

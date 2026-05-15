@@ -18,7 +18,7 @@ use tokio::sync::oneshot;
 
 use crate::app::state::SharedState;
 use crate::network::client::SpotifyClient;
-use crate::network::models::PlaybackContext;
+use crate::network::models::{PlaybackContext, Playback};
 use super::events::AudioEvent;
 use crate::network::request::ClientRequest;
 
@@ -137,59 +137,21 @@ pub async fn start_audio_worker(
     // activate the device so it accepts commands
     let _ = spirc.activate();
 
-    // Sync remote state for UI
-    let _ = net_tx_clone.send(ClientRequest::GetCurrentPlayback);
-
-    // Restore local cache
-    match std::fs::read_to_string(".spotty_cache/playback.json") {
-        Ok(cache_data) => {
-            match serde_json::from_str::<PlaybackContext>(&cache_data) {
-                Ok(cache) => {
-                    if let Some(context_uri) = &cache.context_uri {
-                        let context_options = Some(cache.to_librespot_options());
-                        let playing_track = cache.playing_track_uri.map(PlayingTrack::Uri);
-                        let req = LoadRequest::from_context_uri(
-                            context_uri.clone(),
-                            LoadRequestOptions {
-                                start_playing: false,
-                                seek_to: cache.progress.as_millis() as u32,
-                                playing_track,
-                                context_options,
-                            },
-                        );
-
-                        let _ = spirc.load(req);
-
-                        let vol = percent_to_librespot_volume(cache.volume);
-                        mixer.set_volume(vol);
-                        let _ = spirc.set_volume(vol);
-
-                    } else if let Some(track_uri) = &cache.playing_track_uri {
-                        // Fallback for single tracks without context
-                        let context_options = Some(cache.to_librespot_options());
-                        let req = LoadRequest::from_tracks(
-                            vec![track_uri.clone()],
-                            LoadRequestOptions {
-                                start_playing: false,
-                                seek_to: cache.progress.as_millis() as u32,
-                                context_options,
-                                ..Default::default()
-                            },
-                        );
-                        let _ = spirc.load(req);
-
-                        let vol = percent_to_librespot_volume(cache.volume);
-                        mixer.set_volume(vol);
-                        let _ = spirc.set_volume(vol);
-
-                    } else {
-                        let _ = std::fs::write("cache_debug.log", "Cache read ok, but both context_uri and playing_track_uri were empty");
-                    }
-                }
-                Err(e) => { let _ = std::fs::write("cache_debug.log", format!("Failed to parse JSON: {e}")); }
-            }
-        }
-        Err(e) => { let _ = std::fs::write("cache_debug.log", format!("Failed to read cache file: {e}")); }
+    // Sync remote playback
+    let (reply_tx, reply_rx) = oneshot::channel();
+    let _ = net_tx_clone.send(ClientRequest::GetCurrentPlaybackReply(reply_tx));
+    
+    // Timeout so init doesn't hang forever
+    let playback = tokio::time::timeout(Duration::from_secs(2), reply_rx)
+        .await
+        .ok()
+        .and_then(|res| res.ok())
+        .flatten();
+    
+    if let Some(pb) = playback {
+        load_spirc_from_playback(&spirc, &pb, mixer.clone());
+    } else {
+        load_spirc_from_cache(&spirc, ".spotty_cache/playback.json", mixer.clone());
     }
 
     // command loop
@@ -246,12 +208,11 @@ pub async fn start_audio_worker(
                             let _ = spirc.set_volume(vol); // sync data with server
                         }
 
-                        AudioCommand::Shutdown(pb, sender) => {
+                        AudioCommand::Shutdown(pb, reply_rx) => {
                             // Extract state and save to cache
                             if let Err(e) = std::fs::create_dir_all(".spotty_cache") {
                                 let _ = std::fs::write("cache_debug.log", format!("Failed to create dir: {e}"));
                             }
-
                             match serde_json::to_string(&pb) {
                                 Ok(cache_str) => {
                                     if let Err(e) = std::fs::write(".spotty_cache/playback.json", cache_str) {
@@ -265,7 +226,7 @@ pub async fn start_audio_worker(
 
                             let _ = spirc.shutdown();
                             // Send the signal back to the main loop
-                            let _ = sender.send(());
+                            let _ = reply_rx.send(());
                             break;
                         }
                     }
@@ -275,4 +236,96 @@ pub async fn start_audio_worker(
     });
 
     Ok(())
+}
+
+// Similar to load from cache
+fn load_spirc_from_playback(spirc: &Spirc, pb: &Playback, mixer: Arc<dyn Mixer + Send + Sync>) {
+    let context_options = Some(pb.to_librespot_options(pb.shuffle_state));
+    let playing_track = pb
+        .item
+        .as_ref()
+        .map(|item| PlayingTrack::Uri(item.uri().to_string()));
+
+    let req = if let Some(context_uri) = &pb.context_uri {
+        LoadRequest::from_context_uri(
+            context_uri.clone(),
+            LoadRequestOptions {
+                start_playing: pb.is_playing,
+                seek_to: pb.progress.as_millis() as u32,
+                playing_track,
+                context_options,
+            },
+        )
+    } else if let Some(item) = &pb.item {
+        LoadRequest::from_tracks(
+            vec![item.uri().to_string()],
+            LoadRequestOptions {
+                start_playing: pb.is_playing,
+                seek_to: pb.progress.as_millis() as u32,
+                context_options,
+                ..Default::default()
+            },
+        )
+    } else {
+        return;
+    };
+
+    let _ = spirc.load(req);
+
+    let vol = percent_to_librespot_volume(pb.device.volume);
+    mixer.set_volume(vol);
+    let _ = spirc.set_volume(vol);
+}
+
+fn load_spirc_from_cache(spirc: &Spirc, cache_path: &str, mixer: Arc<SoftMixer>) {
+    match std::fs::read_to_string(cache_path) {
+        Ok(cache_data) => {
+            match serde_json::from_str::<PlaybackContext>(&cache_data) {
+                Ok(cache) => {
+                    if let Some(context_uri) = &cache.context_uri {
+                        let context_options = Some(cache.to_librespot_options());
+                        let playing_track = cache.playing_track_uri.map(PlayingTrack::Uri);
+                        let req = LoadRequest::from_context_uri(
+                            context_uri.clone(),
+                            LoadRequestOptions {
+                                start_playing: false,
+                                seek_to: cache.progress.as_millis() as u32,
+                                playing_track,
+                                context_options,
+                            },
+                        );
+
+                        let _ = spirc.load(req);
+
+                        let vol = percent_to_librespot_volume(cache.volume);
+                        mixer.set_volume(vol);
+                        let _ = spirc.set_volume(vol);
+
+                    } else if let Some(track_uri) = &cache.playing_track_uri {
+                        // Fallback for single tracks without context
+                        let context_options = Some(cache.to_librespot_options());
+                        let req = LoadRequest::from_tracks(
+                            vec![track_uri.clone()],
+                            LoadRequestOptions {
+                                start_playing: false,
+                                seek_to: cache.progress.as_millis() as u32,
+                                context_options,
+                                ..Default::default()
+                            },
+                        );
+                        let _ = spirc.load(req);
+
+                        let vol = percent_to_librespot_volume(cache.volume);
+                        mixer.set_volume(vol);
+                        let _ = spirc.set_volume(vol);
+
+                    } else {
+                        let _ = std::fs::write("cache_debug.log", "Cache read ok, but both context_uri and playing_track_uri were empty");
+                    }
+                }
+                Err(e) => { let _ = std::fs::write("cache_debug.log", format!("Failed to parse JSON: {e}")); }
+            }
+        }
+        Err(e) => { let _ = std::fs::write("cache_debug.log", format!("Failed to read cache file: {e}")); }
+    }
 }
