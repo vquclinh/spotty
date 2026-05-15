@@ -1,5 +1,5 @@
 use crate::network::models::{
-    PlaybackContext, RepeatState, SearchType, TimeRange
+    PlaybackContext, RepeatState, SearchType, TimeRange, Playback
 };
 use std::time::Duration;
 use librespot_connect::LoadRequestOptions;
@@ -24,6 +24,7 @@ pub enum PlayerRequest {
 pub enum ClientRequest {
     GetCurrentUser,
     GetCurrentPlayback,
+    GetCurrentPlaybackReply(oneshot::Sender<Option<Playback>>),
 
     GetUserPlaylists {
         limit: u32,
