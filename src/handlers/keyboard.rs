@@ -11,7 +11,7 @@ use crate::app::types::MenuAction;
 
 use crate::app::album_state::AlbumState;
 
-use librespot_connect::{LoadRequestOptions, LoadContextOptions, PlayingTrack, Options};
+use librespot_connect::{LoadRequestOptions, PlayingTrack};
 
 pub fn handle_key_events(key: KeyEvent, app: &mut App) {
     if app.show_help {
