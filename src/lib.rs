@@ -9,7 +9,7 @@ use app::App;
 use crossterm::{
     execute,
     terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
-    event::{poll, read, Event}
+    event::{poll, read, Event, KeyEventKind}
 };
 use ratatui::{
     Terminal,
@@ -98,7 +98,9 @@ pub async fn run() -> Result<()> {
         let timeout = tick_rate.saturating_sub(last_tick.elapsed());
 
         if poll(timeout)? && let Event::Key(key) = read()? {
-            handle_key_events(key, &mut app);
+            if key.kind == KeyEventKind::Press {
+                handle_key_events(key, &mut app);
+            }
         }
 
         if last_tick.elapsed() >= tick_rate {
