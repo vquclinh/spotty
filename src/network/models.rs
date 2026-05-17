@@ -1,7 +1,7 @@
 use serde::{Serialize, Deserialize, Deserializer, de::DeserializeOwned};
 use serde_json::Value;
 use std::time::Duration;
-use librespot_connect::LoadContextOptions;
+use librespot_connect::{LoadContextOptions, PlayingTrack};
 
 mod duration_ms {
     use serde::{Deserialize, Deserializer};
@@ -122,8 +122,11 @@ impl RepeatState {
 
 #[derive(Debug, Deserialize, Clone, Default)]
 pub struct Device {
+    pub id: Option<String>,
     pub is_active: bool,
     pub name: String,
+     #[serde(rename = "type")]
+    pub r#type: String,
     #[serde(rename = "volume_percent")]
     pub volume: u8
 }
@@ -402,6 +405,22 @@ impl<T> Page<T> {
             limit: self.limit,
             next: self.next,
             after: self.after,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Offset {
+    Index(u32),
+    Uri(String)
+}
+
+impl From<librespot_connect::PlayingTrack> for Offset {
+    fn from(value: PlayingTrack) -> Self {
+        match value {
+            PlayingTrack::Index(idx) => Self::Index(idx),
+            PlayingTrack::Uri(uri) => Self::Uri(uri.to_string()),
+            _ => Self::Index(0)
         }
     }
 }

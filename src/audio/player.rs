@@ -18,7 +18,7 @@ use tokio::sync::oneshot;
 
 use crate::app::state::SharedState;
 use crate::network::client::SpotifyClient;
-use crate::network::models::{PlaybackContext, Playback};
+use crate::network::models::PlaybackContext;
 use super::events::AudioEvent;
 use crate::network::request::ClientRequest;
 
@@ -112,6 +112,8 @@ pub async fn start_audio_worker(
                             let _ = net_tx_delayed.send(ClientRequest::GetCurrentPlayback);
                         });
                     }
+
+                    // TODO: add volume, repeat and shuffle event for dynamic ui update
                 }
 
                 // send signal to ui immediately (sth like change track for lyrics page)
@@ -134,8 +136,9 @@ pub async fn start_audio_worker(
         .await
         .map_err(|e| anyhow::anyhow!("Failed to initialize Spirc: {e:#}"))?;
 
-    // activate the device so it accepts commands
-    let _ = spirc.activate();
+    // Spawn the task here so the device is registered as online
+    tokio::spawn(spirc_task);
+    let _ = net_tx_clone.send(ClientRequest::GetDevices);
 
     // Sync remote playback
     let (reply_tx, reply_rx) = oneshot::channel();
@@ -148,133 +151,86 @@ pub async fn start_audio_worker(
         .and_then(|res| res.ok())
         .flatten();
     
-    if let Some(pb) = playback {
-        load_spirc_from_playback(&spirc, &pb, mixer.clone());
-    } else {
+    if playback.is_none() {
+        let _ = spirc.activate();
         load_spirc_from_cache(&spirc, ".spotty_cache/playback.json", mixer.clone());
     }
 
     // command loop
     tokio::spawn(async move {
-        tokio::select! {
-            () = spirc_task => {},
+        while let Some(cmd) = cmd_rx.recv().await {
+            match cmd {
+                AudioCommand::Play(uri) => {
+                    // use from_tracks for playing single playable item (track/episode)
+                    let req = LoadRequest::from_tracks(
+                        vec![uri],
+                        LoadRequestOptions {
+                            start_playing: true,
+                            ..Default::default()
+                        },
+                    );
+                    let _ = spirc.load(req);
+                }
 
-            _ = async {
-                while let Some(cmd) = cmd_rx.recv().await {
-                    match cmd {
-                        AudioCommand::Play(uri) => {
-                            // use from_tracks for playing single playable item (track/episode)
-                            let req = LoadRequest::from_tracks(
-                                vec![uri],
-                                LoadRequestOptions {
-                                    start_playing: true,
-                                    ..Default::default()
-                                },
-                            );
-                            let _ = spirc.load(req);
-                        }
+                AudioCommand::PlayContext(context_uri, options) => {
+                    // use from_context_uri for playing context (album, playlist, artist)
+                    let req = LoadRequest::from_context_uri(
+                        context_uri,
+                        options
+                    );
+                    let _ = spirc.load(req);
+                }
 
-                        AudioCommand::PlayContext(context_uri, options) => {
-                            // use from_context_uri for playing context (album, playlist, artist)
-                            let req = LoadRequest::from_context_uri(
-                                context_uri,
-                                options
-                            );
-                            let _ = spirc.load(req);
-                        }
+                AudioCommand::Pause => {
+                    let _ = spirc.pause();
+                }
 
-                        AudioCommand::Pause => {
-                            let _ = spirc.pause();
-                        }
+                AudioCommand::Resume => {
+                    let _ = spirc.play();
+                }
 
-                        AudioCommand::Resume => {
-                            let _ = spirc.play();
-                        }
+                AudioCommand::NextTrack => {
+                    let _ = spirc.next();
+                }
 
-                        AudioCommand::NextTrack => {
-                            let _ = spirc.next();
-                        }
+                AudioCommand::PreviousTrack => {
+                    let _ = spirc.prev();
+                }
 
-                        AudioCommand::PreviousTrack => {
-                            let _ = spirc.prev();
-                        }
+                AudioCommand::Seek(position_ms) => {
+                    let _ = spirc.set_position_ms(position_ms);
+                }
 
-                        AudioCommand::Seek(position_ms) => {
-                            let _ = spirc.set_position_ms(position_ms);
-                        }
+                AudioCommand::SetVolume(vol) => {
+                    mixer.set_volume(vol); // set volume local
+                    let _ = spirc.set_volume(vol); // sync data with server
+                }
 
-                        AudioCommand::SetVolume(vol) => {
-                            mixer.set_volume(vol); // set volume local
-                            let _ = spirc.set_volume(vol); // sync data with server
-                        }
-
-                        AudioCommand::Shutdown(pb, reply_rx) => {
-                            // Extract state and save to cache
-                            if let Err(e) = std::fs::create_dir_all(".spotty_cache") {
-                                let _ = std::fs::write("cache_debug.log", format!("Failed to create dir: {e}"));
+                AudioCommand::Shutdown(pb, reply_rx) => {
+                    // Extract state and save to cache
+                    if let Err(e) = std::fs::create_dir_all(".spotty_cache") {
+                        let _ = std::fs::write("cache_debug.log", format!("Failed to create dir: {e}"));
+                    }
+                    match serde_json::to_string(&pb) {
+                        Ok(cache_str) => {
+                            if let Err(e) = std::fs::write(".spotty_cache/playback.json", cache_str) {
+                                let _ = std::fs::write("cache_debug.log", format!("Failed to write cache: {e}"));
                             }
-                            match serde_json::to_string(&pb) {
-                                Ok(cache_str) => {
-                                    if let Err(e) = std::fs::write(".spotty_cache/playback.json", cache_str) {
-                                        let _ = std::fs::write("cache_debug.log", format!("Failed to write cache: {e}"));
-                                    }
-                                }
-                                Err(e) => {
-                                    let _ = std::fs::write("cache_debug.log", format!("Failed to serialize cache: {e}"));
-                                }
-                            }
-
-                            let _ = spirc.shutdown();
-                            // Send the signal back to the main loop
-                            let _ = reply_rx.send(());
-                            break;
+                        }
+                        Err(e) => {
+                            let _ = std::fs::write("cache_debug.log", format!("Failed to serialize cache: {e}"));
                         }
                     }
+
+                    let _ = spirc.shutdown();
+                    let _ = reply_rx.send(());
+                    break;
                 }
-            } => {}
+            }
         }
     });
 
     Ok(())
-}
-
-// Similar to load from cache
-fn load_spirc_from_playback(spirc: &Spirc, pb: &Playback, mixer: Arc<dyn Mixer + Send + Sync>) {
-    let context_options = Some(pb.to_librespot_options(pb.shuffle_state));
-    let playing_track = pb
-        .item
-        .as_ref()
-        .map(|item| PlayingTrack::Uri(item.uri().to_string()));
-
-    let req = if let Some(context_uri) = &pb.context_uri {
-        LoadRequest::from_context_uri(
-            context_uri.clone(),
-            LoadRequestOptions {
-                start_playing: pb.is_playing,
-                seek_to: pb.progress.as_millis() as u32,
-                playing_track,
-                context_options,
-            },
-        )
-    } else if let Some(item) = &pb.item {
-        LoadRequest::from_tracks(
-            vec![item.uri().to_string()],
-            LoadRequestOptions {
-                start_playing: pb.is_playing,
-                seek_to: pb.progress.as_millis() as u32,
-                context_options,
-                ..Default::default()
-            },
-        )
-    } else {
-        return;
-    };
-
-    let _ = spirc.load(req);
-
-    let vol = percent_to_librespot_volume(pb.device.volume);
-    mixer.set_volume(vol);
-    let _ = spirc.set_volume(vol);
 }
 
 fn load_spirc_from_cache(spirc: &Spirc, cache_path: &str, mixer: Arc<SoftMixer>) {

@@ -29,6 +29,10 @@ pub fn handle_key_events(key: KeyEvent, app: &mut App) {
                 app.set_current_route(Route::Search(SearchState::default()));
                 app.active_block = ActiveBlock::SearchInput;
             }
+            KeyCode::Char('t') if !app.show_device_selector => {
+                let _ = app.network_tx.send(ClientRequest::GetDevices);
+                app.show_device_selector = true;
+            }
             _ => {}
         }
         app.show_quick_actions = false;
@@ -73,6 +77,35 @@ pub fn handle_key_events(key: KeyEvent, app: &mut App) {
                 }
             }
             _ => {}
+        }
+        return;
+    }
+
+    if app.show_device_selector {
+        match key.code {
+            KeyCode::Down | KeyCode::Char('j') => {
+                app.device_state.online_devices.next(1, false);
+            }
+            KeyCode::Up | KeyCode::Char('k') => {
+                app.device_state.online_devices.previous(1, false);
+            }
+            KeyCode::Enter => {
+                if let Some(idx) = app.device_state.online_devices.state.selected()
+                && let Some(active_idx) = app.device_state.active_device_idx
+                && idx != active_idx {
+                    app.device_state.online_devices.state.select(Some(idx));
+                    app.device_state.active_device_idx = Some(idx);
+                    let _ = app.network_tx.send(ClientRequest::TransferPlayback {
+                        device_id: app.device_state.active_device_id(),
+                        should_play: false
+                    });
+                    
+                    app.show_device_selector = false;
+                }
+            }
+            _ => {
+                app.show_device_selector = false;
+            }
         }
         return;
     }
@@ -191,7 +224,10 @@ fn execute_action_menu_command(app: &mut App) -> bool {
                         }
                     };
 
-                    let _ = app.network_tx.send(ClientRequest::Player(player_req));
+                    let _ = app.network_tx.send(ClientRequest::Player {
+                        request: player_req,
+                        is_active_device: app.device_state.is_active_device()
+                    });
                     
                     if let Route::Queue(_) = &app.route {
                         let _ = app.network_tx.send(ClientRequest::GetQueue);
@@ -201,7 +237,10 @@ fn execute_action_menu_command(app: &mut App) -> bool {
             }
             MenuAction::AddToQueue => {
                 if let Some(u) = uri {
-                    let _ = app.network_tx.send(ClientRequest::Player(PlayerRequest::AddItemToQueue(u)));
+                    let _ = app.network_tx.send(ClientRequest::Player {
+                        request: PlayerRequest::AddItemToQueue(u),
+                        is_active_device: app.device_state.is_active_device()
+                    });
                 }
                 true
             }

@@ -17,14 +17,20 @@ pub fn handle_playbar_events(key: KeyEvent, app: &mut App) {
             if let Some(pb) = &mut app.playback {
                 let vol = &mut pb.device.volume;
                 *vol = vol.saturating_sub(5);
-                let _ = app.network_tx.send(ClientRequest::Player(PlayerRequest::SetVolume(*vol)));
+                let _ = app.network_tx.send(ClientRequest::Player {
+                    request: PlayerRequest::SetVolume(*vol),
+                    is_active_device: app.device_state.is_active_device()
+                });
             }
         }
         KeyCode::Up | KeyCode::Char('k') => {
             if let Some(pb) = &mut app.playback {
                 let vol = &mut pb.device.volume;
                 *vol = vol.saturating_add(5).min(100);
-                let _ = app.network_tx.send(ClientRequest::Player(PlayerRequest::SetVolume(*vol)));
+                let _ = app.network_tx.send(ClientRequest::Player {
+                    request: PlayerRequest::SetVolume(*vol),
+                    is_active_device: app.device_state.is_active_device()
+                });
             }
         }
         KeyCode::Enter => {
@@ -46,9 +52,10 @@ pub fn handle_playbar_events(key: KeyEvent, app: &mut App) {
                 PlaybarItem::Shuffle => {
                     let shuffling = playback.shuffle_state;
                     playback.shuffle_state = !shuffling;
-                    let _ = app.network_tx.send(ClientRequest::Player(
-                        PlayerRequest::ToggleShuffle(shuffling))
-                    );
+                    let _ = app.network_tx.send(ClientRequest::Player {
+                        request: PlayerRequest::ToggleShuffle(shuffling),
+                        is_active_device: app.device_state.is_active_device()
+                    });
                 }
                 PlaybarItem::Repeat => {
                     let state = match playback.repeat_state {
@@ -57,9 +64,10 @@ pub fn handle_playbar_events(key: KeyEvent, app: &mut App) {
                         RepeatState::Track => RepeatState::Off,
                     };
                     playback.repeat_state = state;
-                    let _ = app.network_tx.send(ClientRequest::Player(
-                        PlayerRequest::SetRepeatMode(state))
-                    );
+                    let _ = app.network_tx.send(ClientRequest::Player {
+                        request: PlayerRequest::SetRepeatMode(state),
+                        is_active_device: app.device_state.is_active_device()
+                    });
                 }
             }
         }

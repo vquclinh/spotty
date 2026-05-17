@@ -1,4 +1,5 @@
 use crate::app::state::SharedState;
+use crate::app::device_state::DeviceState;
 use crate::network::client::SpotifyClient;
 use crate::network::request::{ClientRequest, PlayerRequest};
 use crate::network::models::SearchType;
@@ -311,8 +312,8 @@ pub async fn start_network_worker(
             }
 
             #[allow(clippy::collapsible_if)]
-            ClientRequest::Player(player_req) => {
-                match player_req {
+            ClientRequest::Player { request, is_active_device } => {
+                match request {
                     PlayerRequest::AddItemToQueue(uri) => {
                         let _ = client.add_item_to_queue(&uri).await;
 
@@ -324,33 +325,71 @@ pub async fn start_network_worker(
                     }
 
                     PlayerRequest::Play(uri) => {
-                        let _ = audio_tx.send(AudioCommand::Play(uri));
+                        if is_active_device {
+                            let _ = audio_tx.send(AudioCommand::Play(uri));
+                        } else {
+                            let _ = client.start_uris_playback(
+                                None,
+                                [uri.as_str()],
+                                None,
+                                None
+                            ).await;
+                        }
                     }
+
                     PlayerRequest::PlayContext(context_uri, options) => {
-                        let _ = audio_tx.send(
-                            AudioCommand::PlayContext(context_uri, options)
-                        );
+                        if is_active_device {
+                            let _ = audio_tx.send(AudioCommand::PlayContext(context_uri, options));
+                        } else {
+                            let offset = options.playing_track.map(|t| t.into());
+                            let _ = client.start_context_playback(
+                                None,
+                                &context_uri,
+                                offset,
+                                None
+                            ).await;
+                        }
                     }
                     
                     PlayerRequest::TogglePlayback(playing) => {
-                        let cmd = if playing { AudioCommand::Pause } else { AudioCommand::Resume };
-                        let _ = audio_tx.send(cmd);
+                        if is_active_device {
+                            let cmd = if playing { AudioCommand::Pause } else { AudioCommand::Resume };
+                            let _ = audio_tx.send(cmd);
+                        } else {
+                            let _ = client.toggle_playback(playing).await;
+                        }
                     }
 
                     PlayerRequest::NextTrack => {
-                        let _ = audio_tx.send(AudioCommand::NextTrack);
+                        if is_active_device {
+                            let _ = audio_tx.send(AudioCommand::NextTrack);
+                        } else {
+                            let _ = client.next_track().await;
+                        }
                     }
 
                     PlayerRequest::PreviousTrack => {
-                        let _ = audio_tx.send(AudioCommand::PreviousTrack);
+                        if is_active_device {
+                            let _ = audio_tx.send(AudioCommand::PreviousTrack);
+                        } else {
+                            let _ = client.prev_track().await;
+                        }
                     }
 
                     PlayerRequest::SeekToPosition(ms) => {
-                        let _ = audio_tx.send(AudioCommand::Seek(ms));
+                        if is_active_device {
+                            let _ = audio_tx.send(AudioCommand::Seek(ms));
+                        } else {
+                            let _ = client.seek_to_position(ms).await;
+                        }
                     }
                     
                     PlayerRequest::SetVolume(vol) => {
-                        let _ = audio_tx.send(AudioCommand::SetVolume(percent_to_librespot_volume(vol)));
+                        if is_active_device {
+                            let _ = audio_tx.send(AudioCommand::SetVolume(percent_to_librespot_volume(vol)));
+                        } else {
+                            let _ = client.set_volume(vol).await;
+                        }
                     }
 
                     PlayerRequest::SetRepeatMode(state) => {
@@ -372,6 +411,39 @@ pub async fn start_network_worker(
                     Ok(lyrics_opt) => {
                         if let Ok(mut state) = shared_state.lock() {
                             state.lyrics_data = lyrics_opt;
+                        }
+                    }
+                    Err(_e) => {}
+                }
+            }
+
+            ClientRequest::TransferPlayback { device_id, should_play } => {
+                let device_id = device_id.unwrap_or(client.session.device_id().to_string());
+                let _ = client.transfer_playback(&device_id, should_play).await;
+            }
+            
+            ClientRequest::GetDevices => {
+                match client.get_devices().await {
+                    Ok(devices) => {
+                        if let Ok(mut state) = shared_state.lock() {
+                            let mut device_state = DeviceState::default();
+                            device_state.online_devices.items = devices;
+
+                            let local_id = client.session.device_id().to_string();
+                            device_state.local_device_idx = device_state
+                                .online_devices
+                                .items
+                                .iter()
+                                .position(|d| d.id.as_deref() == Some(local_id.as_str()));
+                            
+                            for (i, d) in device_state.online_devices.items.iter().enumerate() {
+                                if d.is_active {
+                                    device_state.active_device_idx = Some(i);
+                                    device_state.online_devices.state.select(Some(i));
+                                }
+                            }
+                            
+                            state.devices = Some(device_state);
                         }
                     }
                     Err(_e) => {}

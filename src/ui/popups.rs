@@ -2,7 +2,10 @@ use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect, Alignment},
     style::{Color, Style, Modifier},
-    widgets::{Block, Borders, BorderType, Clear, Table, Row, List, ListItem},
+    widgets::{
+        Block, Borders, BorderType, Clear,
+        Table, Row, List, ListItem, HighlightSpacing
+    },
 };
 use crate::app::App;
 use crate::network::models::MenuTarget;
@@ -187,6 +190,7 @@ pub fn draw_quick_actions(f: &mut Frame, area: Rect) {
         Row::new(vec![
             "h → Go to Home",
             "n → Next track",
+            "t → Transfer Playback"
         ]),
         Row::new(vec![
             "s → Go to Search",
@@ -216,6 +220,112 @@ pub fn draw_quick_actions(f: &mut Frame, area: Rect) {
     f.render_widget(table, popup_area);
 }
 
+// ------------------------------------------- Device Selector ------------------------------------
+pub fn draw_device_selector(f: &mut Frame, app: &mut App, area: Rect) {
+    let device_count = app.device_state.online_devices.items.len().max(1) as u16;
+    let popup_height = (device_count + 2).min(area.height);
+
+    let vertical_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Min(0),
+            Constraint::Length(popup_height),
+            Constraint::Min(0),
+        ])
+        .split(area);
+
+    let percent_x = 45;
+    let horizontal_layout = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Percentage((100 - percent_x) / 2),
+            Constraint::Percentage(percent_x),
+            Constraint::Percentage((100 - percent_x) / 2),
+        ])
+        .split(vertical_layout[1]);
+
+    let popup_area = horizontal_layout[1];
+    app.device_state.last_area = popup_area;
+
+    // Explicitly expand the clear area so the text does not eat up the border
+    let clear_x = popup_area.x.saturating_sub(2);
+    let clear_width = popup_area.width.saturating_add(4);
+    let clear_area = Rect {
+        x: clear_x,
+        y: popup_area.y,
+        width: if clear_x + clear_width > area.right() { area.right() - clear_x } else { clear_width },
+        height: popup_area.height,
+    };
+
+    f.render_widget(Clear, clear_area);
+
+    let block = Block::default()
+        .title(" Devices ")
+        .title_alignment(Alignment::Center)
+        .borders(Borders::ALL)
+        .border_type(BorderType::Plain)
+        .border_style(Style::default().fg(Color::LightCyan))
+        .style(Style::default().bg(Color::Rgb(28, 28, 28)).fg(Color::White));
+
+    let active_idx = app.device_state.active_device_idx;
+    let local_idx = app.device_state.local_device_idx;
+
+    let items: Vec<ListItem> = if app.device_state.online_devices.items.is_empty() {
+        vec![ListItem::new(" No devices found")]
+    } else {
+        app.device_state
+            .online_devices
+            .items
+            .iter()
+            .enumerate()
+            .map(|(i, d)| {
+                let name = if d.name.is_empty() { "Unknown device" } else { d.name.as_str() };
+                
+                let icon = match d.r#type.to_lowercase().as_str() {
+                    "computer" | "desktop" | "laptop" | "pc" => "💻",
+                    "phone" | "smartphone" | "mobile" => "📱",
+                    "speaker" | "audio" => "🔊",
+                    _ => "❓",
+                };
+
+                let is_active = active_idx == Some(i);
+                let is_local = local_idx == Some(i);
+
+                let mut suffix = String::new();
+                if is_local {
+                    suffix.push_str(" [Local]");
+                }
+                if is_active {
+                    suffix.push_str(" [Current]");
+                }
+
+                let content = format!(" {} {}{}", icon, name, suffix);
+                let mut item = ListItem::new(content);
+
+                item = item.style(Style::default().fg(Color::White));
+                
+                item
+            })
+            .collect()
+    };
+
+    let list = List::new(items)
+        .block(block)
+        .highlight_style(
+            Style::default()
+                .bg(Color::Rgb(50, 50, 50))
+                .fg(Color::LightGreen)
+                .add_modifier(Modifier::BOLD)
+        )
+        .highlight_symbol("> ")
+        .highlight_spacing(HighlightSpacing::Always);
+
+    f.render_stateful_widget(
+        list,
+        popup_area,
+        &mut app.device_state.online_devices.state,
+    );
+}
 
 // ------------------------------------------- Helper ------------------------------------
 fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {

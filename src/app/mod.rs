@@ -13,6 +13,7 @@ pub mod album_state;
 pub mod library_state;
 pub mod playbar_state;
 pub mod lyrics_state;
+pub mod device_state;
 
 pub use types::ActiveBlock;
 pub use search_state::SearchState;

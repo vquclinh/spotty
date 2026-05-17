@@ -86,7 +86,10 @@ pub async fn run() -> Result<()> {
             if let Some(pb) = &app.playback {
                 // Send shutdown request to cache current playback
                 let (reply_tx, reply_rx) = oneshot::channel();
-                let _ = app.network_tx.send(ClientRequest::Player(PlayerRequest::Shutdown(PlaybackContext::from_playback(pb), reply_tx)));
+                let _ = app.network_tx.send(ClientRequest::Player {
+                    request: PlayerRequest::Shutdown(PlaybackContext::from_playback(pb), reply_tx),
+                    is_active_device: app.device_state.is_active_device()
+                });
                 let _ = reply_rx.await;
             }
 

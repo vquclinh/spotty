@@ -1,5 +1,6 @@
 use std::sync::{Arc, Mutex};
 use crate::network::models::*;
+use crate::app::device_state::DeviceState;
 
 use librespot_metadata::Lyrics;
 
@@ -33,6 +34,7 @@ impl<T> From<Page<T>> for DataPayload<T> {
 pub struct IoSharedState {
     pub user: User,
     
+    pub devices: Option<DeviceState>,
     pub playlists: DataPayload<Playlist>,
     pub playback: Option<Playback>,
 
