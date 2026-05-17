@@ -383,4 +383,79 @@ impl SpotifyClient {
             }
         }    
     }
+
+    pub async fn transfer_playback(&self, device_id: &str, should_play: bool) -> Result<()> {
+        let payload = serde_json::json!({
+            "device_ids": [device_id],
+            "play": should_play
+        });
+
+        helper::put(&self.client, "me/player", &payload)
+            .await.map(|r| r.data())
+    }
+
+    pub async fn start_uris_playback(
+        &self,
+        device_id: Option<&str>,
+        uris: impl IntoIterator<Item = &str>,
+        offset: Option<Offset>,
+        position_ms: Option<u32>,
+    ) -> Result<()> {
+        let url = match device_id {
+            Some(id) => format!("me/player/play?device_id={}", id),
+            None => "me/player/play".to_string(),
+        };
+        let uris: Vec<String> = uris.into_iter().map(|u| u.to_string()).collect();
+
+        let mut body = json!({ "uris": uris });
+
+        if let Some(uri) = offset {
+            body["offset"] = match uri {
+                Offset::Index(idx) => {
+                    json!({ "position": idx })
+                }
+                Offset::Uri(uri) => {
+                    json!({ "uri": uri })
+                }
+            };
+        }
+        if let Some(ms) = position_ms {
+            body["position_ms"] = json!(ms);
+        }
+
+        helper::put(&self.client, &url, &body)
+            .await.map(|r| r.data())
+    }
+
+    pub async fn start_context_playback(
+        &self,
+        device_id: Option<&str>,
+        context_uri: &str,
+        offset: Option<Offset>,
+        position_ms: Option<u32>,
+    ) -> Result<()> {
+        let url = match device_id {
+            Some(id) => format!("me/player/play?device_id={}", id),
+            None => "me/player/play".to_string(),
+        };
+
+        let mut body = json!({ "context_uri": context_uri });
+
+        if let Some(uri) = offset {
+            body["offset"] = match uri {
+                Offset::Index(idx) => {
+                    json!({ "position": idx })
+                }
+                Offset::Uri(uri) => {
+                    json!({ "uri": uri })
+                }
+            };
+        }
+        if let Some(ms) = position_ms {
+            body["position_ms"] = json!(ms);
+        }
+
+        helper::put(&self.client, &url, &body)
+            .await.map(|r| r.data())
+    }
 }

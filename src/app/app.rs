@@ -394,6 +394,10 @@ impl App {
             }
         }
     }
+    
+    pub fn active_device_id(&self) -> Option<String> {
+        self.playback.as_ref().and_then(|pb| pb.device.id.clone())
+    }
 }
 
 fn assign_or_append_payload<T>(into: &mut Vec<T>, payload: &mut DataPayload<T>) {

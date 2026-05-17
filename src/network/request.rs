@@ -24,6 +24,7 @@ pub enum PlayerRequest {
 pub enum ClientRequest {
     GetCurrentUser,
     GetCurrentPlayback,
+    // Get current playback and send back a clone of it
     GetCurrentPlaybackReply(oneshot::Sender<Option<Playback>>),
 
     GetUserPlaylists {
@@ -86,7 +87,10 @@ pub enum ClientRequest {
         id: String,
     },
 
-    Player(PlayerRequest),
+    Player {
+        request: PlayerRequest,
+        active_device_id: Option<String>
+    },
 
     SaveItemsToLibrary(Vec<String>),
 
@@ -114,5 +118,10 @@ pub enum ClientRequest {
 
     GetLyrics {
         track_id: String,
+    },
+
+    TransferPlayback {
+        device_id: Option<String>,
+        should_play: bool
     },
 }

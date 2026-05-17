@@ -311,8 +311,13 @@ pub async fn start_network_worker(
             }
 
             #[allow(clippy::collapsible_if)]
-            ClientRequest::Player(player_req) => {
-                match player_req {
+            ClientRequest::Player { request, active_device_id } => {
+                let is_active_device = if let Some(id) = active_device_id {
+                    id == client.session.device_id() 
+                } else {
+                    false
+                };
+                match request {
                     PlayerRequest::AddItemToQueue(uri) => {
                         let _ = client.add_item_to_queue(&uri).await;
 
@@ -324,33 +329,71 @@ pub async fn start_network_worker(
                     }
 
                     PlayerRequest::Play(uri) => {
-                        let _ = audio_tx.send(AudioCommand::Play(uri));
+                        if is_active_device {
+                            let _ = audio_tx.send(AudioCommand::Play(uri));
+                        } else {
+                            let _ = client.start_uris_playback(
+                                None,
+                                [uri.as_str()],
+                                None,
+                                None
+                            ).await;
+                        }
                     }
+
                     PlayerRequest::PlayContext(context_uri, options) => {
-                        let _ = audio_tx.send(
-                            AudioCommand::PlayContext(context_uri, options)
-                        );
+                        if is_active_device {
+                            let _ = audio_tx.send(AudioCommand::PlayContext(context_uri, options));
+                        } else {
+                            let offset = options.playing_track.map(|t| t.into());
+                            let _ = client.start_context_playback(
+                                None,
+                                &context_uri,
+                                offset,
+                                None
+                            ).await;
+                        }
                     }
                     
                     PlayerRequest::TogglePlayback(playing) => {
-                        let cmd = if playing { AudioCommand::Pause } else { AudioCommand::Resume };
-                        let _ = audio_tx.send(cmd);
+                        if is_active_device {
+                            let cmd = if playing { AudioCommand::Pause } else { AudioCommand::Resume };
+                            let _ = audio_tx.send(cmd);
+                        } else {
+                            let _ = client.toggle_playback(playing).await;
+                        }
                     }
 
                     PlayerRequest::NextTrack => {
-                        let _ = audio_tx.send(AudioCommand::NextTrack);
+                        if is_active_device {
+                            let _ = audio_tx.send(AudioCommand::NextTrack);
+                        } else {
+                            let _ = client.next_track().await;
+                        }
                     }
 
                     PlayerRequest::PreviousTrack => {
-                        let _ = audio_tx.send(AudioCommand::PreviousTrack);
+                        if is_active_device {
+                            let _ = audio_tx.send(AudioCommand::PreviousTrack);
+                        } else {
+                            let _ = client.prev_track().await;
+                        }
                     }
 
                     PlayerRequest::SeekToPosition(ms) => {
-                        let _ = audio_tx.send(AudioCommand::Seek(ms));
+                        if is_active_device {
+                            let _ = audio_tx.send(AudioCommand::Seek(ms));
+                        } else {
+                            let _ = client.seek_to_position(ms).await;
+                        }
                     }
                     
                     PlayerRequest::SetVolume(vol) => {
-                        let _ = audio_tx.send(AudioCommand::SetVolume(percent_to_librespot_volume(vol)));
+                        if is_active_device {
+                            let _ = audio_tx.send(AudioCommand::SetVolume(percent_to_librespot_volume(vol)));
+                        } else {
+                            let _ = client.set_volume(vol).await;
+                        }
                     }
 
                     PlayerRequest::SetRepeatMode(state) => {
@@ -376,6 +419,11 @@ pub async fn start_network_worker(
                     }
                     Err(_e) => {}
                 }
+            }
+
+            ClientRequest::TransferPlayback { device_id, should_play } => {
+                let device_id = device_id.unwrap_or(client.session.device_id().to_string());
+                let _ = client.transfer_playback(&device_id, should_play).await;
             }
         }
     }

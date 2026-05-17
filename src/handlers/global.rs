@@ -30,12 +30,18 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
                     playback.is_playing = true;
                     playback.progress = Duration::from_millis(0);
                     app.track_ended = false;
-                    let _ = app.network_tx.send(ClientRequest::Player(PlayerRequest::Play(uri)));
+                    let _ = app.network_tx.send(ClientRequest::Player {
+                        request: PlayerRequest::Play(uri),
+                        active_device_id: app.active_device_id()
+                    });
                 }
             } else {
                 let is_playing = playback.is_playing;
                 playback.is_playing = !is_playing;
-                let _ = app.network_tx.send(ClientRequest::Player(PlayerRequest::TogglePlayback(is_playing)));
+                let _ = app.network_tx.send(ClientRequest::Player {
+                    request: PlayerRequest::TogglePlayback(is_playing),
+                    active_device_id: app.active_device_id()
+                });
             }
             return true;
         }
@@ -44,25 +50,37 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
         if key.code == KeyCode::Char('-') {
             let vol = &mut playback.device.volume;
             *vol = vol.saturating_sub(5);
-            let _ = app.network_tx.send(ClientRequest::Player(PlayerRequest::SetVolume(*vol)));
+            let _ = app.network_tx.send(ClientRequest::Player {
+                request: PlayerRequest::SetVolume(*vol),
+                active_device_id: app.active_device_id()
+            });
             return true;
         }
         if key.code == KeyCode::Char('+') {
             let vol = &mut playback.device.volume;
             *vol = vol.saturating_add(5).min(100);
-            let _ = app.network_tx.send(ClientRequest::Player(PlayerRequest::SetVolume(*vol)));
+            let _ = app.network_tx.send(ClientRequest::Player {
+                request: PlayerRequest::SetVolume(*vol),
+                active_device_id: app.active_device_id()
+            });
             return true;
         }
         
         // next
         if key.code == KeyCode::Char('n') {
-            let _ = app.network_tx.send(ClientRequest::Player(PlayerRequest::NextTrack));
+            let _ = app.network_tx.send(ClientRequest::Player {
+                request: PlayerRequest::NextTrack,
+                active_device_id: app.active_device_id()
+            });
             return true;
         }
 
         // prev
         if key.code == KeyCode::Char('p') {
-            let _ = app.network_tx.send(ClientRequest::Player(PlayerRequest::PreviousTrack));
+            let _ = app.network_tx.send(ClientRequest::Player {
+                request: PlayerRequest::PreviousTrack,
+                active_device_id: app.active_device_id()
+            });
             return true;
         }
 
@@ -74,9 +92,10 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
                 RepeatState::Track => RepeatState::Off,
             };
             playback.repeat_state = state;
-            let _ = app.network_tx.send(ClientRequest::Player(
-                PlayerRequest::SetRepeatMode(state))
-            );
+            let _ = app.network_tx.send(ClientRequest::Player {
+                request: PlayerRequest::SetRepeatMode(state),
+                active_device_id: app.active_device_id()
+            });
             return true;
         }
 
@@ -84,9 +103,10 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
         if key.code == KeyCode::Char('s') {
             let shuffling = playback.shuffle_state;
             playback.shuffle_state = !shuffling;
-            let _ = app.network_tx.send(ClientRequest::Player(
-                PlayerRequest::ToggleShuffle(shuffling))
-            );
+            let _ = app.network_tx.send(ClientRequest::Player {
+                request: PlayerRequest::ToggleShuffle(shuffling),
+                active_device_id: app.active_device_id()
+            });
             return true;
         }
     }

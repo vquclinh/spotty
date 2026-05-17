@@ -187,6 +187,7 @@ pub fn draw_quick_actions(f: &mut Frame, area: Rect) {
         Row::new(vec![
             "h → Go to Home",
             "n → Next track",
+            "t → Transfer Playback"
         ]),
         Row::new(vec![
             "s → Go to Search",
