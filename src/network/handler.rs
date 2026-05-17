@@ -1,4 +1,5 @@
 use crate::app::state::SharedState;
+use crate::app::device_state::DeviceState;
 use crate::network::client::SpotifyClient;
 use crate::network::request::{ClientRequest, PlayerRequest};
 use crate::network::models::SearchType;
@@ -311,12 +312,7 @@ pub async fn start_network_worker(
             }
 
             #[allow(clippy::collapsible_if)]
-            ClientRequest::Player { request, active_device_id } => {
-                let is_active_device = if let Some(id) = active_device_id {
-                    id == client.session.device_id() 
-                } else {
-                    false
-                };
+            ClientRequest::Player { request, is_active_device } => {
                 match request {
                     PlayerRequest::AddItemToQueue(uri) => {
                         let _ = client.add_item_to_queue(&uri).await;
@@ -424,6 +420,34 @@ pub async fn start_network_worker(
             ClientRequest::TransferPlayback { device_id, should_play } => {
                 let device_id = device_id.unwrap_or(client.session.device_id().to_string());
                 let _ = client.transfer_playback(&device_id, should_play).await;
+            }
+            
+            ClientRequest::GetDevices => {
+                match client.get_devices().await {
+                    Ok(devices) => {
+                        if let Ok(mut state) = shared_state.lock() {
+                            let mut device_state = DeviceState::default();
+                            device_state.online_devices.items = devices;
+
+                            let local_id = client.session.device_id().to_string();
+                            device_state.local_device_idx = device_state
+                                .online_devices
+                                .items
+                                .iter()
+                                .position(|d| d.id.as_deref() == Some(local_id.as_str()));
+                            
+                            for (i, d) in device_state.online_devices.items.iter().enumerate() {
+                                if d.is_active {
+                                    device_state.active_device_idx = Some(i);
+                                    device_state.online_devices.state.select(Some(i));
+                                }
+                            }
+                            
+                            state.devices = Some(device_state);
+                        }
+                    }
+                    Err(_e) => {}
+                }
             }
         }
     }

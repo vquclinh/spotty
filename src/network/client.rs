@@ -458,4 +458,17 @@ impl SpotifyClient {
         helper::put(&self.client, &url, &body)
             .await.map(|r| r.data())
     }
+
+    pub async fn get_devices(&self) -> Result<Vec<Device>> {
+        #[derive(Deserialize, Default)]
+        struct DevicesResponse {
+            devices: Vec<Device>,
+        }
+    
+        let res: DevicesResponse =
+            helper::get(&self.client, "me/player/devices", &HashMap::new())
+                .await?.data();
+    
+        Ok(res.devices)
+    }
 }

@@ -19,7 +19,7 @@ pub fn handle_playbar_events(key: KeyEvent, app: &mut App) {
                 *vol = vol.saturating_sub(5);
                 let _ = app.network_tx.send(ClientRequest::Player {
                     request: PlayerRequest::SetVolume(*vol),
-                    active_device_id: app.active_device_id()
+                    is_active_device: app.device_state.is_active_device()
                 });
             }
         }
@@ -29,7 +29,7 @@ pub fn handle_playbar_events(key: KeyEvent, app: &mut App) {
                 *vol = vol.saturating_add(5).min(100);
                 let _ = app.network_tx.send(ClientRequest::Player {
                     request: PlayerRequest::SetVolume(*vol),
-                    active_device_id: app.active_device_id()
+                    is_active_device: app.device_state.is_active_device()
                 });
             }
         }
@@ -54,7 +54,7 @@ pub fn handle_playbar_events(key: KeyEvent, app: &mut App) {
                     playback.shuffle_state = !shuffling;
                     let _ = app.network_tx.send(ClientRequest::Player {
                         request: PlayerRequest::ToggleShuffle(shuffling),
-                        active_device_id: app.active_device_id()
+                        is_active_device: app.device_state.is_active_device()
                     });
                 }
                 PlaybarItem::Repeat => {
@@ -66,7 +66,7 @@ pub fn handle_playbar_events(key: KeyEvent, app: &mut App) {
                     playback.repeat_state = state;
                     let _ = app.network_tx.send(ClientRequest::Player {
                         request: PlayerRequest::SetRepeatMode(state),
-                        active_device_id: app.active_device_id()
+                        is_active_device: app.device_state.is_active_device()
                     });
                 }
             }

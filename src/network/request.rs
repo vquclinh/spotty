@@ -89,7 +89,7 @@ pub enum ClientRequest {
 
     Player {
         request: PlayerRequest,
-        active_device_id: Option<String>
+        is_active_device: bool,
     },
 
     SaveItemsToLibrary(Vec<String>),
@@ -124,4 +124,6 @@ pub enum ClientRequest {
         device_id: Option<String>,
         should_play: bool
     },
+
+    GetDevices,
 }

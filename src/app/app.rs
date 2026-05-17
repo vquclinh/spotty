@@ -6,6 +6,7 @@ use rspotify::prelude::Id;
 use crate::app::home_state::HomeTab;
 use crate::app::splash_state::SplashState;
 use crate::app::playbar_state::PlaybarState;
+use crate::app::device_state::DeviceState;
 use crate::app::types::{ActionMenu, ActiveBlock, PlaylistSelector, StatefulList, StatefulTable};
 use crate::app::route::Route;
 use crate::app::state::SharedState;
@@ -22,6 +23,7 @@ pub struct App {
     pub route: Route,
     pub active_block: ActiveBlock,
     pub history: Vec<(Route, ActiveBlock)>, // store history about Route and ActiveBlock
+    pub device_state: DeviceState,
     // Limit for each Spotify Web Api page fetch
     pub page_limit: u32,
 
@@ -37,6 +39,7 @@ pub struct App {
     pub should_quit: bool, // Signal to quit main loop
     pub show_help: bool, // Signal to turn on pop-up help
     pub show_quick_actions: bool,
+    pub show_device_selector: bool,
     pub action_menu: ActionMenu,
     pub playlist_selector: PlaylistSelector,
 
@@ -62,10 +65,12 @@ impl App {
             route: Route::Splash(SplashState::new()),
             active_block: ActiveBlock::LibraryMenu,
             history: vec![],
+            device_state: DeviceState::default(),
             page_limit,
 
             show_help: false,
             show_quick_actions: false,
+            show_device_selector: false,
             should_quit: false,
 
             network_tx,
@@ -227,6 +232,10 @@ impl App {
                     playback.is_playing = false;
                 }
                 self.playback = Some(playback);
+            }
+
+            if let Some(device_state) = shared_state.devices.take() {
+                self.device_state = device_state;
             }
 
             if !shared_state.playlists.items.is_empty() {
@@ -393,10 +402,6 @@ impl App {
                 _ => {}
             }
         }
-    }
-    
-    pub fn active_device_id(&self) -> Option<String> {
-        self.playback.as_ref().and_then(|pb| pb.device.id.clone())
     }
 }
 

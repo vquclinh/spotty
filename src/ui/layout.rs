@@ -64,7 +64,10 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         popups::draw_help(f, f.area());
     } else if app.show_quick_actions {
         popups::draw_quick_actions(f, f.area());
-    } else if app.action_menu.is_open {
+    } else if app.show_device_selector {
+        popups::draw_device_selector(f, app, f.area());
+    }
+    else if app.action_menu.is_open {
         let (area, selected, offset) = match &app.route {
             Route::Home(h) => {
                 let (idx, off) = match h.active_tab {

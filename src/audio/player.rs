@@ -138,6 +138,7 @@ pub async fn start_audio_worker(
 
     // Spawn the task here so the device is registered as online
     tokio::spawn(spirc_task);
+    let _ = net_tx_clone.send(ClientRequest::GetDevices);
 
     // Sync remote playback
     let (reply_tx, reply_rx) = oneshot::channel();

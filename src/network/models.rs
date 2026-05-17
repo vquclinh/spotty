@@ -125,6 +125,8 @@ pub struct Device {
     pub id: Option<String>,
     pub is_active: bool,
     pub name: String,
+     #[serde(rename = "type")]
+    pub r#type: String,
     #[serde(rename = "volume_percent")]
     pub volume: u8
 }
