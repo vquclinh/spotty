@@ -267,7 +267,7 @@ pub fn draw_device_selector(f: &mut Frame, app: &mut App, area: Rect) {
         .border_style(Style::default().fg(Color::LightCyan))
         .style(Style::default().bg(Color::Rgb(28, 28, 28)).fg(Color::White));
 
-    let active_idx = app.device_state.active_device_idx;
+    let active_idx = app.device_state.active_device_idx();
     let local_idx = app.device_state.local_device_idx;
 
     let items: Vec<ListItem> = if app.device_state.online_devices.items.is_empty() {
