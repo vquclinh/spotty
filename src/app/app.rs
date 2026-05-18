@@ -60,6 +60,7 @@ impl App {
         let _ = network_tx.send(ClientRequest::GetCurrentUser);
         let _ = network_tx.send(ClientRequest::GetCurrentPlayback);
         let _ = network_tx.send(ClientRequest::GetUserPlaylists { limit: page_limit, offset: 0 });
+        let _ = network_tx.send(ClientRequest::GetDevices);
 
         Self {
             route: Route::Splash(SplashState::new()),
@@ -236,6 +237,13 @@ impl App {
 
             if let Some(device_state) = shared_state.devices.take() {
                 self.device_state = device_state;
+                // Claim the playback if there is no active device
+                if self.device_state.active_device_id().is_none() {
+                    let _ = self.network_tx.send(ClientRequest::TransferPlayback {
+                        device_id: self.device_state.local_device_id(),
+                        should_play: false
+                    });
+                }
             }
 
             if !shared_state.playlists.items.is_empty() {

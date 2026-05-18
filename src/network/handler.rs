@@ -436,12 +436,8 @@ pub async fn start_network_worker(
                                 .iter()
                                 .position(|d| d.id.as_deref() == Some(local_id.as_str()));
                             
-                            for (i, d) in device_state.online_devices.items.iter().enumerate() {
-                                if d.is_active {
-                                    device_state.active_device_idx = Some(i);
-                                    device_state.online_devices.state.select(Some(i));
-                                }
-                            }
+                            // Select the active device by default
+                            device_state.online_devices.state.select(device_state.active_device_idx());
                             
                             state.devices = Some(device_state);
                         }

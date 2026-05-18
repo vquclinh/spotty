@@ -90,15 +90,20 @@ pub fn handle_key_events(key: KeyEvent, app: &mut App) {
                 app.device_state.online_devices.previous(1, false);
             }
             KeyCode::Enter => {
+                let selecting_active_device = |selected_idx: usize| if let Some(idx) = app.device_state.active_device_idx() {
+                    selected_idx == idx
+                } else {
+                    false
+                };
                 if let Some(idx) = app.device_state.online_devices.state.selected()
-                && let Some(active_idx) = app.device_state.active_device_idx
-                && idx != active_idx {
+                && !selecting_active_device(idx) {
                     app.device_state.online_devices.state.select(Some(idx));
-                    app.device_state.active_device_idx = Some(idx);
                     let _ = app.network_tx.send(ClientRequest::TransferPlayback {
-                        device_id: app.device_state.active_device_id(),
+                        device_id: app.device_state.device_id_from_idx(idx),
                         should_play: false
                     });
+                    // Fetch devices again to ensure active device is updated
+                    let _ = app.network_tx.send(ClientRequest::GetDevices);
                     
                     app.show_device_selector = false;
                 }
