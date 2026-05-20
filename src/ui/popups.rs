@@ -12,7 +12,7 @@ use crate::network::models::MenuTarget;
 
 // ---------------------------------- Keybind Popup -------------------------------
 pub fn draw_help(f: &mut Frame, area: Rect) {
-    let popup_area = centered_rect(42, 90, area);
+    let popup_area = centered_rect(37, 90, area);
     f.render_widget(Clear, popup_area);
 
     let bg_color = Color::Rgb(28, 28, 28);
