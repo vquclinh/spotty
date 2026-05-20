@@ -1,63 +1,170 @@
-truoc tien, tai rust thong qua rustup:
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+# Spotty
 
-cargo: quan ly code, thu vien
-rustc: trinh bien dich cua Rust
-rustup: trinh quan ly phien ban
+A modern Terminal User Interface (TUI) for Spotify, built with Rust.
 
-1) cargo init -> Cargo.toml & Cargo.lock == package.json
+## Features
 
-2) crate: main.rs & lib.rs (1 package -> 1 lib crate)
-co the co nhieu binary crate, khi chay chi can chi dinh chay crate nao thong qua flag --bin
-1 package chi co 1 lib crate, neu muon co nhieu lib crate thi phai co cargo workspace lon bao boc ben ngoai
+- **Multi-view Navigation** — Home, Search, Queue, and Lyrics views
+- **Playback Control** — Play, pause, next, previous, volume, shuffle, repeat
+- **Playlist & Library** — Browse playlists, liked songs, saved albums, artists, and podcasts
+- **Device Management** — Switch playback between multiple Spotify-connected devices
+- **Search** — Search across tracks, artists, albums, and playlists
+- **Lyrics** — Display song lyrics with scroll support
+- **Context Actions** — Quick-action menus for tracks, albums, artists, playlists, and episodes
 
-3) File Cargo.toml: [package] [dependencies]
-   crates.io
+## Requirements
 
-4) O day t setup project co cau truc 1 lib + 1 binary crate thoi vi app minh chi co' 1 ung dung, 1 phan mem thoi, cac folder app, event, handlers nhu cac features se support cho library crate duy nhat cua project
+- Rust (edition 2024)
+- A Spotify Premium account
+- Spotify API credentials (Client ID & Secret)
 
-5) config.rs: de ap dung config cua nguoi dung (thong qua yaml)
+## Installation
 
-6) redirect_uri.rs: lay token tu Spotify API gui ve khi dang nhap vao Spotify
+```bash
+git clone https://github.com/vquclinh/spotty
+cd spotty
+cargo build --release
+```
 
-7) Widget == Components (ratatui == shadcn-ui)
-      ti`m widget tren ratatui: https://ratatui.rs/concepts/widgets/ (day la cac widget mac dinh, chi can xem cach su dung roi su dung thoi)
+## Configuration
 
-      con neu muon dung cac widget nang cao duoc cong dong phat trien thi truy cap: https://crates.io/search?q=ratatui. Sau do' va`o: https://docs.rs de doc cach su dung. Xong roi chi can cargo add ... roi use...
+Copy `.env.example` to `.env` and fill in your Spotify credentials:
 
-      ***** 
-      repo tong hop tat ca widget: https://github.com/ratatui/awesome-ratatui
+```env
+CLIENT_ID=your_client_id
+CLIENT_SECRET=your_client_secret
+```
 
-8) crossterm giong kieu Event Listener
+Then run:
 
-9) reqwest == axios (get, post, put, delete API)
+```bash
+cargo run --release
+```
 
-10) rspotify: wrapper spotify API, giup ghi ngan lenh lai
+## Keybindings
 
-11) dirs: phat hien he dieu hanh cua nguoi dung la gi de dua file config vao dung cho
+### Global
 
-12) serde_yaml & serde_json: doc file yaml va json
+| Key | Action |
+|-----|--------|
+| `?` | Toggle help popup |
+| `q` / `Ctrl+C` | Quit |
+| `g` | Open quick actions popup |
 
-13) unicode-width: tinh toan chinh xac do rong, de ve TUI khong bi vo
+### View Switching
 
-14) arboard: cung cap quyen truy cap vao clipboard
+| Key | Action |
+|-----|--------|
+| `H` | Home view |
+| `S` | Search view |
+| `Q` | Queue view |
+| `L` | Lyrics view |
 
-15) sau nay co the tim cac thu vien neu can tai: https://lib.rs/ va doc document tai: https://doc.rs/ 
+### Panel Focus
 
-16) hoac co the tham khao them nhieu thu vien huu ich tai: https://github.com/LargeModGames/spotatui/blob/main/Cargo.toml (repo ca' nhan)
+| Key | Action |
+|-----|--------|
+| `Tab` | Cycle focus between panels |
+| `1` | Focus sidebar / input |
+| `2` | Focus playlists / results |
+| `3` | Focus main content |
+| `4` | Focus playbar |
 
-tong hop hau nhu cac thu vien huu ich:
-https://github.com/ratatui/awesome-ratatui
+### Playback
 
-xem muc: Command-line, Network programming, Audio, Encoding, Logging,...
+| Key | Action |
+|-----|--------|
+| `Space` | Play / Pause |
+| `n` | Next track |
+| `p` | Previous track |
+| `+` | Volume up |
+| `-` | Volume down |
+| `r` | Cycle repeat mode (Off → Context → Track) |
+| `s` | Toggle shuffle |
 
-17) extension: rust-analyzer
+### List Navigation
 
-18) 
-Bước 1 — App struct         nền tảng, mọi thứ phụ thuộc vào đây
-Bước 2 — Event loop         vòng lặp chính, giữ app chạy
-Bước 3 — UI cơ bản          render màn hình trống trước
-Bước 4 — Spotify Auth       đăng nhập, lấy token
-Bước 5 — Network            gọi API lấy data
-Bước 6 — Handlers           xử lý phím bấm
-Bước 7 — Tính năng thực     playlist, player, search...
+| Key | Action |
+|-----|--------|
+| `j` / `Down` | Move down |
+| `k` / `Up` | Move up |
+| `Ctrl+d` | Jump down 10 items |
+| `Ctrl+u` | Jump up 10 items |
+| `h` / `Left` | Move left / previous tab |
+| `l` / `Right` | Move right / next tab |
+| `Enter` | Select item |
+| `Esc` | Close popup / go back |
+| `b` / `Backspace` | Go back to playlist menu |
+
+### Actions
+
+| Key | Action |
+|-----|--------|
+| `t` | Open action menu for selected item |
+| `Enter` | Confirm action / play selected |
+
+#### Action menu options depend on item type:
+
+| Item | Available Actions |
+|------|-------------------|
+| Track / Episode | Play Now, Add to Queue, Add to Playlist, Save/Remove from Library, Go to Album |
+| Album | Play Now, Add to Queue, Save/Remove from Library |
+| Artist | Follow / Unfollow |
+| Playlist | Play Now, Add to Queue |
+
+### Search View
+
+| Key | Action |
+|-----|--------|
+| `Enter` | Execute search |
+| `Tab` | Cycle result categories (Tracks → Artists → Albums → Playlists) |
+| `Esc` | Return to search input |
+
+### Device Selection
+
+| Key | Action |
+|-----|--------|
+| `j` / `Down` | Next device |
+| `k` / `Up` | Previous device |
+| `Enter` | Transfer playback to selected device |
+
+### Playlist Selector (Add to Playlist)
+
+| Key | Action |
+|-----|--------|
+| `j` / `Down` | Move down |
+| `k` / `Up` | Move up |
+| `Enter` | Add item to selected playlist |
+| `Esc` / `t` | Close |
+
+## Tech Stack
+
+| Component | Library |
+|-----------|---------|
+| TUI rendering | [ratatui](https://github.com/ratatui-org/ratatui) |
+| Terminal events | [crossterm](https://github.com/crossterm-rs/crossterm) |
+| Spotify Web API | [rspotify](https://github.com/ramsayleung/rspotify) |
+| Audio playback | [librespot](https://github.com/librespot-org/librespot) |
+| Async runtime | [tokio](https://tokio.rs) |
+
+## Project Structure
+
+```
+src/
+├── app/          # Application state and routes
+├── audio/        # Audio playback and Spotify auth
+├── event/        # Event system
+├── handlers/     # Keyboard input handlers per view
+├── network/      # Spotify API client
+├── ui/           # Rendering logic, widgets, and popups
+└── lib.rs        # App initialization and main event loop
+```
+
+## Authors
+
+- Vo Quoc Linh
+- night0
+
+## License
+
+MIT
