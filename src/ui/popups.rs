@@ -48,7 +48,7 @@ pub fn draw_help(f: &mut Frame, area: Rect) {
         Row::new(vec![" j / k", "Up / Down"]),
         Row::new(vec![" h / l", "Left / Right"]),
         Row::new(vec![" ?", "Close Help"]),
-        Row::new(vec![" q / Esc", "Quit App"]),
+        Row::new(vec![" q", "Quit App"]),
     ];
 
     let table = Table::new(rows, [Constraint::Percentage(40), Constraint::Percentage(60)])

@@ -48,7 +48,7 @@ cargo run --release
 | Key | Action |
 |-----|--------|
 | `?` | Toggle help popup |
-| `q` / `Ctrl+C` | Quit |
+| `q` | Quit |
 | `g` | Open quick actions popup |
 
 ### View Switching
