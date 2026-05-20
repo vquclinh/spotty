@@ -12,10 +12,11 @@ use crate::network::models::MenuTarget;
 
 // ---------------------------------- Keybind Popup -------------------------------
 pub fn draw_help(f: &mut Frame, area: Rect) {
-    let popup_area = centered_rect(35, 75, area);
+    let popup_area = centered_rect(42, 90, area);
     f.render_widget(Clear, popup_area);
 
     let bg_color = Color::Rgb(28, 28, 28);
+    let section_style = Style::default().fg(Color::LightYellow).add_modifier(Modifier::BOLD);
 
     let block = Block::default()
         .title(" ⌨  SHORTCUTS ")
@@ -26,32 +27,39 @@ pub fn draw_help(f: &mut Frame, area: Rect) {
         .style(Style::default().bg(bg_color));
 
     let rows = vec![
-        Row::new(vec![" Tab", "Switch Focus"]),
-        Row::new(vec![" 1-3", "Switch Tabs"]),
-        Row::new(vec![" t", "Open Action Menu"]),
-        Row::new(vec![" g", "Open Quick Actions"]),
+        Row::new(vec!["  General", ""]).style(section_style),
+        Row::new(vec!["  Tab", "Cycle Panel Focus"]),
+        Row::new(vec!["  1 / 2 / 3 / 4", "Focus Panel 1 / 2 / 3 / 4"]),
+        Row::new(vec!["  t", "Open Action Menu"]),
+        Row::new(vec!["  g", "Quick Actions"]),
+        Row::new(vec!["  ?", "Toggle Help"]),
+        Row::new(vec!["  q", "Quit App"]),
         Row::new(vec![""]),
 
-        Row::new(vec![" H", "Go to Home"]),
-        Row::new(vec![" S", "Go to Search"]),
-        Row::new(vec![" Q", "Go to Queue"]),
-        Row::new(vec![" L", "Go to Lyrics"]),
+        Row::new(vec!["  Views", ""]).style(section_style),
+        Row::new(vec!["  H", "Go to Home"]),
+        Row::new(vec!["  S", "Go to Search"]),
+        Row::new(vec!["  Q", "Go to Queue"]),
+        Row::new(vec!["  L", "Go to Lyrics"]),
         Row::new(vec![""]),
 
-        Row::new(vec![" Space", "Play / Pause"]),
-        Row::new(vec![" n / p", "Next / Prev Track"]),
-        Row::new(vec![" + / -", "Increase / Decrease Volume"]),
-        Row::new(vec![" s", "Shuffle"]),
-        Row::new(vec![" r", "Repeat"]),
+        Row::new(vec!["  Playback", ""]).style(section_style),
+        Row::new(vec!["  Space", "Play / Pause"]),
+        Row::new(vec!["  n / p", "Next / Prev Track"]),
+        Row::new(vec!["  + / -", "Volume Up / Down"]),
+        Row::new(vec!["  s", "Toggle Shuffle"]),
+        Row::new(vec!["  r", "Cycle Repeat Mode"]),
         Row::new(vec![""]),
 
-        Row::new(vec![" j / k", "Up / Down"]),
-        Row::new(vec![" h / l", "Left / Right"]),
-        Row::new(vec![" ?", "Close Help"]),
-        Row::new(vec![" q", "Quit App"]),
+        Row::new(vec!["  Navigation", ""]).style(section_style),
+        Row::new(vec!["  j / k", "Move Down / Up"]),
+        Row::new(vec!["  h / l", "Move Left / Right"]),
+        Row::new(vec!["  Ctrl+d / u", "Jump Down / Up 10"]),
+        Row::new(vec!["  Enter", "Select / Confirm"]),
+        Row::new(vec!["  Esc", "Close / Go Back"]),
     ];
 
-    let table = Table::new(rows, [Constraint::Percentage(40), Constraint::Percentage(60)])
+    let table = Table::new(rows, [Constraint::Percentage(42), Constraint::Percentage(58)])
         .block(block)
         .style(Style::default().fg(Color::White));
 

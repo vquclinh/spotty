@@ -94,7 +94,6 @@ cargo run --release
 | `l` / `Right` | Move right / next tab |
 | `Enter` | Select item |
 | `Esc` | Close popup / go back |
-| `b` / `Backspace` | Go back to playlist menu |
 
 ### Actions
 
