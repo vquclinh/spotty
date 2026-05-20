@@ -21,24 +21,17 @@ Spotty is an unofficial Spotify client and is not affiliated with Spotify AB.
 - A Spotify Developer application with a redirect URI configured.
 - Access to a browser for OAuth authorization.
 
-## Quick Start
+## Installation
 
-```bash
-git clone https://github.com/vquclinh/spotty.git
-cd spotty
-cp .env.example .env
-cargo run --release
-```
+Spotty is intended to run on Linux, macOS, and Windows. Linux is the primary development environment; macOS and Windows support may depend on terminal, browser, and audio backend behavior.
 
-## Configuration
-
-Create a Spotify application in the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard), then add a redirect URI such as:
+Install Rust from [rustup.rs](https://rustup.rs), then create a Spotify application in the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard). Add a redirect URI such as:
 
 ```text
 http://localhost:8888/callback
 ```
 
-Configure `.env` with the same values:
+Create `.env` from `.env.example`, then fill in your Spotify application values:
 
 ```env
 RSPOTIFY_CLIENT_ID=your_spotify_client_id
@@ -48,12 +41,57 @@ RSPOTIFY_REDIRECT_URI=http://localhost:8888/callback
 RSPOTIFY_CLIENT_SECRET=your_spotify_client_secret
 ```
 
-Spotty uses the following local cache files:
+On first launch, Spotty opens a Spotify authorization page in your browser. OAuth tokens are cached in `.spotify_token_cache.json`, and audio/session data is cached in `.spotty_cache/`.
 
-- `.spotify_token_cache.json` for Spotify OAuth tokens.
-- `.spotty_cache/` for librespot audio/session cache data.
+### Linux
 
-These files should stay out of version control.
+```bash
+git clone https://github.com/vquclinh/spotty.git
+cd spotty
+cp .env.example .env
+cargo run --release
+```
+
+Build a release binary:
+
+```bash
+cargo build --release
+./target/release/spotty
+```
+
+### macOS
+
+```bash
+git clone https://github.com/vquclinh/spotty.git
+cd spotty
+cp .env.example .env
+cargo run --release
+```
+
+Build a release binary:
+
+```bash
+cargo build --release
+./target/release/spotty
+```
+
+### Windows
+
+Use PowerShell:
+
+```powershell
+git clone https://github.com/vquclinh/spotty.git
+cd spotty
+Copy-Item .env.example .env
+cargo run --release
+```
+
+Build a release binary:
+
+```powershell
+cargo build --release
+.\target\release\spotty.exe
+```
 
 ## Keyboard Shortcuts
 
