@@ -27,23 +27,28 @@ pub fn draw_help(f: &mut Frame, area: Rect) {
 
     let rows = vec![
         Row::new(vec![" Tab", "Switch Focus"]),
-        Row::new(vec![" 1-3", "Switch Home Tabs"]),
-        Row::new(vec![" Enter", "Select Item / Play"]),
+        Row::new(vec![" 1-3", "Switch Tabs"]),
         Row::new(vec![" t", "Open Action Menu"]),
-        Row::new(vec![" Backspace, b", "Back to Menu"]),
-        Row::new(vec![" H", "Return to Home"]),
+        Row::new(vec![" g", "Open Quick Actions"]),
+        Row::new(vec![""]),
+
+        Row::new(vec![" H", "Go to Home"]),
+        Row::new(vec![" S", "Go to Search"]),
+        Row::new(vec![" Q", "Go to Queue"]),
+        Row::new(vec![" L", "Go to Lyrics"]),
         Row::new(vec![""]),
 
         Row::new(vec![" Space", "Play / Pause"]),
         Row::new(vec![" n / p", "Next / Prev Track"]),
+        Row::new(vec![" + / -", "Increase / Decrease Volume"]),
+        Row::new(vec![" s", "Shuffle"]),
+        Row::new(vec![" r", "Repeat"]),
         Row::new(vec![""]),
 
-        Row::new(vec![" j / k", "Up / Down (List)"]),
-        Row::new(vec![" h / l", "Left / Right (Tab)"]),
-        Row::new(vec![""]),
-
+        Row::new(vec![" j / k", "Up / Down"]),
+        Row::new(vec![" h / l", "Left / Right"]),
         Row::new(vec![" ?", "Close Help"]),
-        Row::new(vec![" q, Esc", "Quit App"]),
+        Row::new(vec![" q / Esc", "Quit App"]),
     ];
 
     let table = Table::new(rows, [Constraint::Percentage(40), Constraint::Percentage(60)])
