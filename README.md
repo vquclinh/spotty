@@ -16,82 +16,35 @@ Spotty is an unofficial Spotify client and is not affiliated with Spotify AB.
 
 ## Requirements
 
-- Rust 1.85+ with edition 2024 support.
 - A Spotify Premium account for playback control and streaming.
 - A Spotify Developer application with a redirect URI configured.
 - Access to a browser for OAuth authorization.
 
 ## Installation
 
-Spotty is intended to run on Linux, macOS, and Windows. Linux is the primary development environment; macOS and Windows support may depend on terminal, browser, and audio backend behavior.
+Go to the [Releases page](https://github.com/vquclinh/spotty/releases/tag/v0.0.1) and download the binary for your platform:
 
-Install Rust from [rustup.rs](https://rustup.rs), then create a Spotify application in the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard). Add a redirect URI such as:
+| Platform | File |
+| --- | --- |
+| Linux (x86_64) | `spotty-linux-x86_64` |
+| macOS (Apple Silicon) | `spotty-macos-aarch64` |
+| macOS (Intel) | `spotty-macos-x86_64` |
+| Windows (x86_64) | `spotty-windows-x86_64.exe` |
 
-```text
-http://localhost:8888/callback
+Make the binary executable (Linux / macOS):
+
+```bash
+chmod +x spotty-linux-x86_64   # or spotty-macos-*
+./spotty-linux-x86_64
 ```
 
-Create `.env` from `.env.example`, then fill in your Spotify application values:
+On Windows, double-click `spotty-windows-x86_64.exe` or run it from PowerShell:
 
-```env
-RSPOTIFY_CLIENT_ID=your_spotify_client_id
-RSPOTIFY_REDIRECT_URI=http://localhost:8888/callback
-
-# Optional for PKCE, but supported if your Spotify app uses one.
-RSPOTIFY_CLIENT_SECRET=your_spotify_client_secret
+```powershell
+.\spotty-windows-x86_64.exe
 ```
 
 On first launch, Spotty opens a Spotify authorization page in your browser. OAuth tokens are cached in `.spotify_token_cache.json`, and audio/session data is cached in `.spotty_cache/`.
-
-### Linux
-
-```bash
-git clone https://github.com/vquclinh/spotty.git
-cd spotty
-cp .env.example .env
-cargo run --release
-```
-
-Build a release binary:
-
-```bash
-cargo build --release
-./target/release/spotty
-```
-
-### macOS
-
-```bash
-git clone https://github.com/vquclinh/spotty.git
-cd spotty
-cp .env.example .env
-cargo run --release
-```
-
-Build a release binary:
-
-```bash
-cargo build --release
-./target/release/spotty
-```
-
-### Windows
-
-Use PowerShell:
-
-```powershell
-git clone https://github.com/vquclinh/spotty.git
-cd spotty
-Copy-Item .env.example .env
-cargo run --release
-```
-
-Build a release binary:
-
-```powershell
-cargo build --release
-.\target\release\spotty.exe
-```
 
 ## Keyboard Shortcuts
 
@@ -160,25 +113,61 @@ Open quick actions with `g`, then press `t` to transfer playback.
 
 ## Development
 
+### System dependencies
+
+**Linux (Debian / Ubuntu)**
 ```bash
-cargo check
-cargo fmt
-cargo clippy
+sudo apt install -y libasound2-dev pkg-config libssl-dev
 ```
 
-Run the application locally with:
-
+**Linux (Fedora / RHEL)**
 ```bash
-cargo run
+sudo dnf install -y alsa-lib-devel pkg-config openssl-devel
 ```
 
-Build an optimized binary with:
-
+**macOS** — install Xcode Command Line Tools if you haven't already:
 ```bash
-cargo build --release
+xcode-select --install
 ```
 
-The release binary is written to `target/release/spotty`.
+**Windows** — install [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) with the **Desktop development with C++** workload selected.
+
+### Setup
+
+Install Rust from [rustup.rs](https://rustup.rs), then:
+
+```bash
+git clone https://github.com/vquclinh/spotty.git
+cd spotty
+cp .env.example .env
+```
+
+Create a Spotify application in the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard) and add a redirect URI:
+
+```text
+http://localhost:8888/callback
+```
+
+Edit `.env` with your Spotify application values:
+
+```env
+RSPOTIFY_CLIENT_ID=your_spotify_client_id
+RSPOTIFY_REDIRECT_URI=http://localhost:8888/callback
+
+# Optional: only needed if your Spotify app has a client secret configured.
+RSPOTIFY_CLIENT_SECRET=your_spotify_client_secret
+```
+
+### Commands
+
+```bash
+cargo run              # run in debug mode
+cargo run --release    # run optimized
+cargo build --release  # build binary to target/release/spotty
+cargo check            # type-check without building
+cargo fmt              # format code
+cargo clippy           # lint
+```
 
 ## Tech Stack
 
