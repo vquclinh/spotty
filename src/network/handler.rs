@@ -177,21 +177,24 @@ pub async fn start_network_worker(
             }
 
             ClientRequest::GetQueue => {
-                let Ok(mut res) = client.get_queue().await else { return };
-
-                // If the first item in queue_items is a duplicate of currently_playing
-                // then we remove it
-                if let Some(current) = &res.currently_playing {
-                    let is_dup = res.queue.first()
-                        .is_some_and(|first| current.uri() == first.uri());
-
-                    if is_dup {
-                        res.queue.remove(0);
+                match client.get_queue().await {
+                    Ok(mut res) => {
+                        // If the first item in queue_items is a duplicate
+                        // of currently_playing then we remove it
+                        if let Some(current) = &res.currently_playing {
+                            let is_dup = res.queue.first()
+                                .is_some_and(|first| current.uri() == first.uri());
+        
+                            if is_dup {
+                                res.queue.remove(0);
+                            }
+                        }
+        
+                        if let Ok(mut state) = shared_state.lock() {
+                            state.queue_data = Some((res.currently_playing, res.queue));
+                        }
                     }
-                }
-
-                if let Ok(mut state) = shared_state.lock() {
-                    state.queue_data = Some((res.currently_playing, res.queue));
+                    Err(_e) => {}
                 }
             }
 
@@ -273,8 +276,8 @@ pub async fn start_network_worker(
 
             #[allow(clippy::collapsible_if)]
             ClientRequest::SaveItemsToLibrary(uris) => {
+                if uris.is_empty() { continue; };
                 // FIXME
-                if uris.is_empty() { return; }
                 let uris: Vec<&str> = uris.iter().map(|u| u.as_str()).collect();
                 // Assuming all the items are of the same type
                 let first_uri = uris[0];
