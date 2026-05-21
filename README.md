@@ -16,19 +16,18 @@ Spotty is an unofficial Spotify client and is not affiliated with Spotify AB.
 
 ## Requirements
 
-- A Spotify Premium account for playback control and streaming.
-- A Spotify Developer application with a redirect URI configured.
-- Access to a browser for OAuth authorization.
+- A Spotify Premium account.
+- A browser for OAuth authorization.
 
 ## Installation
 
-Go to the [Releases page](https://github.com/vquclinh/spotty/releases/tag/v0.0.1) and download the binary for your platform:
+Go to the [Releases page](https://github.com/vquclinh/spotty/releases/tag/v0.0.1) and download the archive for your platform:
 
 | Platform | File |
 | --- | --- |
-| Linux (x86_64) | `spotty-linux-x86_64` |
-| macOS (Apple Silicon) | `spotty-macos-aarch64` |
-| Windows (x86_64) | `spotty-windows-x86_64.exe` |
+| Linux (x86_64) | `spotty-linux-x86_64.tar.gz` |
+| macOS (Apple Silicon) | `spotty-macos-aarch64.tar.gz` |
+| Windows (x86_64) | `spotty-windows-x86_64.exe.zip` |
 
 ### Linux
 
@@ -45,18 +44,20 @@ sudo dnf install -y alsa-lib
 sudo pacman -S alsa-lib
 ```
 
-Make the binary executable and run it:
+Extract and run:
 
 ```bash
+tar -xzf spotty-linux-x86_64.tar.gz
 chmod +x spotty-linux-x86_64
 ./spotty-linux-x86_64
 ```
 
 ### macOS
 
-macOS includes all required audio libraries. Just make the binary executable and run it:
+macOS includes all required audio libraries. Extract and run:
 
 ```bash
+tar -xzf spotty-macos-aarch64.tar.gz
 chmod +x spotty-macos-aarch64
 ./spotty-macos-aarch64
 ```
@@ -69,7 +70,7 @@ xattr -d com.apple.quarantine spotty-macos-aarch64
 
 ### Windows
 
-No additional dependencies are required. Run the binary from PowerShell:
+No additional dependencies are required. Extract `spotty-windows-x86_64.exe.zip` and run from PowerShell:
 
 ```powershell
 .\spotty-windows-x86_64.exe
@@ -79,7 +80,7 @@ If Windows Defender SmartScreen blocks the binary, click **More info → Run any
 
 ### First launch
 
-On first launch, Spotty opens a Spotify authorization page in your browser. OAuth tokens are cached in `.spotify_token_cache.json`, and audio/session data is cached in `.spotty_cache/`.
+When you first launch Spotty, it will open your browser and redirect you to Spotify's login page. After logging in, Spotify redirects back to the app automatically. Your credentials are then cached locally, so you won't need to log in again on future launches.
 
 ## Keyboard Shortcuts
 
@@ -174,23 +175,6 @@ Install Rust from [rustup.rs](https://rustup.rs), then:
 ```bash
 git clone https://github.com/vquclinh/spotty.git
 cd spotty
-cp .env.example .env
-```
-
-Create a Spotify application in the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard) and add a redirect URI:
-
-```text
-http://localhost:8888/callback
-```
-
-Edit `.env` with your Spotify application values:
-
-```env
-RSPOTIFY_CLIENT_ID=your_spotify_client_id
-RSPOTIFY_REDIRECT_URI=http://localhost:8888/callback
-
-# Optional: only needed if your Spotify app has a client secret configured.
-RSPOTIFY_CLIENT_SECRET=your_spotify_client_secret
 ```
 
 ### Commands
