@@ -28,7 +28,6 @@ Go to the [Releases page](https://github.com/vquclinh/spotty/releases/tag/v0.0.1
 | --- | --- |
 | Linux (x86_64) | `spotty-linux-x86_64` |
 | macOS (Apple Silicon) | `spotty-macos-aarch64` |
-| macOS (Intel) | `spotty-macos-x86_64` |
 | Windows (x86_64) | `spotty-windows-x86_64.exe` |
 
 ### Linux
@@ -58,7 +57,7 @@ chmod +x spotty-linux-x86_64
 macOS includes all required audio libraries. Just make the binary executable and run it:
 
 ```bash
-chmod +x spotty-macos-aarch64   # or spotty-macos-x86_64 on Intel
+chmod +x spotty-macos-aarch64
 ./spotty-macos-aarch64
 ```
 
