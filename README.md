@@ -31,18 +31,54 @@ Go to the [Releases page](https://github.com/vquclinh/spotty/releases/tag/v0.0.1
 | macOS (Intel) | `spotty-macos-x86_64` |
 | Windows (x86_64) | `spotty-windows-x86_64.exe` |
 
-Make the binary executable (Linux / macOS):
+### Linux
+
+Install the ALSA runtime library (required for audio):
 
 ```bash
-chmod +x spotty-linux-x86_64   # or spotty-macos-*
+# Debian / Ubuntu
+sudo apt install -y libasound2
+
+# Fedora / RHEL
+sudo dnf install -y alsa-lib
+
+# Arch
+sudo pacman -S alsa-lib
+```
+
+Make the binary executable and run it:
+
+```bash
+chmod +x spotty-linux-x86_64
 ./spotty-linux-x86_64
 ```
 
-On Windows, double-click `spotty-windows-x86_64.exe` or run it from PowerShell:
+### macOS
+
+macOS includes all required audio libraries. Just make the binary executable and run it:
+
+```bash
+chmod +x spotty-macos-aarch64   # or spotty-macos-x86_64 on Intel
+./spotty-macos-aarch64
+```
+
+If macOS blocks the binary because it is from an unidentified developer, remove the quarantine flag:
+
+```bash
+xattr -d com.apple.quarantine spotty-macos-aarch64
+```
+
+### Windows
+
+No additional dependencies are required. Run the binary from PowerShell:
 
 ```powershell
 .\spotty-windows-x86_64.exe
 ```
+
+If Windows Defender SmartScreen blocks the binary, click **More info → Run anyway**.
+
+### First launch
 
 On first launch, Spotty opens a Spotify authorization page in your browser. OAuth tokens are cached in `.spotify_token_cache.json`, and audio/session data is cached in `.spotty_cache/`.
 
