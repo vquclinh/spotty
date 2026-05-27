@@ -1,5 +1,6 @@
 use librespot_core::{spotify_uri::SpotifyUri, SpotifyUri as SpotifyUriEnum};
 use librespot_playback::player::PlayerEvent as LibrespotEvent;
+use crate::network::models::RepeatState;
 
 // helper (delete all SpotifyUriEnum except Track and Episode)
 fn spotify_uri_to_string(uri: &SpotifyUri) -> Option<String> {
@@ -18,6 +19,8 @@ pub enum AudioEvent {
     Playing { uri: String, position_ms: u32 },
     Paused { uri: String, position_ms: u32 },
     EndOfTrack { uri: String },
+    ShuffleChanged { shuffle: bool },
+    RepeatChanged { repeat: RepeatState }
 }
 
 impl AudioEvent {
@@ -59,6 +62,25 @@ impl AudioEvent {
             } => {
                 let uri = spotify_uri_to_string(&track_id)?;
                 Some(Self::Playing { uri, position_ms })
+            }
+
+
+            LibrespotEvent::ShuffleChanged { shuffle } => {
+                Some(Self::ShuffleChanged { shuffle })
+            }
+
+            LibrespotEvent::RepeatChanged {
+                context,
+                track,
+            } => {
+                let repeat = if context {
+                    RepeatState::Context
+                } else if track {
+                    RepeatState::Track
+                } else {
+                    RepeatState::Off
+                };
+                Some(Self::RepeatChanged { repeat })
             }
 
             _ => None,

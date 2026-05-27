@@ -112,8 +112,7 @@ pub async fn start_audio_worker(
                             let _ = net_tx_delayed.send(ClientRequest::GetCurrentPlayback);
                         });
                     }
-
-                    // TODO: add volume, repeat and shuffle event for dynamic ui update
+                    _ => {}
                 }
 
                 // send signal to ui immediately (sth like change track for lyrics page)
@@ -155,6 +154,11 @@ pub async fn start_audio_worker(
         let _ = spirc.activate();
         load_spirc_from_cache(&spirc, ".spotty_cache/playback.json", mixer.clone());
     }
+
+    tokio::spawn(async move {
+        tokio::time::sleep(Duration::from_millis(300)).await;
+        let _ = net_tx_clone.send(ClientRequest::GetDevices);
+    });
 
     // command loop
     tokio::spawn(async move {

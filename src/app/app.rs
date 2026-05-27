@@ -7,7 +7,10 @@ use crate::app::home_state::HomeTab;
 use crate::app::splash_state::SplashState;
 use crate::app::playbar_state::PlaybarState;
 use crate::app::device_state::DeviceState;
-use crate::app::types::{ActionMenu, ActiveBlock, PlaylistSelector, StatefulList, StatefulTable};
+use crate::app::types::{
+    ActionMenu, ActiveBlock, PlaylistSelector,
+    StatefulList, StatefulTable, AppCache
+};
 use crate::app::route::Route;
 use crate::app::state::SharedState;
 use crate::app::library_state::*;
@@ -23,6 +26,7 @@ pub struct App {
     pub route: Route,
     pub active_block: ActiveBlock,
     pub history: Vec<(Route, ActiveBlock)>, // store history about Route and ActiveBlock
+    pub app_cache: AppCache,
     pub device_state: DeviceState,
     // Limit for each Spotify Web Api page fetch
     pub page_limit: u32,
@@ -46,9 +50,12 @@ pub struct App {
     pub playbar: PlaybarState,
 
     pub track_ended: bool,
+    pub pending_device_claim: bool,
 }
 
 impl App {
+    pub const APP_CACHE_PATH: &str = ".spotty_cache/app_cache.json";
+
     pub fn new(
         network_tx: mpsc::UnboundedSender<ClientRequest>,
         audio_event_rx: mpsc::UnboundedReceiver<AudioEvent>,
@@ -60,12 +67,14 @@ impl App {
         let _ = network_tx.send(ClientRequest::GetCurrentUser);
         let _ = network_tx.send(ClientRequest::GetCurrentPlayback);
         let _ = network_tx.send(ClientRequest::GetUserPlaylists { limit: page_limit, offset: 0 });
-        let _ = network_tx.send(ClientRequest::GetDevices);
+
+        let app_cache = AppCache::load(Self::APP_CACHE_PATH).unwrap_or_default();
 
         Self {
             route: Route::Splash(SplashState::new()),
             active_block: ActiveBlock::LibraryMenu,
             history: vec![],
+            app_cache,
             device_state: DeviceState::default(),
             page_limit,
 
@@ -96,6 +105,7 @@ impl App {
             playbar: PlaybarState::new(),
 
             track_ended: false,
+            pending_device_claim: false,
         }
     }
 
@@ -203,6 +213,20 @@ impl App {
                         pb.is_playing = false;
                     }
                 }
+
+                AudioEvent::ShuffleChanged { shuffle } => {
+                    if let Some(pb) = &mut self.playback
+                    && let Some(context_uri) = &pb.context_uri {
+                        self.app_cache.shuffle_state.insert(context_uri.to_string(), shuffle);
+                        pb.shuffle_state = shuffle;
+                    }
+                }
+
+                AudioEvent::RepeatChanged { repeat } => {
+                    if let Some(pb) = &mut self.playback {
+                        pb.repeat_state = repeat;
+                    }
+                }
             }
         }
 
@@ -237,11 +261,27 @@ impl App {
 
             if let Some(device_state) = shared_state.devices.take() {
                 self.device_state = device_state;
+                
                 // Claim the playback if there is no active device
-                if self.device_state.active_device_id().is_none() {
+                if self.device_state.active_device_id().is_some() {
+                    self.pending_device_claim = false;
+                }
+                else if !self.pending_device_claim {
+                    self.pending_device_claim = true;
+                    
+                    let id_opt = self.device_state.local_device_id();
                     let _ = self.network_tx.send(ClientRequest::TransferPlayback {
-                        device_id: self.device_state.local_device_id(),
+                        device_id: id_opt.clone(),
                         should_play: false
+                    });
+                    
+                    if let Some(id) = id_opt {
+                        self.device_state.set_active_device_optimistic(&id);
+                    }
+                    let net_tx = self.network_tx.clone();
+                    tokio::spawn(async move {
+                        tokio::time::sleep(Duration::from_millis(400)).await;
+                        let _ = net_tx.send(ClientRequest::GetDevices);
                     });
                 }
             }

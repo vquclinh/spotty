@@ -33,6 +33,21 @@ use crate::audio::player::*;
 
 use crate::app::state::IoSharedState;
 
+#[macro_export]
+macro_rules! log_to_file {
+    ($file:expr, $($arg:tt)*) => {{
+        use ::std::io::Write;
+        
+        let mut file = ::std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open($file)
+            .expect("Failed to open the log file");
+            
+        ::std::writeln!(file, $($arg)*).expect("Failed to write to the log file");
+    }};
+}
+
 pub async fn run() -> Result<()> {
     // when app crash, call disable_raw_mode()
     panic::set_hook(Box::new(|info| {
@@ -112,6 +127,9 @@ pub async fn run() -> Result<()> {
             last_tick = Instant::now();
         }
     }
+
+    let _ = std::fs::create_dir_all(".spotty_cache");
+    let _ = app.app_cache.save(App::APP_CACHE_PATH);
 
     disable_raw_mode()?;
     execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
