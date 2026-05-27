@@ -1,17 +1,16 @@
 use crate::app::{ActiveBlock, App, Route};
 use crate::app::home_state::HomeState;
 use crate::app::search_state::SearchState;
+use crate::app::types::MenuAction;
+use crate::app::album_state::AlbumState;
+use super::{global, home, playlist};
 use crate::handlers::{album, library, playbar, queue, search, sidebar, lyrics};
 use crate::network::models::*;
 use crate::network::request::{PlayerRequest, ClientRequest};
+
 use crossterm::event::{KeyEvent, KeyCode};
-
-use super::{global, home, playlist};
-use crate::app::types::MenuAction;
-
-use crate::app::album_state::AlbumState;
-
 use librespot_connect::{LoadRequestOptions, PlayingTrack};
+use std::time::Duration;
 
 pub fn handle_key_events(key: KeyEvent, app: &mut App) {
     if app.show_help {
@@ -98,12 +97,20 @@ pub fn handle_key_events(key: KeyEvent, app: &mut App) {
                 if let Some(idx) = app.device_state.online_devices.state.selected()
                 && !selecting_active_device(idx) {
                     app.device_state.online_devices.state.select(Some(idx));
+                    let id_opt = app.device_state.device_id_from_idx(idx);
                     let _ = app.network_tx.send(ClientRequest::TransferPlayback {
-                        device_id: app.device_state.device_id_from_idx(idx),
+                        device_id: id_opt.clone(),
                         should_play: false
                     });
-                    // Fetch devices again to ensure active device is updated
-                    let _ = app.network_tx.send(ClientRequest::GetDevices);
+                    // Optimistic update -> Delayed fetch to ensure accurate device state
+                    if let Some(id) = id_opt {
+                        app.device_state.set_active_device_optimistic(&id);
+                    }
+                    let net_tx = app.network_tx.clone();
+                    tokio::spawn(async move {
+                        tokio::time::sleep(Duration::from_millis(400)).await;
+                        let _ = net_tx.send(ClientRequest::GetDevices);
+                    });
                     
                     app.show_device_selector = false;
                 }
@@ -191,24 +198,33 @@ fn execute_action_menu_command(app: &mut App) -> bool {
                         MenuTarget::Track(_) | MenuTarget::Episode(_) => {
                             match &app.route {
                                 Route::PlaylistDetail(s) => {
-                                    let index = s.tracks.state.selected().map(|i| i as u32);
-                                    let context_options = app.playback.as_ref()
-                                        .map(|pb| pb.to_librespot_options(false));
+                                    let context_options = app.playback.as_ref().map(|pb| {
+                                        let shuffle = app.app_cache.shuffle_state
+                                            .get(&s.playlist.uri)
+                                            .copied()
+                                            .unwrap_or(false);
+                                        pb.to_librespot_options(shuffle)
+
+                                    });
                                     let opts = LoadRequestOptions {
                                         start_playing: true,
-                                        playing_track: index.map(PlayingTrack::Index),
+                                        playing_track: Some(PlayingTrack::Uri(u)),
                                         context_options,
                                         ..Default::default()
                                     };
                                     PlayerRequest::PlayContext(s.playlist.uri.clone(), opts)
                                 }
                                 Route::AlbumDetail(s) => {
-                                    let index = s.tracks.state.selected().map(|i| i as u32);
-                                    let context_options = app.playback.as_ref()
-                                        .map(|pb| pb.to_librespot_options(false));
+                                    let context_options = app.playback.as_ref().map(|pb| {
+                                        let shuffle = app.app_cache.shuffle_state
+                                            .get(&s.album.uri)
+                                            .copied()
+                                            .unwrap_or(false);
+                                        pb.to_librespot_options(shuffle)
+                                    });
                                     let opts = LoadRequestOptions {
                                         start_playing: true,
-                                        playing_track: index.map(PlayingTrack::Index),
+                                        playing_track: Some(PlayingTrack::Uri(u)),
                                         context_options,
                                         ..Default::default()
                                     };
@@ -218,8 +234,12 @@ fn execute_action_menu_command(app: &mut App) -> bool {
                             }
                         }
                         MenuTarget::Album(_) | MenuTarget::Playlist(_) | MenuTarget::Artist(_) => {
+                            let shuffle = app.app_cache.shuffle_state
+                                .get(&u)
+                                .copied()
+                                .unwrap_or(false);
                             let context_options = app.playback.as_ref()
-                                .map(|pb| pb.to_librespot_options(false));
+                                .map(|pb| pb.to_librespot_options(shuffle));
                             let opts = LoadRequestOptions {
                                 start_playing: true,
                                 context_options,

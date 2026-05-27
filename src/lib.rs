@@ -5,7 +5,7 @@ pub mod network;
 pub mod ui;
 pub mod audio;
 
-use app::App;
+use app::{App, cache::AppCache};
 use crossterm::{
     execute,
     terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
@@ -33,6 +33,21 @@ use crate::audio::player::*;
 
 use crate::app::state::IoSharedState;
 
+#[macro_export]
+macro_rules! log_to_file {
+    ($file:expr, $($arg:tt)*) => {{
+        use ::std::io::Write;
+        
+        let mut file = ::std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open($file)
+            .expect("Failed to open the log file");
+            
+        ::std::writeln!(file, $($arg)*).expect("Failed to write to the log file");
+    }};
+}
+
 pub async fn run() -> Result<()> {
     // when app crash, call disable_raw_mode()
     panic::set_hook(Box::new(|info| {
@@ -59,12 +74,23 @@ pub async fn run() -> Result<()> {
         start_network_worker(network_client, network_rx, audio_cmd_tx_for_net, network_shared_state).await;
     });
 
+    // load app cache from disk
+    let app_cache = AppCache::load(App::APP_CACHE_PATH).unwrap_or_default();
+    let initial_volume = app_cache.volume;
+
     // audio
     let network_client = Arc::clone(&spotify_client);
     let net_tx_for_audio = network_tx.clone();
     let audio_shared_state = Arc::clone(&shared_state);
     tokio::spawn(async move {
-        if let Err(e) = start_audio_worker(network_client, audio_cmd_rx, audio_event_tx, net_tx_for_audio, audio_shared_state).await {
+        if let Err(e) = start_audio_worker(
+            network_client,
+            audio_cmd_rx,
+            audio_event_tx,
+            net_tx_for_audio,
+            audio_shared_state,
+            initial_volume,
+        ).await {
             let _ = std::fs::write("audio_crash.log", format!("Audio Worker crash:\n{:#?}", e));
         }
     });
@@ -76,7 +102,7 @@ pub async fn run() -> Result<()> {
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
-    let mut app = App::new(network_tx, audio_event_rx, Arc::clone(&shared_state));
+    let mut app = App::new(app_cache, network_tx, audio_event_rx, Arc::clone(&shared_state));
 
     let tick_rate = Duration::from_millis(50);
     let mut last_tick = Instant::now();
@@ -112,6 +138,9 @@ pub async fn run() -> Result<()> {
             last_tick = Instant::now();
         }
     }
+
+    let _ = std::fs::create_dir_all(".spotty_cache");
+    let _ = app.app_cache.save(App::APP_CACHE_PATH);
 
     disable_raw_mode()?;
     execute!(terminal.backend_mut(), LeaveAlternateScreen)?;

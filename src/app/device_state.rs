@@ -54,4 +54,12 @@ impl DeviceState {
             .get(idx)
             .and_then(|d| d.id.clone())
     }
+
+    // Used to optimistically update device state before sending
+    // the GetDevices request
+    pub fn set_active_device_optimistic(&mut self, id: &str) {
+        for d in self.online_devices.items.iter_mut() {
+            d.is_active = d.id.as_deref() == Some(id);
+        }
+    }
 }

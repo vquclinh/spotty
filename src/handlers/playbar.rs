@@ -1,5 +1,6 @@
 use crate::app::{ActiveBlock, App, route::Route};
 use crate::app::queue_state::QueueState;
+use crate::app::lyrics_state::LyricsState;
 use crate::app::playbar_state::PlaybarItem;
 use crate::network::request::{ClientRequest, PlayerRequest};
 use crate::network::models::RepeatState;
@@ -17,6 +18,7 @@ pub fn handle_playbar_events(key: KeyEvent, app: &mut App) {
             if let Some(pb) = &mut app.playback {
                 let vol = &mut pb.device.volume;
                 *vol = vol.saturating_sub(5);
+                app.app_cache.volume = *vol;
                 let _ = app.network_tx.send(ClientRequest::Player {
                     request: PlayerRequest::SetVolume(*vol),
                     is_active_device: app.device_state.is_active_device()
@@ -27,6 +29,7 @@ pub fn handle_playbar_events(key: KeyEvent, app: &mut App) {
             if let Some(pb) = &mut app.playback {
                 let vol = &mut pb.device.volume;
                 *vol = vol.saturating_add(5).min(100);
+                app.app_cache.volume = *vol;
                 let _ = app.network_tx.send(ClientRequest::Player {
                     request: PlayerRequest::SetVolume(*vol),
                     is_active_device: app.device_state.is_active_device()
@@ -37,11 +40,12 @@ pub fn handle_playbar_events(key: KeyEvent, app: &mut App) {
             let Some(playback) = &mut app.playback else { return };
 
             match app.playbar.hovered_item {
-                PlaybarItem::Volume => {
-                    // TODO
-                }
+                PlaybarItem::Volume => {}
                 PlaybarItem::Lyrics => {
-                    // TODO
+                    if !matches!(app.route, Route::Lyrics(_)) {
+                        app.set_current_route(Route::Lyrics(LyricsState::default()));
+                    }
+                    app.active_block = ActiveBlock::LyricsText;
                 }
                 PlaybarItem::Queue => {
                     if !matches!(app.route, Route::Queue(_)) {
@@ -52,6 +56,9 @@ pub fn handle_playbar_events(key: KeyEvent, app: &mut App) {
                 PlaybarItem::Shuffle => {
                     let shuffling = playback.shuffle_state;
                     playback.shuffle_state = !shuffling;
+                    if let Some(uri) = &playback.context_uri {
+                        app.app_cache.shuffle_state.insert(uri.clone(), !shuffling);
+                    }
                     let _ = app.network_tx.send(ClientRequest::Player {
                         request: PlayerRequest::ToggleShuffle(shuffling),
                         is_active_device: app.device_state.is_active_device()
