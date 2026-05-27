@@ -1,5 +1,6 @@
 use crate::app::{ActiveBlock, App, route::Route};
 use crate::app::queue_state::QueueState;
+use crate::app::lyrics_state::LyricsState;
 use crate::app::playbar_state::PlaybarItem;
 use crate::network::request::{ClientRequest, PlayerRequest};
 use crate::network::models::RepeatState;
@@ -37,11 +38,12 @@ pub fn handle_playbar_events(key: KeyEvent, app: &mut App) {
             let Some(playback) = &mut app.playback else { return };
 
             match app.playbar.hovered_item {
-                PlaybarItem::Volume => {
-                    // TODO
-                }
+                PlaybarItem::Volume => {}
                 PlaybarItem::Lyrics => {
-                    // TODO
+                    if !matches!(app.route, Route::Lyrics(_)) {
+                        app.set_current_route(Route::Lyrics(LyricsState::default()));
+                    }
+                    app.active_block = ActiveBlock::LyricsText;
                 }
                 PlaybarItem::Queue => {
                     if !matches!(app.route, Route::Queue(_)) {
