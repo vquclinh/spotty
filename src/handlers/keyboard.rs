@@ -191,24 +191,22 @@ fn execute_action_menu_command(app: &mut App) -> bool {
                         MenuTarget::Track(_) | MenuTarget::Episode(_) => {
                             match &app.route {
                                 Route::PlaylistDetail(s) => {
-                                    let index = s.tracks.state.selected().map(|i| i as u32);
                                     let context_options = app.playback.as_ref()
                                         .map(|pb| pb.to_librespot_options(false));
                                     let opts = LoadRequestOptions {
                                         start_playing: true,
-                                        playing_track: index.map(PlayingTrack::Index),
+                                        playing_track: Some(PlayingTrack::Uri(u)),
                                         context_options,
                                         ..Default::default()
                                     };
                                     PlayerRequest::PlayContext(s.playlist.uri.clone(), opts)
                                 }
                                 Route::AlbumDetail(s) => {
-                                    let index = s.tracks.state.selected().map(|i| i as u32);
                                     let context_options = app.playback.as_ref()
                                         .map(|pb| pb.to_librespot_options(false));
                                     let opts = LoadRequestOptions {
                                         start_playing: true,
-                                        playing_track: index.map(PlayingTrack::Index),
+                                        playing_track: Some(PlayingTrack::Uri(u)),
                                         context_options,
                                         ..Default::default()
                                     };
