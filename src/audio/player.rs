@@ -40,7 +40,13 @@ pub enum AudioCommand {
 
 // convert volume to librespot volume
 pub fn percent_to_librespot_volume(percent: u8) -> u16 {
-    (f64::from(percent.min(100)) / 100.0 * 65535.0).round() as u16
+    let p = percent.min(100) as f64 / 100.0;
+    (p * 65535.0).ceil() as u16
+}
+
+pub fn librespot_volume_to_percent(volume: u16) -> u8 {
+    let percent = ((volume as u32 * 100) / 65535) as u8;
+    percent.min(100)
 }
 
 // start_audio_worker

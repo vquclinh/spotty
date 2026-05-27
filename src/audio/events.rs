@@ -1,6 +1,7 @@
 use librespot_core::{spotify_uri::SpotifyUri, SpotifyUri as SpotifyUriEnum};
 use librespot_playback::player::PlayerEvent as LibrespotEvent;
 use crate::network::models::RepeatState;
+use super::player::librespot_volume_to_percent;
 
 // helper (delete all SpotifyUriEnum except Track and Episode)
 fn spotify_uri_to_string(uri: &SpotifyUri) -> Option<String> {
@@ -66,8 +67,7 @@ impl AudioEvent {
             }
             
             LibrespotEvent::VolumeChanged { volume } => {
-                let percent = ((volume as f64 / 65535.0) * 100.0).round() as u8;
-                Some(Self::VolumeChanged { volume: percent.min(100) })
+                Some(Self::VolumeChanged { volume: librespot_volume_to_percent(volume) })
             }
 
             LibrespotEvent::ShuffleChanged { shuffle } => {
