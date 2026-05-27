@@ -50,6 +50,7 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
         if key.code == KeyCode::Char('-') {
             let vol = &mut playback.device.volume;
             *vol = vol.saturating_sub(5);
+            app.app_cache.volume = *vol;
             let _ = app.network_tx.send(ClientRequest::Player {
                 request: PlayerRequest::SetVolume(*vol),
                 is_active_device: app.device_state.is_active_device()
@@ -59,6 +60,7 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
         if key.code == KeyCode::Char('+') {
             let vol = &mut playback.device.volume;
             *vol = vol.saturating_add(5).min(100);
+            app.app_cache.volume = *vol;
             let _ = app.network_tx.send(ClientRequest::Player {
                 request: PlayerRequest::SetVolume(*vol),
                 is_active_device: app.device_state.is_active_device()

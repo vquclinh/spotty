@@ -1,10 +1,5 @@
 use ratatui::widgets::TableState;
 use ratatui::widgets::ListState;
-use std::collections::HashMap;
-use std::fs;
-use std::path::Path;
-use serde::{Serialize, Deserialize};
-use anyhow::Result;
 use crate::network::models::MenuTarget;
 use crate::network::models::*;
 use crate::app::Route;
@@ -176,37 +171,6 @@ impl ActionMenu {
             None => 0,
         };
         self.state.select(Some(i));
-    }
-}
-
-// ----------------------------- App Cache ---------------------------------
-#[derive(Debug, Serialize, Deserialize)]
-pub struct AppCache {
-    pub shuffle_state: HashMap<String, bool>,
-    pub volume: u8
-}
-
-impl AppCache {
-    pub fn save<P: AsRef<Path>>(&self, path: P) -> Result<()> {
-        let data = serde_json::to_string(self)?;
-        
-        fs::write(path, data)?;
-        Ok(())
-    }
-
-    pub fn load<P: AsRef<Path>>(path: P) -> Result<Self> {
-        let data = fs::read_to_string(path)?;
-        
-        Ok(serde_json::from_str(&data)?)
-    }
-}
-
-impl Default for AppCache {
-    fn default() -> Self {
-        Self {
-            shuffle_state: HashMap::new(),
-            volume: 50
-        }
     }
 }
 

@@ -19,6 +19,7 @@ pub enum AudioEvent {
     Playing { uri: String, position_ms: u32 },
     Paused { uri: String, position_ms: u32 },
     EndOfTrack { uri: String },
+    VolumeChanged { volume: u8 },
     ShuffleChanged { shuffle: bool },
     RepeatChanged { repeat: RepeatState }
 }
@@ -63,7 +64,11 @@ impl AudioEvent {
                 let uri = spotify_uri_to_string(&track_id)?;
                 Some(Self::Playing { uri, position_ms })
             }
-
+            
+            LibrespotEvent::VolumeChanged { volume } => {
+                let percent = ((volume as f64 / 65535.0) * 100.0).round() as u8;
+                Some(Self::VolumeChanged { volume: percent.min(100) })
+            }
 
             LibrespotEvent::ShuffleChanged { shuffle } => {
                 Some(Self::ShuffleChanged { shuffle })

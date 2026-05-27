@@ -176,7 +176,6 @@ pub struct PlaybackContext {
     pub progress: Duration,
     pub repeat_state: RepeatState,
     pub shuffle_state: bool,
-    pub volume: u8
 }
 
 impl Default for PlaybackContext {
@@ -187,7 +186,6 @@ impl Default for PlaybackContext {
             progress: Duration::ZERO,
             repeat_state: RepeatState::Off,
             shuffle_state: false,
-            volume: 50
         }
     }
 }
@@ -196,7 +194,6 @@ impl PlaybackContext {
     pub fn from_playback(pb: &Playback) -> Self {
         Self {
             playing_track_uri: pb.item.as_ref().map(|i| i.uri().to_string()),
-            volume: pb.device.volume,
             context_uri: pb.context_uri.clone(),
             progress: pb.progress,
             repeat_state: pb.repeat_state,

@@ -50,12 +50,13 @@ pub async fn start_audio_worker(
     event_tx: mpsc::UnboundedSender<AudioEvent>, // send event signal to UI
     net_tx: mpsc::UnboundedSender<ClientRequest>, // send request fetch API to network
     shared_state: SharedState,
+    initial_volume_percent: u8,
 ) -> anyhow::Result<()> {
     // mixer
     let mixer = Arc::new(
         SoftMixer::open(MixerConfig::default()).context("Failed to open SoftMixer")?,
     );
-    let initial_volume = percent_to_librespot_volume(50);
+    let initial_volume = percent_to_librespot_volume(initial_volume_percent);
     mixer.set_volume(initial_volume);
 
     // backend + player
@@ -152,7 +153,7 @@ pub async fn start_audio_worker(
     
     if playback.is_none() {
         let _ = spirc.activate();
-        load_spirc_from_cache(&spirc, ".spotty_cache/playback.json", mixer.clone());
+        load_spirc_from_cache(&spirc, ".spotty_cache/playback.json");
     }
 
     tokio::spawn(async move {
@@ -237,7 +238,7 @@ pub async fn start_audio_worker(
     Ok(())
 }
 
-fn load_spirc_from_cache(spirc: &Spirc, cache_path: &str, mixer: Arc<SoftMixer>) {
+fn load_spirc_from_cache(spirc: &Spirc, cache_path: &str) {
     match std::fs::read_to_string(cache_path) {
         Ok(cache_data) => {
             match serde_json::from_str::<PlaybackContext>(&cache_data) {
@@ -256,11 +257,7 @@ fn load_spirc_from_cache(spirc: &Spirc, cache_path: &str, mixer: Arc<SoftMixer>)
                         );
 
                         let _ = spirc.load(req);
-
-                        let vol = percent_to_librespot_volume(cache.volume);
-                        mixer.set_volume(vol);
-                        let _ = spirc.set_volume(vol);
-
+                        
                     } else if let Some(track_uri) = &cache.playing_track_uri {
                         // Fallback for single tracks without context
                         let context_options = Some(cache.to_librespot_options());
@@ -274,10 +271,6 @@ fn load_spirc_from_cache(spirc: &Spirc, cache_path: &str, mixer: Arc<SoftMixer>)
                             },
                         );
                         let _ = spirc.load(req);
-
-                        let vol = percent_to_librespot_volume(cache.volume);
-                        mixer.set_volume(vol);
-                        let _ = spirc.set_volume(vol);
 
                     } else {
                         let _ = std::fs::write("cache_debug.log", "Cache read ok, but both context_uri and playing_track_uri were empty");

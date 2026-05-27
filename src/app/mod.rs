@@ -3,6 +3,7 @@ pub mod route;
 
 pub mod types;
 pub mod state;
+pub mod cache;
 
 pub mod search_state;
 pub mod home_state;

@@ -9,12 +9,13 @@ use crate::app::playbar_state::PlaybarState;
 use crate::app::device_state::DeviceState;
 use crate::app::types::{
     ActionMenu, ActiveBlock, PlaylistSelector,
-    StatefulList, StatefulTable, AppCache
+    StatefulList, StatefulTable
 };
 use crate::app::route::Route;
 use crate::app::state::SharedState;
 use crate::app::library_state::*;
 use crate::app::state::DataPayload;
+use crate::app::cache::AppCache;
 
 use crate::network::models::*;
 use crate::network::request::ClientRequest;
@@ -57,6 +58,7 @@ impl App {
     pub const APP_CACHE_PATH: &str = ".spotty_cache/app_cache.json";
 
     pub fn new(
+        app_cache: AppCache,
         network_tx: mpsc::UnboundedSender<ClientRequest>,
         audio_event_rx: mpsc::UnboundedReceiver<AudioEvent>,
         shared_state: SharedState,
@@ -67,8 +69,6 @@ impl App {
         let _ = network_tx.send(ClientRequest::GetCurrentUser);
         let _ = network_tx.send(ClientRequest::GetCurrentPlayback);
         let _ = network_tx.send(ClientRequest::GetUserPlaylists { limit: page_limit, offset: 0 });
-
-        let app_cache = AppCache::load(Self::APP_CACHE_PATH).unwrap_or_default();
 
         Self {
             route: Route::Splash(SplashState::new()),
@@ -211,6 +211,13 @@ impl App {
                     self.track_ended = true;
                     if let Some(pb) = &mut self.playback {
                         pb.is_playing = false;
+                    }
+                }
+
+                AudioEvent::VolumeChanged { volume } => {
+                    if let Some(pb) = &mut self.playback {
+                        self.app_cache.volume = volume;
+                        pb.device.volume = volume;
                     }
                 }
 

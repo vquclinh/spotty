@@ -18,6 +18,7 @@ pub fn handle_playbar_events(key: KeyEvent, app: &mut App) {
             if let Some(pb) = &mut app.playback {
                 let vol = &mut pb.device.volume;
                 *vol = vol.saturating_sub(5);
+                app.app_cache.volume = *vol;
                 let _ = app.network_tx.send(ClientRequest::Player {
                     request: PlayerRequest::SetVolume(*vol),
                     is_active_device: app.device_state.is_active_device()
@@ -28,6 +29,7 @@ pub fn handle_playbar_events(key: KeyEvent, app: &mut App) {
             if let Some(pb) = &mut app.playback {
                 let vol = &mut pb.device.volume;
                 *vol = vol.saturating_add(5).min(100);
+                app.app_cache.volume = *vol;
                 let _ = app.network_tx.send(ClientRequest::Player {
                     request: PlayerRequest::SetVolume(*vol),
                     is_active_device: app.device_state.is_active_device()
@@ -54,6 +56,9 @@ pub fn handle_playbar_events(key: KeyEvent, app: &mut App) {
                 PlaybarItem::Shuffle => {
                     let shuffling = playback.shuffle_state;
                     playback.shuffle_state = !shuffling;
+                    if let Some(uri) = &playback.context_uri {
+                        app.app_cache.shuffle_state.insert(uri.clone(), !shuffling);
+                    }
                     let _ = app.network_tx.send(ClientRequest::Player {
                         request: PlayerRequest::ToggleShuffle(shuffling),
                         is_active_device: app.device_state.is_active_device()
