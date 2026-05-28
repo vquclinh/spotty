@@ -308,7 +308,7 @@ fn execute_action_menu_command(app: &mut App) -> bool {
                     if let Some(idx) = route.tracks.state.selected() {
                         let len = route.tracks.items.len();
                         if idx >= len {
-                            route.tracks.state.select(Some(len - 1));
+                            route.tracks.state.select(len.checked_sub(1));
                         }
                     }
 
@@ -393,7 +393,7 @@ fn execute_action_menu_command(app: &mut App) -> bool {
                         if let Some((len, list_state)) = state_info
                         && let Some(idx) = list_state.selected()
                         && idx >= len {
-                            list_state.select(Some(len - 1));
+                            list_state.select(len.checked_sub(1));
                         }
                     }
                 }
