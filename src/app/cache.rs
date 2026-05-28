@@ -23,6 +23,10 @@ impl AppCache {
         
         Ok(serde_json::from_str(&data)?)
     }
+
+    pub fn shuffle(&self, context_uri: &str) -> bool {
+        self.shuffle_state.get(context_uri).copied().unwrap_or(false)
+    }
 }
 
 impl Default for AppCache {

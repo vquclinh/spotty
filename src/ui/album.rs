@@ -32,7 +32,6 @@ pub fn draw(f: &mut Frame, state: &mut AlbumState, active_block: &ActiveBlock, a
     let info_max = info_width.saturating_sub(20);
 
     // --------------------------------------- Album Info -----------------------------
-    // --------------------------------------- Album Info -----------------------------
     let artists_full = state.album.artists.iter().map(|a| a.name.as_str()).collect::<Vec<_>>().join(", ");
     let release_date = state.album.release_date.as_deref().unwrap_or("Unknown Date");
 

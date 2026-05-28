@@ -9,7 +9,7 @@ use crate::app::playbar_state::PlaybarState;
 use crate::app::device_state::DeviceState;
 use crate::app::types::{
     ActionMenu, ActiveBlock, PlaylistSelector,
-    StatefulList, StatefulTable
+    StatefulList, StatefulTable, QuickAction
 };
 use crate::app::route::Route;
 use crate::app::state::SharedState;
@@ -47,6 +47,7 @@ pub struct App {
     pub show_device_selector: bool,
     pub action_menu: ActionMenu,
     pub playlist_selector: PlaylistSelector,
+    pub quick_actions: Vec<QuickAction>,
 
     pub playbar: PlaybarState,
 
@@ -101,6 +102,7 @@ impl App {
 
             action_menu: ActionMenu::new(),
             playlist_selector: PlaylistSelector::new(),
+            quick_actions: Vec::new(),
 
             playbar: PlaybarState::new(),
 
@@ -110,7 +112,7 @@ impl App {
     }
 
     pub fn set_current_route(&mut self, route: Route) {
-        self.history.push((self.route.clone(), self.active_block.clone()));
+        // self.history.push((self.route.clone(), self.active_block.clone()));
 
         #[allow(clippy::single_match)]
         match &route {
@@ -457,6 +459,32 @@ impl App {
                 _ => {}
             }
         }
+    }
+
+    pub fn update_quick_actions(&mut self) {
+        let actions = &mut self.quick_actions;
+        actions.clear();
+        match &self.route {
+            Route::PlaylistDetail(s) => {
+                actions.push(QuickAction::PlayContext);
+                if self.app_cache.shuffle(&s.playlist.uri) {
+                    actions.push(QuickAction::UnshuffleContext);
+                } else {
+                    actions.push(QuickAction::ShuffleContext);
+                }
+            }
+            Route::AlbumDetail(s) => {
+                actions.push(QuickAction::PlayContext);
+                actions.push(QuickAction::SaveContext);
+                if self.app_cache.shuffle(&s.album.uri) {
+                    actions.push(QuickAction::UnshuffleContext);
+                } else {
+                    actions.push(QuickAction::ShuffleContext);
+                }
+            }
+            _ => {}
+        }
+        actions.push(QuickAction::TransferPlayback);
     }
 }
 

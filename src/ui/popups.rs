@@ -178,7 +178,7 @@ pub fn draw_playlist_selector(f: &mut Frame, app: &mut App, action_menu_area: Re
 }
 
 // ------------------------------------------- Quick Actions ------------------------------------
-pub fn draw_quick_actions(f: &mut Frame, area: Rect) {
+pub fn draw_quick_actions(f: &mut Frame, app: &App, area: Rect) {
     let layout = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
@@ -199,23 +199,41 @@ pub fn draw_quick_actions(f: &mut Frame, area: Rect) {
         
     let popup_area = layout[1];
 
-    let rows = vec![
-        Row::new(vec![
-            "h → Go to Home",
-            "n → Next track",
-            "t → Transfer Playback"
-        ]),
-        Row::new(vec![
-            "s → Go to Search",
-            "p → Previous track",
-        ]),
-    ];
+    let actions: Vec<String> = if app.quick_actions.is_empty() {
+        vec!["No quick actions available".to_string()]
+    } else {
+        app.quick_actions
+            .iter()
+            .map(|action| format!(
+                "{} → {}",
+                action.keycode().to_string(),
+                action.as_str()
+            ))
+            .collect()
+    };
 
-    let widths = [
-        Constraint::Ratio(1, 3),
-        Constraint::Ratio(1, 3),
-        Constraint::Ratio(1, 3),
-    ];
+    let column_count = if actions.len() <= 2 {
+        1
+    } else if actions.len() <= 4 {
+        2
+    } else {
+        3
+    };
+
+    let rows: Vec<Row> = actions
+        .chunks(column_count)
+        .map(|chunk| {
+            let mut cells: Vec<String> = chunk.iter().cloned().collect();
+            while cells.len() < column_count {
+                cells.push(String::new());
+            }
+            Row::new(cells)
+        })
+        .collect();
+
+    let widths: Vec<Constraint> = (0..column_count)
+        .map(|_| Constraint::Ratio(1, column_count as u32))
+        .collect();
 
     let block = Block::default()
         .title(" Quick Actions ")
