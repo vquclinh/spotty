@@ -432,8 +432,7 @@ fn build_play_context_request(context_uri: &str, track_uri: Option<&str>, app: &
         pb.to_librespot_options(shuffle)
     });
     let playing_track = track_uri
-        .map(|u| Some(PlayingTrack::Uri(u.to_string())))
-        .flatten();
+        .map(|u| PlayingTrack::Uri(u.to_string()));
     let opts = LoadRequestOptions {
         start_playing: true,
         playing_track,
