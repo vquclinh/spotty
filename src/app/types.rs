@@ -1,5 +1,5 @@
-use ratatui::widgets::TableState;
-use ratatui::widgets::ListState;
+use ratatui::widgets::{TableState, ListState};
+use crossterm::event::KeyCode;
 use crate::network::models::MenuTarget;
 use crate::network::models::*;
 use crate::app::Route;
@@ -54,6 +54,37 @@ impl MenuAction {
             MenuAction::FollowArtist => "Follow Artist",
             MenuAction::UnfollowArtist => "Unfollow Artist",
             MenuAction::ViewDetails => "View Details",
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum QuickAction {
+    TransferPlayback,
+    
+    ShuffleContext,
+    UnshuffleContext,
+    PlayContext,
+    SaveContext,
+}
+
+impl QuickAction {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::TransferPlayback => "Transfer Playback",
+            Self::ShuffleContext => "Shuffle this Context",
+            Self::UnshuffleContext => "Unshuffle this Context",
+            Self::PlayContext => "Play this Context",
+            Self::SaveContext => "Save Context to Library",
+        }
+    }
+
+    pub fn keycode(&self) -> KeyCode {
+        match self {
+            Self::TransferPlayback => KeyCode::Char('t'),
+            Self::ShuffleContext | Self::UnshuffleContext => KeyCode::Char('s'),
+            Self::PlayContext => KeyCode::Enter,
+            Self::SaveContext => KeyCode::Char('l'),
         }
     }
 }

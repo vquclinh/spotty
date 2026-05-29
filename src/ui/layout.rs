@@ -47,14 +47,55 @@ pub fn draw(f: &mut Frame, app: &mut App) {
             sidebar::draw(f, app, content_chunks[0]);
 
             match &mut app.route {
-                Route::Home(home_state) => home::draw(f, home_state, &app.active_block, content_chunks[1]),
-                Route::Queue(queue_state) => queue::draw(f, queue_state, &app.active_block, content_chunks[1]),
-                Route::AlbumDetail(album_state) => album::draw(f, album_state, &app.active_block, content_chunks[1]),
-                Route::PlaylistDetail(playlist_state) => playlist::draw(f, playlist_state, &app.active_block, content_chunks[1]),
-                Route::LikedSongs(liked_songs_state) => library::draw_liked_songs(f, liked_songs_state, &app.active_block, content_chunks[1]),
-                Route::SavedAlbums(saved_albums_state) => library::draw_saved_albums(f, saved_albums_state, &app.active_block, content_chunks[1]),
-                Route::SavedArtists(saved_artists_state) => library::draw_saved_artists(f, saved_artists_state, &app.active_block, content_chunks[1]),
-                Route::SavedPodcasts(saved_podcasts_state) => library::draw_saved_podcasts(f, saved_podcasts_state, &app.active_block, content_chunks[1]),
+                Route::Home(home_state) => home::draw(
+                    f,
+                    home_state,
+                    &app.active_block,
+                    content_chunks[1]
+                ),
+                Route::Queue(queue_state) => queue::draw(
+                    f,
+                    queue_state,
+                    &app.active_block,
+                    content_chunks[1]
+                ),
+                Route::AlbumDetail(album_state) => album::draw(
+                    f,
+                    album_state,
+                    &app.active_block,
+                    content_chunks[1]
+                ),
+                Route::PlaylistDetail(playlist_state) => playlist::draw(
+                    f,
+                    playlist_state,
+                    &app.active_block,
+                    &app.app_cache.shuffle_state,
+                    content_chunks[1]
+                ),
+                Route::LikedSongs(liked_songs_state) => library::draw_liked_songs(
+                    f,
+                    liked_songs_state,
+                    &app.active_block,
+                    content_chunks[1]
+                ),
+                Route::SavedAlbums(saved_albums_state) => library::draw_saved_albums(
+                    f,
+                    saved_albums_state,
+                    &app.active_block,
+                    content_chunks[1]
+                ),
+                Route::SavedArtists(saved_artists_state) => library::draw_saved_artists(
+                    f,
+                    saved_artists_state,
+                    &app.active_block,
+                    content_chunks[1]
+                ),
+                Route::SavedPodcasts(saved_podcasts_state) => library::draw_saved_podcasts(
+                    f,
+                    saved_podcasts_state,
+                    &app.active_block,
+                    content_chunks[1]
+                ),
                 _ => {}
             }
         }
@@ -63,7 +104,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     if app.show_help {
         popups::draw_help(f, f.area());
     } else if app.show_quick_actions {
-        popups::draw_quick_actions(f, f.area());
+        popups::draw_quick_actions(f, app, f.area());
     } else if app.show_device_selector {
         popups::draw_device_selector(f, app, f.area());
     }

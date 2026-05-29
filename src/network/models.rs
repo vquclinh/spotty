@@ -22,12 +22,11 @@ pub struct User {
     pub id: String,
     pub uri: String,
     pub display_name: String,
-
 }
 
 impl Default for User {
     fn default() -> Self {
-        Self { id: String::new(), uri: String::new(), display_name: String::from("User") }
+        Self { id: String::new(), uri: String::new(), display_name: String::from("Unknown") }
     }
 }
 

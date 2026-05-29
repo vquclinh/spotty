@@ -1,15 +1,24 @@
-use crate::app::playlist_state::PlaylistState;
-use crate::app::ActiveBlock;
 use ratatui::{
     Frame,
-    layout::{Constraint, Rect},
+    layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
-    widgets::{Block, Borders, Table, Row, HighlightSpacing},
+    text::{Line, Span},
+    widgets::{Block, Borders, Table, Row, HighlightSpacing, Paragraph, Padding},
 };
+use std::collections::HashMap;
+
+use crate::app::playlist_state::PlaylistState;
+use crate::app::ActiveBlock;
 use crate::network::models::*;
 use super::layout::truncate;
 
-pub fn draw(f: &mut Frame, state: &mut PlaylistState, active_block: &ActiveBlock, area: Rect) {
+pub fn draw(
+    f: &mut Frame,
+    state: &mut PlaylistState,
+    active_block: &ActiveBlock,
+    shuffle_state: &HashMap<String, bool>,
+    area: Rect
+) {
     let is_focused = *active_block == ActiveBlock::PlaylistTracks;
     let border_color = if is_focused { Color::LightCyan } else { Color::White };
 
@@ -20,12 +29,58 @@ pub fn draw(f: &mut Frame, state: &mut PlaylistState, active_block: &ActiveBlock
         .border_style(Style::default().fg(border_color));
 
     let inner_area = outer_block.inner(area);
-    
-    state.last_area = inner_area;
 
     f.render_widget(outer_block, area);
 
-    let table_width = inner_area.width;
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Length(5),
+            Constraint::Min(0),
+        ])
+        .split(inner_area);
+
+    let info_width = chunks[0].width;
+    let info_max = info_width.saturating_sub(22);
+
+    let owner_name = if state.playlist.owner.display_name.is_empty() {
+        "Unknown"
+    } else {
+        state.playlist.owner.display_name.as_str()
+    };
+    let is_shuffle_on = shuffle_state
+        .get(&state.playlist.uri)
+        .copied()
+        .unwrap_or(false);
+
+    let playlist_content = vec![
+        Line::from(vec![
+            Span::styled(" 🎶 Playlist: ", Style::default().fg(Color::LightGreen).add_modifier(Modifier::BOLD)),
+            Span::styled(truncate(&state.playlist.name, info_max), Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
+        ]),
+        Line::from(vec![
+            Span::raw("    👤 Owner: "),
+            Span::styled(truncate(owner_name, info_max), Style::default().fg(Color::White)),
+        ]),
+        Line::from(vec![
+            Span::raw("    🔀 Shuffle: "),
+            Span::styled(if is_shuffle_on { "On" } else { "Off" }, Style::default().fg(Color::DarkGray)),
+        ]),
+    ];
+
+    let playlist_info_widget = Paragraph::new(playlist_content)
+        .block(Block::default().padding(Padding::new(1, 1, 1, 0)));
+    f.render_widget(playlist_info_widget, chunks[0]);
+
+    let table_block = Block::default()
+        .title(" Tracks ")
+        .borders(Borders::TOP)
+        .border_style(Style::default().fg(border_color));
+
+    let table_area = table_block.inner(chunks[1]);
+    state.last_area = table_area;
+
+    let table_width = table_area.width;
     
     let title_max = ((table_width as f32 * 0.45) as u16).saturating_sub(6);
     let artist_max = ((table_width as f32 * 0.35) as u16).saturating_sub(2);
@@ -61,9 +116,10 @@ pub fn draw(f: &mut Frame, state: &mut PlaylistState, active_block: &ActiveBlock
 
     let table = Table::new(rows, widths)
         .header(header)
+        .block(table_block)
         .row_highlight_style(highlight_style)
         .highlight_symbol(if is_focused { "▶ " } else { "  " })
         .highlight_spacing(HighlightSpacing::Always);
 
-    f.render_stateful_widget(table, inner_area, &mut state.tracks.state);
+    f.render_stateful_widget(table, chunks[1], &mut state.tracks.state);
 }

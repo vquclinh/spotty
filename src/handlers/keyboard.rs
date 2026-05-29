@@ -1,6 +1,4 @@
 use crate::app::{ActiveBlock, App, Route};
-use crate::app::home_state::HomeState;
-use crate::app::search_state::SearchState;
 use crate::app::types::MenuAction;
 use crate::app::album_state::AlbumState;
 use super::{global, home, playlist};
@@ -19,20 +17,50 @@ pub fn handle_key_events(key: KeyEvent, app: &mut App) {
     }
 
     if app.show_quick_actions {
-        match key.code {
-            KeyCode::Char('h') => {
-                app.set_current_route(Route::Home(HomeState::default()));
-                app.active_block = ActiveBlock::HomeBlock;
-            }
-            KeyCode::Char('s') => {
-                app.set_current_route(Route::Search(SearchState::default()));
-                app.active_block = ActiveBlock::SearchInput;
-            }
+        // Handle global keybinds first, early return if success
+        if match key.code {
             KeyCode::Char('t') if !app.show_device_selector => {
                 let _ = app.network_tx.send(ClientRequest::GetDevices);
                 app.show_device_selector = true;
+                true
             }
-            _ => {}
+            _ => false
+        } {
+            app.show_quick_actions = false;
+            return;
+        }
+
+        if let Some(uri) = match &app.route {
+            Route::AlbumDetail(s) => Some(s.album.uri.clone()),
+            Route::PlaylistDetail(s) => Some(s.playlist.uri.clone()),
+            _ => None
+        } {
+            match key.code {
+                KeyCode::Char('s') => {
+                    let shuffle = app.app_cache.shuffle(&uri);
+                    app.app_cache.shuffle_state.insert(uri.clone(), !shuffle);
+                    if let Some(pb) = &app.playback
+                    && let Some(context_uri) = &pb.context_uri
+                    && *context_uri == uri {
+                        let _ = app.network_tx.send(ClientRequest::Player {
+                            request: PlayerRequest::ToggleShuffle(shuffle),
+                            is_active_device: app.device_state.is_active_device()
+                        });
+                    }
+                }
+                KeyCode::Char('l') => {
+                    let _ = app.network_tx.send(
+                        ClientRequest::SaveItemsToLibrary(vec![uri])
+                    );
+                }
+                KeyCode::Enter => {
+                    let _ = app.network_tx.send(ClientRequest::Player {
+                        request: build_play_context_request(&uri, None, app),
+                        is_active_device: app.device_state.is_active_device()
+                    });
+                }
+                _ => {}
+            }
         }
         app.show_quick_actions = false;
         return;
@@ -174,8 +202,6 @@ pub fn handle_key_events(key: KeyEvent, app: &mut App) {
     }
 }
 
-// TODO: handle the AddToPlaylist action outside the function and
-// return nothing here
 fn execute_action_menu_command(app: &mut App) -> bool {
     let selected_action = app.action_menu.state.selected()
         .and_then(|idx| app.action_menu.actions.get(idx));
@@ -198,54 +224,16 @@ fn execute_action_menu_command(app: &mut App) -> bool {
                         MenuTarget::Track(_) | MenuTarget::Episode(_) => {
                             match &app.route {
                                 Route::PlaylistDetail(s) => {
-                                    let context_options = app.playback.as_ref().map(|pb| {
-                                        let shuffle = app.app_cache.shuffle_state
-                                            .get(&s.playlist.uri)
-                                            .copied()
-                                            .unwrap_or(false);
-                                        pb.to_librespot_options(shuffle)
-
-                                    });
-                                    let opts = LoadRequestOptions {
-                                        start_playing: true,
-                                        playing_track: Some(PlayingTrack::Uri(u)),
-                                        context_options,
-                                        ..Default::default()
-                                    };
-                                    PlayerRequest::PlayContext(s.playlist.uri.clone(), opts)
+                                    build_play_context_request(&s.playlist.uri, Some(&u), app)
                                 }
                                 Route::AlbumDetail(s) => {
-                                    let context_options = app.playback.as_ref().map(|pb| {
-                                        let shuffle = app.app_cache.shuffle_state
-                                            .get(&s.album.uri)
-                                            .copied()
-                                            .unwrap_or(false);
-                                        pb.to_librespot_options(shuffle)
-                                    });
-                                    let opts = LoadRequestOptions {
-                                        start_playing: true,
-                                        playing_track: Some(PlayingTrack::Uri(u)),
-                                        context_options,
-                                        ..Default::default()
-                                    };
-                                    PlayerRequest::PlayContext(s.album.uri.clone(), opts)
+                                    build_play_context_request(&s.album.uri, Some(&u), app)
                                 }
                                 _ => PlayerRequest::Play(u),
                             }
                         }
                         MenuTarget::Album(_) | MenuTarget::Playlist(_) | MenuTarget::Artist(_) => {
-                            let shuffle = app.app_cache.shuffle_state
-                                .get(&u)
-                                .copied()
-                                .unwrap_or(false);
-                            let context_options = app.playback.as_ref()
-                                .map(|pb| pb.to_librespot_options(shuffle));
-                            let opts = LoadRequestOptions {
-                                start_playing: true,
-                                context_options,
-                                ..Default::default()
-                            };
-                            PlayerRequest::PlayContext(u, opts)
+                            build_play_context_request(&u, None, app)
                         }
                     };
 
@@ -308,7 +296,7 @@ fn execute_action_menu_command(app: &mut App) -> bool {
                     if let Some(idx) = route.tracks.state.selected() {
                         let len = route.tracks.items.len();
                         if idx >= len {
-                            route.tracks.state.select(Some(len - 1));
+                            route.tracks.state.select(len.checked_sub(1));
                         }
                     }
 
@@ -393,7 +381,7 @@ fn execute_action_menu_command(app: &mut App) -> bool {
                         if let Some((len, list_state)) = state_info
                         && let Some(idx) = list_state.selected()
                         && idx >= len {
-                            list_state.select(Some(len - 1));
+                            list_state.select(len.checked_sub(1));
                         }
                     }
                 }
@@ -436,4 +424,20 @@ fn execute_add_to_playlist(app: &mut App) {
             });
         }
     }
+}
+
+fn build_play_context_request(context_uri: &str, track_uri: Option<&str>, app: &App) -> PlayerRequest {
+    let context_options = app.playback.as_ref().map(|pb| {
+        let shuffle = app.app_cache.shuffle(context_uri);
+        pb.to_librespot_options(shuffle)
+    });
+    let playing_track = track_uri
+        .map(|u| PlayingTrack::Uri(u.to_string()));
+    let opts = LoadRequestOptions {
+        start_playing: true,
+        playing_track,
+        context_options,
+        ..Default::default()
+    };
+    PlayerRequest::PlayContext(context_uri.to_string(), opts)
 }
