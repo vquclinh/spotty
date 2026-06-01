@@ -395,7 +395,17 @@ fn execute_action_menu_command(app: &mut App) -> bool {
             }
             MenuAction::UnfollowArtist => {
                 if let MenuTarget::Artist(_) = target && let Some(uri) = uri {
-                    let _ = app.network_tx.send(ClientRequest::RemoveItemsFromLibrary(vec![uri]));
+                    let _ = app.network_tx
+                        .send(ClientRequest::RemoveItemsFromLibrary(vec![uri.clone()]));
+                    if let Route::SavedArtists(s) = &mut app.route {
+                        s.artists.items.retain(|item| item.uri != uri);
+                        if let Some(idx) = s.artists.state.selected() {
+                            let len = s.artists.items.len();
+                            if idx >= len {
+                                s.artists.state.select(len.checked_sub(1));
+                            }
+                        }
+                    }
                 }
                 true
             }
