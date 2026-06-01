@@ -78,10 +78,10 @@ impl AudioEvent {
                 context,
                 track,
             } => {
-                let repeat = if context {
-                    RepeatState::Context
-                } else if track {
+                let repeat = if track {
                     RepeatState::Track
+                } else if context {
+                    RepeatState::Context
                 } else {
                     RepeatState::Off
                 };
