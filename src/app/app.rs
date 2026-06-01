@@ -69,7 +69,10 @@ impl App {
         // At initialization, send a request to get current playback and playlists
         let _ = network_tx.send(ClientRequest::GetCurrentUser);
         let _ = network_tx.send(ClientRequest::GetCurrentPlayback);
-        let _ = network_tx.send(ClientRequest::GetUserPlaylists { limit: page_limit, offset: 0 });
+        let _ = network_tx.send(ClientRequest::GetUserPlaylists {
+            limit: page_limit,
+            offset: 0
+        });
 
         Self {
             route: Route::Splash(SplashState::new()),
@@ -93,10 +96,10 @@ impl App {
             playback: None,
             // Initialize the items we want to have in the library menu
             library_menu: StatefulList::with_items(vec![
-                LibraryMenuItem::LikedSongs(LikedSongsState::new(vec![])),
-                LibraryMenuItem::SavedArtists(SavedArtistsState::new(vec![])),
-                LibraryMenuItem::SavedAlbums(SavedAlbumsState::new(vec![])),
-                LibraryMenuItem::SavedPodcasts(SavedPodcastsState::new(vec![]))
+                LibraryMenuItem::LikedSongs(LikedSongsState::default()),
+                LibraryMenuItem::SavedArtists(SavedArtistsState::default()),
+                LibraryMenuItem::SavedAlbums(SavedAlbumsState::default()),
+                LibraryMenuItem::SavedPodcasts(SavedPodcastsState::default())
             ]),
             playlists_menu: StatefulTable::new(),
 
@@ -119,13 +122,24 @@ impl App {
             Route::Home(state) => {
                 match state.active_tab {
                     HomeTab::RecentlyPlayed => {
-                        let _ = self.network_tx.send(ClientRequest::GetRecentlyPlayed { limit: self.page_limit, after: None });
+                        let _ = self.network_tx.send(ClientRequest::GetRecentlyPlayed {
+                            limit: self.page_limit,
+                            after: None
+                        });
                     }
                     HomeTab::TopTracks => {
-                        let _ = self.network_tx.send(ClientRequest::GetUserTopTracks { time_range: TimeRange::ShortTerm, limit: self.page_limit, offset: 0 });
+                        let _ = self.network_tx.send(ClientRequest::GetUserTopTracks {
+                            time_range: TimeRange::ShortTerm,
+                            limit: self.page_limit,
+                            offset: 0
+                        });
                     }
                     HomeTab::TopArtists => {
-                        let _ = self.network_tx.send(ClientRequest::GetUserTopArtists { time_range: TimeRange::ShortTerm, limit: self.page_limit, offset: 0 });
+                        let _ = self.network_tx.send(ClientRequest::GetUserTopArtists {
+                            time_range: TimeRange::ShortTerm,
+                            limit: self.page_limit,
+                            offset: 0
+                        });
                     }
                 }
             }
@@ -136,17 +150,37 @@ impl App {
                 let id = state.album_id.clone();
                 let _ = self.network_tx.send(ClientRequest::GetAlbum { id });
             }
+            Route::PlaylistDetail(state) => {
+                let id = state.playlist.id.clone();
+                let _ = self.network_tx.send(ClientRequest::GetPlaylistItems {
+                    playlist_id: id,
+                    limit: self.page_limit,
+                    offset: 0
+                });
+            }
             Route::LikedSongs(_) => {
-                let _ = self.network_tx.send(ClientRequest::GetUserLikedSongs { limit: self.page_limit, offset: 0 });
+                let _ = self.network_tx.send(ClientRequest::GetUserLikedSongs {
+                    limit: self.page_limit,
+                    offset: 0
+                });
             }
             Route::SavedAlbums(_) => {
-                let _ = self.network_tx.send(ClientRequest::GetUserSavedAlbums { limit: self.page_limit, offset: 0 });
+                let _ = self.network_tx.send(ClientRequest::GetUserSavedAlbums {
+                    limit: self.page_limit,
+                    offset: 0
+                });
             }
             Route::SavedArtists(_) => {
-                let _ = self.network_tx.send(ClientRequest::GetUserSavedArtists { limit: self.page_limit, after: None });
+                let _ = self.network_tx.send(ClientRequest::GetUserSavedArtists {
+                    limit: self.page_limit,
+                    after: None
+                });
             }
             Route::SavedPodcasts(_) => {
-                let _ = self.network_tx.send(ClientRequest::GetUserSavedPodcasts { limit: self.page_limit, offset: 0 });
+                let _ = self.network_tx.send(ClientRequest::GetUserSavedPodcasts {
+                    limit: self.page_limit,
+                    offset: 0
+                });
             }
             Route::Lyrics(_) => {
                 if let Some(playback) = &self.playback {

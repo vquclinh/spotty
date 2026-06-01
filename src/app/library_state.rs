@@ -10,7 +10,7 @@ pub enum LibraryMenuItem {
     SavedPodcasts(SavedPodcastsState)
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct LikedSongsState {
     pub tracks: StatefulTable<Track>,
 
@@ -31,7 +31,7 @@ impl LikedSongsState {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct SavedAlbumsState {
     pub albums: StatefulTable<Album>,
 
@@ -52,7 +52,7 @@ impl SavedAlbumsState {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct SavedArtistsState {
     pub artists: StatefulTable<Artist>,
 
@@ -73,7 +73,7 @@ impl SavedArtistsState {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct SavedPodcastsState {
     pub podcasts: StatefulTable<Episode>,
 
