@@ -19,11 +19,17 @@ pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
 }
 
 pub fn draw_wide(f: &mut Frame, app: &mut App, area: Rect) {
-    let border_color = if app.active_block == ActiveBlock::Playbar { Color::LightCyan } else { Color::White };
+    let active_block = app.state.current().active_block;
     
-    let title = match &app.route {
+    let border_color = if active_block == ActiveBlock::Playbar {
+        Color::LightCyan
+    } else {
+        Color::White
+    };
+    
+    let title = match &app.state.current().route {
         Route::Search(_) => {
-            if app.active_block == ActiveBlock::SearchInput {
+            if active_block == ActiveBlock::SearchInput {
                 ""
             } else {
                 " [3] "
@@ -108,7 +114,7 @@ pub fn draw_wide(f: &mut Frame, app: &mut App, area: Rect) {
     f.render_widget(gauge, gauge_area);
 
     let mut spans = Vec::new();
-    let is_playbar_active = app.active_block == ActiveBlock::Playbar;
+    let is_playbar_active = active_block == ActiveBlock::Playbar;
     let hovered_item = app.playbar.hovered_item;
 
     let (first_char, rest_text) = if is_playbar_active {
@@ -167,11 +173,17 @@ pub fn draw_wide(f: &mut Frame, app: &mut App, area: Rect) {
 }
 
 pub fn draw_narrow(f: &mut Frame, app: &mut App, area: Rect) {
-    let border_color = if app.active_block == ActiveBlock::Playbar { Color::LightCyan } else { Color::White };
+    let active_block = app.state.current().active_block;
     
-    let title = match &app.route {
+    let border_color = if active_block == ActiveBlock::Playbar {
+        Color::LightCyan
+    } else {
+        Color::White
+    };
+    
+    let title = match &app.state.current().route {
         Route::Search(_) => {
-            if app.active_block == ActiveBlock::SearchInput {
+            if active_block == ActiveBlock::SearchInput {
                 ""
             } else {
                 " [3] "
@@ -253,7 +265,7 @@ pub fn draw_narrow(f: &mut Frame, app: &mut App, area: Rect) {
     f.render_widget(gauge, gauge_area);
 
     let mut spans = Vec::new();
-    let is_playbar_active = app.active_block == ActiveBlock::Playbar;
+    let is_playbar_active = active_block == ActiveBlock::Playbar;
     let hovered_item = app.playbar.hovered_item;
 
     let (first_char, rest_text) = if is_playbar_active {

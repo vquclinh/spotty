@@ -3,19 +3,20 @@ use std::time::Duration;
 use rspotify::model::TrackId;
 use rspotify::prelude::Id;
 
-use crate::app::home_state::HomeTab;
-use crate::app::splash_state::SplashState;
-use crate::app::playbar_state::PlaybarState;
-use crate::app::device_state::DeviceState;
-use crate::app::types::{
+use super::home_state::HomeTab;
+use super::splash_state::SplashState;
+use super::playbar_state::PlaybarState;
+use super::device_state::DeviceState;
+use super::types::{
     ActionMenu, ActiveBlock, PlaylistSelector,
     StatefulList, StatefulTable, QuickAction
 };
-use crate::app::route::Route;
-use crate::app::state::SharedState;
-use crate::app::library_state::*;
-use crate::app::state::DataPayload;
-use crate::app::cache::AppCache;
+use super::route::Route;
+use super::state::SharedState;
+use super::library_state::*;
+use super::state::DataPayload;
+use super::cache::AppCache;
+use super::{AppState, StateHistory};
 
 use crate::network::models::*;
 use crate::network::request::ClientRequest;
@@ -24,9 +25,7 @@ use crate::audio::events::*;
 
 // Global/non route-specific data will be stored in app
 pub struct App {
-    pub route: Route,
-    pub active_block: ActiveBlock,
-    pub history: Vec<(Route, ActiveBlock)>, // store history about Route and ActiveBlock
+    pub state: StateHistory,
     pub app_cache: AppCache,
     pub device_state: DeviceState,
     // Limit for each Spotify Web Api page fetch
@@ -74,10 +73,13 @@ impl App {
             offset: 0
         });
 
+        let initial_state = AppState::new(
+            Route::Splash(SplashState::new()),
+            ActiveBlock::LibraryMenu
+        );
+
         Self {
-            route: Route::Splash(SplashState::new()),
-            active_block: ActiveBlock::LibraryMenu,
-            history: vec![],
+            state: StateHistory::new(initial_state),
             app_cache,
             device_state: DeviceState::default(),
             page_limit,
@@ -114,10 +116,7 @@ impl App {
         }
     }
 
-    pub fn set_current_route(&mut self, route: Route) {
-        // self.history.push((self.route.clone(), self.active_block.clone()));
-
-        #[allow(clippy::single_match)]
+    pub fn set_app_state(&mut self, route: Route, active_block: Option<ActiveBlock>) {
         match &route {
             Route::Home(state) => {
                 match state.active_tab {
@@ -193,18 +192,18 @@ impl App {
             _ => {}
         }
 
-        self.route = route;
+        self.state.set_state(route, active_block);
     }
 
     // tick in main loop
     pub fn on_tick(&mut self, tick_rate: Duration) {
         // update route
-        if let Some(next_route) = self.route.update() {
-            self.set_current_route(next_route);
+        if let Some(next_route) = self.state.current_mut().route.update() {
+            self.set_app_state(next_route, None);
         }
 
         // increment lyrics animation tick
-        if let Route::Lyrics(state) = &mut self.route {
+        if let Route::Lyrics(state) = &mut self.state.current_mut().route {
             state.tick = state.tick.wrapping_add(1);
         }
         
@@ -216,11 +215,11 @@ impl App {
                     if let Some(pb) = &mut self.playback {
                         pb.progress = Duration::from_millis(0);
 
-                        if let Route::Queue(_) = &self.route {
+                        if let Route::Queue(_) = self.state.current().route {
                             let _ = self.network_tx.send(ClientRequest::GetQueue);
                         }
 
-                        if let Route::Lyrics(_) = &mut self.route
+                        if let Route::Lyrics(_) = self.state.current().route
                         && let Ok(track_id) = TrackId::from_uri(uri.as_str()) {
                             let track_id = track_id.id().to_string();
                             let _ = self.network_tx.send(ClientRequest::GetLyrics { track_id });
@@ -334,7 +333,7 @@ impl App {
             }
 
             #[allow(clippy::collapsible_match)]
-            match &mut self.route {
+            match &mut self.state.current_mut().route {
                 Route::Home(home_state) => {
 
                     if !shared_state.recent_tracks.items.is_empty() {
@@ -498,7 +497,7 @@ impl App {
     pub fn update_quick_actions(&mut self) {
         let actions = &mut self.quick_actions;
         actions.clear();
-        match &self.route {
+        match &self.state.current().route {
             Route::PlaylistDetail(s) => {
                 actions.push(QuickAction::PlayContext);
                 if self.app_cache.shuffle(&s.playlist.uri) {

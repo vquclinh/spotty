@@ -1,12 +1,14 @@
 use crate::app::{
     ActiveBlock, App, Route::PlaylistDetail,
     library_state::*, playlist_state::PlaylistState,
-    route::Route
+    Route, AppState
 };
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 pub fn handle_sidebar_events(key: KeyEvent, app: &mut App) {
-    match &app.active_block {
+    let AppState { active_block, .. } = app.state.current_mut();
+    
+    match *active_block {
         ActiveBlock::PlaylistsMenu => {
             match key {
                 KeyEvent{ code: KeyCode::Down, .. }
@@ -34,8 +36,10 @@ pub fn handle_sidebar_events(key: KeyEvent, app: &mut App) {
                 KeyEvent { code: KeyCode::Enter, .. } => {
                     if let Some(selected_idx) = app.playlists_menu.state.selected()
                     && let Some(playlist) = app.playlists_menu.items.get(selected_idx).cloned() {
-                        app.set_current_route(PlaylistDetail(PlaylistState::new(playlist)));
-                        app.active_block = ActiveBlock::PlaylistTracks; 
+                        app.set_app_state(
+                            PlaylistDetail(PlaylistState::new(playlist)),
+                            Some(ActiveBlock::PlaylistTracks)
+                        );
                     }
                 }
                 _ => {}
@@ -53,23 +57,31 @@ pub fn handle_sidebar_events(key: KeyEvent, app: &mut App) {
                     && let Some(library_item) = app.library_menu.items.get(selected_idx).cloned() {
                         match library_item {
                             LibraryMenuItem::LikedSongs(state) => {
-                                app.set_current_route(Route::LikedSongs(state));
-                                app.active_block = ActiveBlock::LikedSongs; 
+                                app.set_app_state(
+                                    Route::LikedSongs(state),
+                                    Some(ActiveBlock::LikedSongs)
+                                );
                             }
 
                             LibraryMenuItem::SavedAlbums(state) => {
-                                app.set_current_route(Route::SavedAlbums(state));
-                                app.active_block = ActiveBlock::SavedAlbums; 
+                                app.set_app_state(
+                                    Route::SavedAlbums(state),
+                                    Some(ActiveBlock::SavedAlbums)
+                                );
                             }
 
                             LibraryMenuItem::SavedArtists(state) => {
-                                app.set_current_route(Route::SavedArtists(state));
-                                app.active_block = ActiveBlock::SavedArtists; 
+                                app.set_app_state(
+                                    Route::SavedArtists(state),
+                                    Some(ActiveBlock::SavedArtists)
+                                );
                             }
 
                             LibraryMenuItem::SavedPodcasts(state) => {
-                                app.set_current_route(Route::SavedPodcasts(state));
-                                app.active_block = ActiveBlock::SavedPodcasts; 
+                                app.set_app_state(
+                                    Route::SavedPodcasts(state),
+                                    Some(ActiveBlock::SavedPodcasts)
+                                );
                             }
                         }
                     }

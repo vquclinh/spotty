@@ -1,5 +1,5 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use crate::app::{ActiveBlock, App, route::Route};
+use crate::app::{ActiveBlock, App, Route, AppState};
 use crate::app::search_state::SearchHoveredPane;
 use crate::network::request::ClientRequest;
 use crate::network::models::*;
@@ -8,8 +8,10 @@ pub fn handle_search_events(key: KeyEvent, app: &mut App) {
     let mut query_to_send = None;
     let mut target_to_open = None;
 
-    if let Route::Search(search_state) = &mut app.route {
-        match app.active_block {
+    let AppState { route, active_block } = app.state.current_mut();
+
+    if let Route::Search(search_state) = route {
+        match *active_block {
             ActiveBlock::SearchInput => {
                 match key.code {
                     KeyCode::Char(c) => {
@@ -24,11 +26,11 @@ pub fn handle_search_events(key: KeyEvent, app: &mut App) {
                             query_to_send = Some(query);
                         }
 
-                        app.active_block = ActiveBlock::SearchResults;
+                        *active_block = ActiveBlock::SearchResults;
                         search_state.hovered_pane = SearchHoveredPane::Tracks;
                     }
                     KeyCode::Esc => {
-                        app.active_block = ActiveBlock::SearchResults;
+                        *active_block = ActiveBlock::SearchResults;
                     }
 
                     _ => {}
@@ -116,7 +118,7 @@ pub fn handle_search_events(key: KeyEvent, app: &mut App) {
                     }
 
                     KeyEvent { code: KeyCode::Esc, .. } => {
-                        app.active_block = ActiveBlock::SearchInput;
+                        *active_block = ActiveBlock::SearchInput;
                     }
                     _ => {}
                 }
@@ -126,7 +128,7 @@ pub fn handle_search_events(key: KeyEvent, app: &mut App) {
     }
 
     if let Some(target) = target_to_open {
-        app.action_menu.open(target, &app.route);
+        app.action_menu.open(target, route);
     }
 
     if let Some(query) = query_to_send {
