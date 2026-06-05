@@ -1,5 +1,5 @@
 use std::time::Duration;
-use crate::app::{ActiveBlock, App, AppState, Route, StateHistory};
+use crate::app::{ActiveBlock, App, AppState, Route};
 use crate::app::home_state::HomeState;
 use crate::app::search_state::{SearchState, SearchHoveredPane};
 use crate::app::queue_state::QueueState;
