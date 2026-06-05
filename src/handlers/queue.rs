@@ -1,11 +1,13 @@
-use crate::app::{ActiveBlock, App, route::Route};
+use crate::app::{ActiveBlock, App, Route, AppState};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use crate::network::models::*;
 
 pub fn handle_queue_events(key: KeyEvent, app: &mut App) {
     let mut target_to_open = None;
 
-    if let Route::Queue(queue_state) = &mut app.route {
+    let AppState { route, active_block } = app.state.current_mut();
+
+    if let Route::Queue(queue_state) = route {
         match key {
             KeyEvent{ code: KeyCode::Down, .. }
             | KeyEvent { code: KeyCode::Char('j'), ..}
@@ -41,7 +43,7 @@ pub fn handle_queue_events(key: KeyEvent, app: &mut App) {
             KeyEvent { code: KeyCode::Backspace, .. }
             | KeyEvent { code: KeyCode::Char('b'), .. }
             | KeyEvent { code: KeyCode::Esc, .. } => {
-                app.active_block = ActiveBlock::PlaylistsMenu;
+                *active_block = ActiveBlock::PlaylistsMenu;
             }
 
             _ => {}
@@ -49,6 +51,6 @@ pub fn handle_queue_events(key: KeyEvent, app: &mut App) {
     }
     
     if let Some(target) = target_to_open {
-        app.action_menu.open(target, &app.route);
+        app.action_menu.open(target, route);
     }
 }

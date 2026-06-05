@@ -2,7 +2,7 @@ use crate::app::{App, Route};
 use crossterm::event::{KeyCode, KeyEvent};
 
 pub fn handle_lyrics_events(key: KeyEvent, app: &mut App) {
-    if let Route::Lyrics(state) = &mut app.route {
+    if let Route::Lyrics(state) = &mut app.state.current_mut().route {
         // check if synced data or not
         let is_unsynced = state.data.as_ref().map_or(false, |lyrics_data| {
             format!("{:?}", lyrics_data.lyrics.sync_type).to_uppercase().contains("UNSYNCED")

@@ -1,4 +1,4 @@
-use crate::app::{ActiveBlock, App, Route};
+use crate::app::{ActiveBlock, App, Route, AppState};
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
@@ -18,10 +18,12 @@ pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
 
 // library
 fn draw_library(f: &mut Frame, app: &mut App, area: Rect) {
-    let is_focused = app.active_block == ActiveBlock::LibraryMenu;
+    let AppState { route, active_block } = app.state.current();
+    
+    let is_focused = *active_block == ActiveBlock::LibraryMenu;
     let border_color = if is_focused { Color::LightCyan } else { Color::White };
     
-    let selected_idx = match &app.route {
+    let selected_idx = match route {
         Route::LikedSongs(_) => Some(0),
         Route::SavedArtists(_) => Some(1),
         Route::SavedAlbums(_) => Some(2),
@@ -57,12 +59,14 @@ fn draw_library(f: &mut Frame, app: &mut App, area: Rect) {
 
 // playlists
 fn draw_playlists(f: &mut Frame, app: &mut App, area: Rect) {
-    let is_focused = app.active_block == ActiveBlock::PlaylistsMenu;
+    let AppState { route, active_block } = app.state.current();
+    
+    let is_focused = *active_block == ActiveBlock::PlaylistsMenu;
     let border_color = if is_focused { Color::LightCyan } else { Color::White };
     let mut rows: Vec<Row> = vec![];
 
     for playlist in &app.playlists_menu.items {
-        let should_highlight = if let Route::PlaylistDetail(s) = &app.route {
+        let should_highlight = if let Route::PlaylistDetail(s) = route {
             s.playlist.id == playlist.id
         } else {
             false

@@ -1,4 +1,4 @@
-use crate::app::{ActiveBlock, App, route::Route};
+use crate::app::{ActiveBlock, App, Route, AppState};
 use crate::app::queue_state::QueueState;
 use crate::app::lyrics_state::LyricsState;
 use crate::app::playbar_state::PlaybarItem;
@@ -7,6 +7,8 @@ use crate::network::models::RepeatState;
 use crossterm::event::{KeyCode, KeyEvent};
 
 pub fn handle_playbar_events(key: KeyEvent, app: &mut App) {
+    let AppState { route, .. } = app.state.current_mut();
+    
     match key.code {
         KeyCode::Left | KeyCode::Char('h') => {
             app.playbar.hovered_item = app.playbar.hovered_item.prev();
@@ -42,16 +44,20 @@ pub fn handle_playbar_events(key: KeyEvent, app: &mut App) {
             match app.playbar.hovered_item {
                 PlaybarItem::Volume => {}
                 PlaybarItem::Lyrics => {
-                    if !matches!(app.route, Route::Lyrics(_)) {
-                        app.set_current_route(Route::Lyrics(LyricsState::default()));
+                    if !matches!(route, Route::Lyrics(_)) {
+                        app.set_app_state(
+                            Route::Lyrics(LyricsState::default()),
+                            Some(ActiveBlock::LyricsText)
+                        );
                     }
-                    app.active_block = ActiveBlock::LyricsText;
                 }
                 PlaybarItem::Queue => {
-                    if !matches!(app.route, Route::Queue(_)) {
-                        app.set_current_route(Route::Queue(QueueState::default()));
+                    if !matches!(route, Route::Queue(_)) {
+                        app.set_app_state(
+                            Route::Queue(QueueState::default()),
+                            Some(ActiveBlock::QueueBlock)
+                        );
                     }
-                    app.active_block = ActiveBlock::QueueBlock;
                 }
                 PlaybarItem::Shuffle => {
                     let shuffling = playback.shuffle_state;

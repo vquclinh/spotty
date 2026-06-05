@@ -5,7 +5,7 @@ use crate::network::models::*;
 use crate::app::Route;
 
 // -------------------------------- Active Block ----------------------------------
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum ActiveBlock {
     LibraryMenu,
     PlaylistsMenu,

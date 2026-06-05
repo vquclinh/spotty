@@ -1,4 +1,4 @@
-use crate::app::{ActiveBlock, App, route::Route};
+use crate::app::{ActiveBlock, App, Route, AppState};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use crate::network::models::*;
 use crate::network::request::ClientRequest;
@@ -6,7 +6,9 @@ use crate::network::request::ClientRequest;
 pub fn handle_playlist_events(key: KeyEvent, app: &mut App) {
     let mut target_to_open = None;
 
-    if let Route::PlaylistDetail(playlist_state) = &mut app.route {
+    let AppState { route, active_block } = app.state.current_mut();
+
+    if let Route::PlaylistDetail(playlist_state) = route {
         match key {
             KeyEvent{ code: KeyCode::Down, .. }
             | KeyEvent { code: KeyCode::Char('j'), ..}
@@ -56,13 +58,13 @@ pub fn handle_playlist_events(key: KeyEvent, app: &mut App) {
 
             KeyEvent { code: KeyCode::Backspace, .. }
             | KeyEvent{ code: KeyCode::Char('b'), .. } => {
-                app.active_block = ActiveBlock::PlaylistsMenu;
+                *active_block = ActiveBlock::PlaylistsMenu;
             }
             _ => {}
         }
     }
     
     if let Some(target) = target_to_open {
-        app.action_menu.open(target, &app.route);
+        app.action_menu.open(target, route);
     }
 }

@@ -1,4 +1,4 @@
-use crate::app::{ActiveBlock, App};
+use crate::app::{ActiveBlock, App, AppState};
 use crate::app::route::Route;
 use ratatui::{
     Frame,
@@ -11,7 +11,9 @@ use ratatui::{
 use crate::network::models::PlayableItem;
 
 pub fn draw_text(f: &mut Frame, app: &mut App, area: Rect) {
-    let border_color = if app.active_block == ActiveBlock::LyricsText { 
+    let AppState { route, active_block } = app.state.current();
+    
+    let border_color = if *active_block == ActiveBlock::LyricsText { 
         Color::LightCyan 
     } else { 
         Color::White 
@@ -33,7 +35,7 @@ pub fn draw_text(f: &mut Frame, app: &mut App, area: Rect) {
         }
     };
 
-    let Route::Lyrics(state) = &app.route else { return };
+    let Route::Lyrics(state) = route else { return };
 
     if state.is_loading {
         let p = Paragraph::new("\n\n♫ ... Loading lyrics ... ♫\n\n")
@@ -105,7 +107,9 @@ pub fn draw_text(f: &mut Frame, app: &mut App, area: Rect) {
 }
 
 pub fn draw_info(f: &mut Frame, app: &mut App, area: Rect) {
-    let border_color = if app.active_block == ActiveBlock::LyricsInfo { 
+    let AppState { route, active_block } = app.state.current();
+    
+    let border_color = if *active_block == ActiveBlock::LyricsInfo { 
         Color::LightCyan
     } else { 
         Color::White 
@@ -170,7 +174,7 @@ pub fn draw_info(f: &mut Frame, app: &mut App, area: Rect) {
         return;
     }
 
-    let tick = if let Route::Lyrics(state) = &app.route {
+    let tick = if let Route::Lyrics(state) = route {
         state.tick
     } else {
         0

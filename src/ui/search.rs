@@ -1,4 +1,4 @@
-use crate::app::{App, ActiveBlock, route::Route};
+use crate::app::{App, ActiveBlock, Route, AppState};
 use crate::app::search_state::SearchHoveredPane;
 use ratatui::{
     Frame,
@@ -9,14 +9,16 @@ use ratatui::{
 use super::layout::truncate;
 
 pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
-    let (input_text, hovered_pane) = if let Route::Search(s) = &app.route {
+    let AppState { route, active_block } = app.state.current();
+    
+    let (input_text, hovered_pane) = if let Route::Search(s) = route {
         (s.input.clone(), s.hovered_pane.clone())
     } else {
         (String::new(), SearchHoveredPane::Input)
     };
 
-    let is_input_active = app.active_block == ActiveBlock::SearchInput;
-    let is_results_active = app.active_block == ActiveBlock::SearchResults;
+    let is_input_active = *active_block == ActiveBlock::SearchInput;
+    let is_results_active = *active_block == ActiveBlock::SearchResults;
 
     let main_chunks = Layout::default()
         .direction(Direction::Vertical)
@@ -97,7 +99,7 @@ pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
     };
 
     // get data
-    let search_state = if let Route::Search(ref s) = app.route {
+    let search_state = if let Route::Search(s) = route {
         s
     } else {
         return;
@@ -219,7 +221,7 @@ pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
         .highlight_symbol(get_highlight_symbol(SearchHoveredPane::Playlists))
         .highlight_spacing(HighlightSpacing::Always);
 
-    if let Route::Search(ref mut search_state) = app.route {
+    if let Route::Search(search_state) = &mut app.state.current_mut().route {
         // store last area
         search_state.last_area = match search_state.hovered_pane {
             SearchHoveredPane::Tracks => tracks_area,

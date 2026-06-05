@@ -34,14 +34,12 @@ pub fn draw_help(f: &mut Frame, area: Rect) {
         Row::new(vec!["  g", "Quick Actions"]),
         Row::new(vec!["  ?", "Toggle Help"]),
         Row::new(vec!["  q", "Quit App"]),
-        Row::new(vec![""]),
 
         Row::new(vec!["  Views", ""]).style(section_style),
         Row::new(vec!["  H", "Go to Home"]),
         Row::new(vec!["  S", "Go to Search"]),
         Row::new(vec!["  Q", "Go to Queue"]),
         Row::new(vec!["  L", "Go to Lyrics"]),
-        Row::new(vec![""]),
 
         Row::new(vec!["  Playback", ""]).style(section_style),
         Row::new(vec!["  Space", "Play / Pause"]),
@@ -49,14 +47,14 @@ pub fn draw_help(f: &mut Frame, area: Rect) {
         Row::new(vec!["  + / -", "Volume Up / Down"]),
         Row::new(vec!["  s", "Toggle Shuffle"]),
         Row::new(vec!["  r", "Cycle Repeat Mode"]),
-        Row::new(vec![""]),
 
         Row::new(vec!["  Navigation", ""]).style(section_style),
         Row::new(vec!["  j / k", "Move Down / Up"]),
         Row::new(vec!["  h / l", "Move Left / Right"]),
         Row::new(vec!["  Ctrl+d / u", "Jump Down / Up 10"]),
         Row::new(vec!["  Enter", "Select / Confirm"]),
-        Row::new(vec!["  Esc", "Close / Go Back"]),
+        Row::new(vec!["  b", "Go Back"]),
+        Row::new(vec!["  Esc", "Close"]),
     ];
 
     let table = Table::new(rows, [Constraint::Percentage(42), Constraint::Percentage(58)])

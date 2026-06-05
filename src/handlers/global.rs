@@ -1,5 +1,5 @@
 use std::time::Duration;
-use crate::app::{ActiveBlock, App, route::Route};
+use crate::app::{ActiveBlock, App, AppState, Route, StateHistory};
 use crate::app::home_state::HomeState;
 use crate::app::search_state::{SearchState, SearchHoveredPane};
 use crate::app::queue_state::QueueState;
@@ -116,51 +116,73 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
         }
     }
 
+    // ----------------------------------- go back state -------------------------------------
+    if key.code == KeyCode::Char('b') {
+        if app.state.previous().is_some() {
+            // The usage here borrows app so we cannot destructure AppState yet
+            app.state.pop_state();
+            return true;
+        }
+        // If we can't pop state then return false to continue checking for an operation
+        return false;
+    }
+
+    // Only from here can we destructure AppState
+    let AppState { route, active_block } = app.state.current_mut();
+
     // ----------------------------------- home -------------------------------------
     if key.code == KeyCode::Char('H') {
-        if !matches!(app.route, Route::Home(_)) {
-            app.set_current_route(Route::Home(HomeState::default())); 
+        if !matches!(route, Route::Home(_)) {
+            app.set_app_state(
+                Route::Home(HomeState::default()),
+                Some(ActiveBlock::HomeBlock)
+            ); 
         }
-        app.active_block = ActiveBlock::HomeBlock;
         return true;
     }
 
     // ----------------------------------- search -----------------------------------
     if key.code == KeyCode::Char('S') {
-        if !matches!(app.route, Route::Search(_)) {
-            app.set_current_route(Route::Search(SearchState::default()));
+        if !matches!(route, Route::Search(_)) {
+            app.set_app_state(
+                Route::Search(SearchState::default()),
+                Some(ActiveBlock::SearchInput)
+            );
         }
-        app.active_block = ActiveBlock::SearchInput;
         return true;
     }
 
     // ------------------------------------ queue -----------------------------------
     if key.code == KeyCode::Char('Q') {
-        if !matches!(app.route, Route::Queue(_)) {
-            app.set_current_route(Route::Queue(QueueState::default()));
+        if !matches!(route, Route::Queue(_)) {
+            app.set_app_state(
+                Route::Queue(QueueState::default()),
+                Some(ActiveBlock::QueueBlock)
+            );
         }
-        app.active_block = ActiveBlock::QueueBlock;
         return true;
     }
 
     // ------------------------------------- lyrics ----------------------------------
     if key.code == KeyCode::Char('L') {
-        if !matches!(app.route, Route::Lyrics(_)) {
-            app.set_current_route(Route::Lyrics(LyricsState::default()));
+        if !matches!(route, Route::Lyrics(_)) {
+            app.set_app_state(
+                Route::Lyrics(LyricsState::default()),
+                Some(ActiveBlock::LyricsText)
+            );
         }
-        app.active_block = ActiveBlock::LyricsText;
         return true;
     }
 
     // ----------------------------------- active block -------------------------------
     if key.code == KeyCode::Tab && !key.modifiers.contains(KeyModifiers::CONTROL) {
-        if app.active_block == ActiveBlock::SearchResults {
+        if *active_block == ActiveBlock::SearchResults {
             return false;
         }
         
-        app.active_block = match app.active_block {
+        *active_block = match *active_block {
             ActiveBlock::LibraryMenu => ActiveBlock::PlaylistsMenu,
-            ActiveBlock::PlaylistsMenu => match app.route {
+            ActiveBlock::PlaylistsMenu => match route {
                 Route::PlaylistDetail(_) => ActiveBlock::PlaylistTracks,
                 Route::Search(_) => ActiveBlock::SearchInput,
                 Route::Queue(_) => ActiveBlock::QueueBlock,
@@ -174,7 +196,7 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
             },
 
             ActiveBlock::SearchInput => {
-                if let Route::Search(ref mut search_state) = app.route {
+                if let Route::Search(search_state) = route {
                     search_state.hovered_pane = SearchHoveredPane::Tracks;
                 }
                 ActiveBlock::SearchResults
@@ -194,14 +216,14 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
                 ActiveBlock::Playbar
             },
 
-            ActiveBlock::Playbar => match app.route {
+            ActiveBlock::Playbar => match route {
                 Route::Search(_) => ActiveBlock::SearchInput,
                 Route::Lyrics(_) => ActiveBlock::LyricsText,
                 _ => ActiveBlock::LibraryMenu,
             },
 
             _ => {
-                if matches!(app.route, Route::Lyrics(_)) {
+                if matches!(route, Route::Lyrics(_)) {
                     ActiveBlock::LyricsText
                 } else {
                     ActiveBlock::LibraryMenu
@@ -214,69 +236,69 @@ pub fn handle_global_events(key: KeyEvent, app: &mut App) -> bool {
     // -------------------------------- number keys ----------------------------------
     match key.code {
         KeyCode::Char('1') => {
-            match app.route {
+            match route {
                 Route::Search(_) => {
-                    app.active_block = ActiveBlock::SearchInput;
+                    *active_block = ActiveBlock::SearchInput;
                 }
                 Route::Lyrics(_) => {
-                    app.active_block = ActiveBlock::LyricsText;
+                    *active_block = ActiveBlock::LyricsText;
                 }
                 _ => {
-                    app.active_block = ActiveBlock::LibraryMenu;
+                    *active_block = ActiveBlock::LibraryMenu;
                 }
             }
 
         },
         KeyCode::Char('2') => {
-            match app.route {
+            match route {
                 Route::Search(_) => {
-                    app.active_block = ActiveBlock::SearchResults;
+                    *active_block = ActiveBlock::SearchResults;
                 }
                 Route::Lyrics(_) => {
-                    app.active_block = ActiveBlock::LyricsInfo;
+                    *active_block = ActiveBlock::LyricsInfo;
                 }
                 _ => {
-                    app.active_block = ActiveBlock::PlaylistsMenu;
+                    *active_block = ActiveBlock::PlaylistsMenu;
                 }
             }
         },
         KeyCode::Char('3') => {
-            match app.route {
+            match route {
                 Route::Home(_) => {
-                    app.active_block = ActiveBlock::HomeBlock;
+                    *active_block = ActiveBlock::HomeBlock;
                 },
                 Route::AlbumDetail(_) => {
-                    app.active_block = ActiveBlock::AlbumBlock;
+                    *active_block = ActiveBlock::AlbumBlock;
                 },
                 Route::PlaylistDetail(_) => {
-                    app.active_block = ActiveBlock::PlaylistTracks;
+                    *active_block = ActiveBlock::PlaylistTracks;
                 },
                 Route::LikedSongs(_) => {
-                    app.active_block = ActiveBlock::LikedSongs;
+                    *active_block = ActiveBlock::LikedSongs;
                 },
                 Route::SavedAlbums(_) => {
-                    app.active_block = ActiveBlock::SavedAlbums;
+                    *active_block = ActiveBlock::SavedAlbums;
                 },
                 Route::SavedArtists(_) => {
-                    app.active_block = ActiveBlock::SavedArtists;
+                    *active_block = ActiveBlock::SavedArtists;
                 },
                 Route::SavedPodcasts(_) => {
-                    app.active_block = ActiveBlock::SavedPodcasts;
+                    *active_block = ActiveBlock::SavedPodcasts;
                 },
                 Route::Queue(_) => {
-                    app.active_block = ActiveBlock::QueueBlock;
+                    *active_block = ActiveBlock::QueueBlock;
                 },
                 Route::Lyrics(_) => {
-                    app.active_block = ActiveBlock::Playbar;
+                    *active_block = ActiveBlock::Playbar;
                 },
                 Route::Search(_) => {
-                    app.active_block = ActiveBlock::Playbar;
+                    *active_block = ActiveBlock::Playbar;
                 }
                 _ => {}
             }
         },
-        KeyCode::Char('4') if !matches!(app.route, Route::Search(_) | Route::Lyrics(_)) => {
-            app.active_block = ActiveBlock::Playbar;
+        KeyCode::Char('4') if !matches!(route, Route::Search(_) | Route::Lyrics(_)) => {
+            *active_block = ActiveBlock::Playbar;
         }
 
         _ => {}

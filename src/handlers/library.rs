@@ -1,4 +1,4 @@
-use crate::app::{ActiveBlock, App, route::Route};
+use crate::app::{ActiveBlock, App, Route, AppState};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use crate::network::models::*;
 use crate::network::request::ClientRequest;
@@ -6,7 +6,9 @@ use crate::network::request::ClientRequest;
 pub fn handle_liked_songs_events(key: KeyEvent, app: &mut App) {
     let mut target_to_open = None;
 
-    if let Route::LikedSongs(liked_songs) = &mut app.route {
+    let AppState { route, active_block } = app.state.current_mut();
+
+    if let Route::LikedSongs(liked_songs) = route {
         match key {
             KeyEvent{ code: KeyCode::Down, .. }
             | KeyEvent { code: KeyCode::Char('j'), ..}
@@ -51,21 +53,23 @@ pub fn handle_liked_songs_events(key: KeyEvent, app: &mut App) {
 
             KeyEvent { code: KeyCode::Backspace, .. }
             | KeyEvent{ code: KeyCode::Char('b'), .. } => {
-                app.active_block = ActiveBlock::LikedSongs;
+                *active_block = ActiveBlock::LikedSongs;
             }
             _ => {}
         }
     }
     
     if let Some(target) = target_to_open {
-        app.action_menu.open(target, &app.route);
+        app.action_menu.open(target, route);
     }
 }
 
 pub fn handle_saved_albums_events(key: KeyEvent, app: &mut App) {
     let mut target_to_open = None;
 
-    if let Route::SavedAlbums(saved_albums) = &mut app.route {
+    let AppState { route, active_block } = app.state.current_mut();
+
+    if let Route::SavedAlbums(saved_albums) = route {
         match key {
             KeyEvent{ code: KeyCode::Down, .. }
             | KeyEvent { code: KeyCode::Char('j'), ..}
@@ -110,21 +114,23 @@ pub fn handle_saved_albums_events(key: KeyEvent, app: &mut App) {
 
             KeyEvent { code: KeyCode::Backspace, .. }
             | KeyEvent{ code: KeyCode::Char('b'), .. } => {
-                app.active_block = ActiveBlock::SavedAlbums;
+                *active_block = ActiveBlock::SavedAlbums;
             }
             _ => {}
         }
     }
     
     if let Some(target) = target_to_open {
-        app.action_menu.open(target, &app.route);
+        app.action_menu.open(target, route);
     }
 }
 
 pub fn handle_saved_artists_events(key: KeyEvent, app: &mut App) {
     let mut target_to_open = None;
 
-    if let Route::SavedArtists(saved_artists) = &mut app.route {
+    let AppState { route, active_block } = app.state.current_mut();
+
+    if let Route::SavedArtists(saved_artists) = route {
         match key {
             KeyEvent{ code: KeyCode::Down, .. }
             | KeyEvent { code: KeyCode::Char('j'), ..}
@@ -170,21 +176,23 @@ pub fn handle_saved_artists_events(key: KeyEvent, app: &mut App) {
 
             KeyEvent { code: KeyCode::Backspace, .. }
             | KeyEvent{ code: KeyCode::Char('b'), .. } => {
-                app.active_block = ActiveBlock::SavedArtists;
+                *active_block = ActiveBlock::SavedArtists;
             }
             _ => {}
         }
     }
     
     if let Some(target) = target_to_open {
-        app.action_menu.open(target, &app.route);
+        app.action_menu.open(target, route);
     }
 }
 
 pub fn handle_saved_podcasts_events(key: KeyEvent, app: &mut App) {
     let mut target_to_open = None;
 
-    if let Route::SavedPodcasts(saved_podcasts) = &mut app.route {
+    let AppState { route, active_block } = app.state.current_mut();
+    
+    if let Route::SavedPodcasts(saved_podcasts) = route {
         match key {
             KeyEvent{ code: KeyCode::Down, .. }
             | KeyEvent { code: KeyCode::Char('j'), ..}
@@ -229,13 +237,13 @@ pub fn handle_saved_podcasts_events(key: KeyEvent, app: &mut App) {
 
             KeyEvent { code: KeyCode::Backspace, .. }
             | KeyEvent{ code: KeyCode::Char('b'), .. } => {
-                app.active_block = ActiveBlock::SavedPodcasts;
+                *active_block = ActiveBlock::SavedPodcasts;
             }
             _ => {}
         }
     }
     
     if let Some(target) = target_to_open {
-        app.action_menu.open(target, &app.route);
+        app.action_menu.open(target, route);
     }
 }

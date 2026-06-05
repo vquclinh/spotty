@@ -1,11 +1,12 @@
-use crate::app::{ActiveBlock, App, route::Route};
+use crate::app::{ActiveBlock, App, Route, AppState};
 use crate::network::models::*;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 pub fn handle_album_events(key: KeyEvent, app: &mut App) {
     let mut target_to_open = None;
+    let AppState { route, active_block } = app.state.current_mut();
 
-    if let Route::AlbumDetail(album_state) = &mut app.route {
+    if let Route::AlbumDetail(album_state) = route {
         match key {
             KeyEvent{ code: KeyCode::Down, .. }
             | KeyEvent { code: KeyCode::Char('j'), ..}
@@ -38,7 +39,7 @@ pub fn handle_album_events(key: KeyEvent, app: &mut App) {
             KeyEvent { code: KeyCode::Backspace, .. }
             | KeyEvent { code: KeyCode::Char('b'), .. }
             | KeyEvent { code: KeyCode::Esc, .. } => {
-                app.active_block = ActiveBlock::PlaylistsMenu;
+                *active_block = ActiveBlock::PlaylistsMenu;
             }
 
             _ => {}
@@ -46,6 +47,6 @@ pub fn handle_album_events(key: KeyEvent, app: &mut App) {
     }
     
     if let Some(target) = target_to_open {
-        app.action_menu.open(target, &app.route);
+        app.action_menu.open(target, route);
     }
 }
