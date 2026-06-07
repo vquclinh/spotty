@@ -4,8 +4,10 @@ use crate::network::client::SpotifyClient;
 use crate::network::request::{ClientRequest, PlayerRequest};
 use crate::network::models::SearchType;
 use crate::audio::player::*;
+use librespot_connect::LoadContextOptions;
 use tokio::sync::mpsc;
 use std::sync::Arc;
+use std::time::Duration;
 
 // Match request type and execute it with WebApiClient
 // then store in shared state
@@ -344,6 +346,9 @@ pub async fn start_network_worker(
                         if is_active_device {
                             let _ = audio_tx.send(AudioCommand::PlayContext(context_uri, options));
                         } else {
+                            let shuffle = options.context_options.is_some_and(|opts| {
+                                matches!(opts, LoadContextOptions::Options(opt) if opt.shuffle)
+                            });
                             let offset = options.playing_track.map(|t| t.into());
                             let _ = client.start_context_playback(
                                 None,
@@ -351,6 +356,15 @@ pub async fn start_network_worker(
                                 offset,
                                 None
                             ).await;
+                            // Send a separate shuffle request because Spotify endpoint does not
+                            // take shuffle state 
+                            if shuffle {
+                                let client_clone = Arc::clone(&client);
+                                tokio::spawn(async move {
+                                    tokio::time::sleep(Duration::from_millis(200)).await;
+                                    let _ = client_clone.toggle_shuffle(false).await;
+                                });
+                            }
                         }
                     }
                     

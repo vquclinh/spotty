@@ -57,6 +57,12 @@ pub struct Album {
     pub tracks: Option<Page<Track>>,
 }
 
+impl Album {
+    pub fn total(&self) -> Option<u32> {
+        self.tracks.as_ref().and_then(|p| p.total)
+    }
+}
+
 #[derive(Debug, Deserialize, Clone, Default)]
 pub struct Track {
     pub id: String,
@@ -97,6 +103,12 @@ pub struct Playlist {
     pub owner: User,
     pub description: Option<String>,
     pub items: Option<Page<PlayableItem>>,
+}
+
+impl Playlist {
+    pub fn total(&self) -> Option<u32> {
+        self.items.as_ref().and_then(|p| p.total)
+    }
 }
 
 // ------------------------------------- Playback -----------------------------------

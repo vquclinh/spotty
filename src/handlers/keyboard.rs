@@ -242,8 +242,16 @@ fn handle_play_now_action(app: &mut App, target: &MenuTarget, uri: Option<String
             match target {
                 MenuTarget::Track(_) | MenuTarget::Episode(_) => {
                     match route {
-                        Route::PlaylistDetail(s) => build_play_context_request(&s.playlist.uri, Some(&u), app),
-                        Route::AlbumDetail(s) => build_play_context_request(&s.album.uri, Some(&u), app),
+                        Route::PlaylistDetail(s) => build_play_context_request(
+                            &s.playlist.uri,
+                            Some(Offset::Uri(u.clone())),
+                            app
+                        ),
+                        Route::AlbumDetail(s) => build_play_context_request(
+                            &s.album.uri,
+                            Some(Offset::Uri(u.clone())),
+                            app
+                        ),
                         _ => PlayerRequest::Play(u),
                     }
                 }
@@ -434,13 +442,26 @@ fn execute_add_to_playlist(app: &mut App) {
     }
 }
 
-fn build_play_context_request(context_uri: &str, track_uri: Option<&str>, app: &App) -> PlayerRequest {
+fn build_play_context_request(context_uri: &str, offset: Option<Offset>, app: &App) -> PlayerRequest {
+    let shuffle = app.app_cache.shuffle(context_uri);
     let context_options = app.playback.as_ref().map(|pb| {
-        let shuffle = app.app_cache.shuffle(context_uri);
         pb.to_librespot_options(shuffle)
     });
-    let playing_track = track_uri
-        .map(|u| PlayingTrack::Uri(u.to_string()));
+    let playing_track = match offset {
+        Some(Offset::Index(i)) => Some(PlayingTrack::Index(i)),
+        Some(Offset::Uri(u)) => Some(PlayingTrack::Uri(u)),
+        // If we are not active device, then we simulate a shuffle context play
+        // request by randomizing the start track.
+        None if shuffle => {
+            let total = match &app.state.current().route {
+                Route::AlbumDetail(s) => s.album.total(),
+                Route::PlaylistDetail(s) => s.playlist.total(),
+                _ => None,
+            };
+            total.map(|t| PlayingTrack::Index(rand::random_range(0..t)))
+        },
+        _ => None,
+    };
     let opts = LoadRequestOptions {
         start_playing: true,
         playing_track,
