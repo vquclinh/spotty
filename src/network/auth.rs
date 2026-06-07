@@ -6,12 +6,14 @@ use rspotify::{
     Config
 };
 use anyhow::Result;
+use crate::app::cache;
 
 pub async fn create_auth_client() -> Result<AuthCodePkceSpotify> {
     let conf = Config {
         // Enable this so that if the token is already in cache
         // then user does not need to authorize again
-        token_cached : true,
+        token_cached: true,
+        cache_path: cache::token_cache_path().to_path_buf(),
         ..Default::default()
     };
 

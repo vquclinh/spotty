@@ -11,12 +11,13 @@ use librespot_playback::config::{AudioFormat, Bitrate, PlayerConfig};
 use librespot_playback::mixer::{softmixer::SoftMixer, Mixer, MixerConfig};
 use librespot_playback::player::Player;
 use librespot_connect::PlayingTrack;
+use std::path::Path;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::mpsc;
 use tokio::sync::oneshot;
 
-use crate::app::state::SharedState;
+use crate::app::{cache, state::SharedState};
 use crate::network::client::SpotifyClient;
 use crate::network::models::PlaybackContext;
 use super::events::AudioEvent;
@@ -159,7 +160,7 @@ pub async fn start_audio_worker(
     
     if playback.is_none() {
         let _ = spirc.activate();
-        load_spirc_from_cache(&spirc, ".spotty_cache/playback.json");
+        load_spirc_from_cache(&spirc, &cache::playback_cache_path());
     }
 
     tokio::spawn(async move {
@@ -218,13 +219,10 @@ pub async fn start_audio_worker(
                 }
 
                 AudioCommand::Shutdown(pb, reply_rx) => {
-                    // Extract state and save to cache
-                    if let Err(e) = std::fs::create_dir_all(".spotty_cache") {
-                        let _ = std::fs::write("cache_debug.log", format!("Failed to create dir: {e}"));
-                    }
+                    // Persist the last playback context so it can be resumed on next launch
                     match serde_json::to_string(&pb) {
                         Ok(cache_str) => {
-                            if let Err(e) = std::fs::write(".spotty_cache/playback.json", cache_str) {
+                            if let Err(e) = std::fs::write(cache::playback_cache_path(), cache_str) {
                                 let _ = std::fs::write("cache_debug.log", format!("Failed to write cache: {e}"));
                             }
                         }
@@ -244,7 +242,7 @@ pub async fn start_audio_worker(
     Ok(())
 }
 
-fn load_spirc_from_cache(spirc: &Spirc, cache_path: &str) {
+fn load_spirc_from_cache(spirc: &Spirc, cache_path: &Path) {
     match std::fs::read_to_string(cache_path) {
         Ok(cache_data) => {
             match serde_json::from_str::<PlaybackContext>(&cache_data) {
