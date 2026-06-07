@@ -4,6 +4,16 @@ Spotty is a modern terminal user interface for Spotify, built with Rust. It brin
 
 Spotty is an unofficial Spotify client and is not affiliated with Spotify AB.
 
+## Demo
+
+<p align="center">
+  <img src="assets/demo.gif" width="800" alt="Spotty Spotify TUI demo" />
+</p>
+
+<p align="center">
+  🎧 <a href="https://youtu.be/VLUd_-fLCo4">Watch the full demo with audio</a>
+</p>
+
 ## Features
 
 - Keyboard-first Spotify playback: play, pause, skip, volume, shuffle, and repeat.
