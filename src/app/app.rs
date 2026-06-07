@@ -55,8 +55,6 @@ pub struct App {
 }
 
 impl App {
-    pub const APP_CACHE_PATH: &str = ".spotty_cache/app_cache.json";
-
     pub fn new(
         app_cache: AppCache,
         network_tx: mpsc::UnboundedSender<ClientRequest>,

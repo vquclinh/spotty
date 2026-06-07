@@ -5,7 +5,7 @@ pub mod network;
 pub mod ui;
 pub mod audio;
 
-use app::{App, cache::AppCache};
+use app::{App, cache::{self, AppCache}};
 use crossterm::{
     execute,
     terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
@@ -60,6 +60,11 @@ pub async fn run() -> Result<()> {
     let (audio_cmd_tx, audio_cmd_rx) = mpsc::unbounded_channel::<AudioCommand>();
     let (audio_event_tx, audio_event_rx) = mpsc::unbounded_channel::<AudioEvent>();
 
+    // Ensure all the cache dirs exist before any read/write operation
+    if let Err(e) = cache::ensure_cache_dirs() {
+        eprintln!("Warning: could not create cache directory: {e}");
+    }
+
     let spotify_client = Arc::new(SpotifyClient::new().await?);
 
     // shared_state
@@ -75,7 +80,7 @@ pub async fn run() -> Result<()> {
     });
 
     // load app cache from disk
-    let app_cache = AppCache::load(App::APP_CACHE_PATH).unwrap_or_default();
+    let app_cache = AppCache::load().unwrap_or_default();
     let initial_volume = app_cache.volume;
 
     // audio
@@ -139,8 +144,7 @@ pub async fn run() -> Result<()> {
         }
     }
 
-    let _ = std::fs::create_dir_all(".spotty_cache");
-    let _ = app.app_cache.save(App::APP_CACHE_PATH);
+    let _ = app.app_cache.save();
 
     disable_raw_mode()?;
     execute!(terminal.backend_mut(), LeaveAlternateScreen)?;

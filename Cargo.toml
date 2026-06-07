@@ -11,6 +11,11 @@ crossterm = "0.29"
 
 rspotify = { version = "0.16", features = ["client-reqwest", "env-file", "cli"] }
 
+librespot-core = "0.8.0"
+librespot-playback = { version = "0.8.0", features = ["rodio-backend"] }
+librespot-connect = "0.8.0"
+librespot-metadata = "0.8.0"
+
 tokio = { version = "1.51", features = ["full"] }
 
 serde = { version = "1.0", features = ["derive"] }
@@ -18,10 +23,7 @@ serde_json = "1.0.149"
 
 anyhow = "1.0"
 
-librespot-core = "0.8.0"
-librespot-playback = { version = "0.8.0", features = ["rodio-backend"] }
-librespot-connect = "0.8.0"
-librespot-metadata = "0.8.0"
+dirs = "6.0.0"
 
 [[bin]]
 path = "src/main.rs"
