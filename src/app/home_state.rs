@@ -43,8 +43,8 @@ pub struct HomeState {
 impl Default for HomeState {
     fn default() -> Self {
         Self {
-            greeting: "Good Morning".to_string(),
-            active_tab: HomeTab::TopTracks,
+            greeting: "Home".to_string(),
+            active_tab: HomeTab::RecentlyPlayed,
 
             top_tracks: HomePane::default(),
             top_artists: HomePane::default(),

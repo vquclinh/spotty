@@ -30,15 +30,15 @@ pub fn draw(f: &mut Frame, state: &mut HomeState, active_block: &ActiveBlock, ar
         ])
         .split(inner_area);
 
-    let tab_titles: Vec<Line> = vec!["🔥 Top Tracks", "🎤 Top Artists", "🕒 Recently Played"]
+    let tab_titles: Vec<Line> = vec!["🕒 Recently Played", "🔥 Top Tracks", "🎤 Top Artists"]
         .into_iter()
         .map(Line::from)
         .collect();
 
     let active_tab_index = match state.active_tab {
-        HomeTab::TopTracks => 0,
-        HomeTab::TopArtists => 1,
-        HomeTab::RecentlyPlayed => 2,
+        HomeTab::RecentlyPlayed => 0,
+        HomeTab::TopTracks => 1,
+        HomeTab::TopArtists => 2,
     };
 
     // draw a line show 3 tab name
