@@ -1,5 +1,6 @@
 use crate::app::state::SharedState;
 use crate::app::device_state::DeviceState;
+use crate::app::cache;
 use crate::network::client::SpotifyClient;
 use crate::network::request::{ClientRequest, PlayerRequest};
 use crate::network::models::SearchType;
@@ -28,7 +29,7 @@ pub async fn start_network_worker(
                     }
 
                     Err(e) => {
-                        crate::log_to_file!("network.log", "{}", e);
+                        crate::log_to_file!(cache::log_dir().join("network.log"), "{}", e);
                     }
                 }   
             }
@@ -42,7 +43,7 @@ pub async fn start_network_worker(
                     }
 
                     Err(e) => {
-                        crate::log_to_file!("network.log", "{}", e);
+                        crate::log_to_file!(cache::log_dir().join("network.log"), "{}", e);
                     }
                 }
             }
@@ -56,7 +57,7 @@ pub async fn start_network_worker(
                     }
 
                     Err(e) => {
-                        crate::log_to_file!("network.log", "{}", e);
+                        crate::log_to_file!(cache::log_dir().join("network.log"), "{}", e);
                     }
                 }
             }
@@ -70,7 +71,7 @@ pub async fn start_network_worker(
                     }
 
                     Err(e) => {
-                        crate::log_to_file!("network.log", "{}", e);
+                        crate::log_to_file!(cache::log_dir().join("network.log"), "{}", e);
                     }
                 }
             }
@@ -84,7 +85,7 @@ pub async fn start_network_worker(
                     }
 
                     Err(e) => {
-                        crate::log_to_file!("network.log", "{}", e);
+                        crate::log_to_file!(cache::log_dir().join("network.log"), "{}", e);
                     }
                 }
             }
@@ -98,7 +99,7 @@ pub async fn start_network_worker(
                     }
 
                     Err(e) => {
-                        crate::log_to_file!("network.log", "{}", e);
+                        crate::log_to_file!(cache::log_dir().join("network.log"), "{}", e);
                     }
                 }
             }
@@ -112,7 +113,7 @@ pub async fn start_network_worker(
                     }
 
                     Err(e) => {
-                        crate::log_to_file!("network.log", "{}", e);
+                        crate::log_to_file!(cache::log_dir().join("network.log"), "{}", e);
                     }
                 }
             }
@@ -127,7 +128,7 @@ pub async fn start_network_worker(
                     }
 
                     Err(e) => {
-                        crate::log_to_file!("network.log", "{}", e);
+                        crate::log_to_file!(cache::log_dir().join("network.log"), "{}", e);
                     }
                 }
             }
@@ -141,7 +142,7 @@ pub async fn start_network_worker(
                     }
 
                     Err(e) => {
-                        crate::log_to_file!("network.log", "{}", e);
+                        crate::log_to_file!(cache::log_dir().join("network.log"), "{}", e);
                     }
                 }
             }
@@ -194,7 +195,7 @@ pub async fn start_network_worker(
                         
 
                         Err(e) => {
-                            crate::log_to_file!("network.log", "{}", e);
+                            crate::log_to_file!(cache::log_dir().join("network.log"), "{}", e);
                         }
                     }
 
@@ -226,7 +227,7 @@ pub async fn start_network_worker(
                     }
 
                     Err(e) => {
-                        crate::log_to_file!("network.log", "{}", e);
+                        crate::log_to_file!(cache::log_dir().join("network.log"), "{}", e);
                     }
                 }
             }
@@ -244,7 +245,7 @@ pub async fn start_network_worker(
                     }
 
                     Err(e) => {
-                        crate::log_to_file!("network.log", "{}", e);
+                        crate::log_to_file!(cache::log_dir().join("network.log"), "{}", e);
                     }
                 }
             }
@@ -264,7 +265,7 @@ pub async fn start_network_worker(
                     }
 
                     Err(e) => {
-                        crate::log_to_file!("network.log", "{}", e);
+                        crate::log_to_file!(cache::log_dir().join("network.log"), "{}", e);
                     }
                 }
             }
@@ -278,7 +279,7 @@ pub async fn start_network_worker(
                     }
 
                     Err(e) => {
-                        crate::log_to_file!("network.log", "{}", e);
+                        crate::log_to_file!(cache::log_dir().join("network.log"), "{}", e);
                     }
                 }
             }
@@ -292,7 +293,7 @@ pub async fn start_network_worker(
                     }
 
                     Err(e) => {
-                        crate::log_to_file!("network.log", "{}", e);
+                        crate::log_to_file!(cache::log_dir().join("network.log"), "{}", e);
                     }
                 }
             }
@@ -306,7 +307,7 @@ pub async fn start_network_worker(
                     }
 
                     Err(e) => {
-                        crate::log_to_file!("network.log", "{}", e);
+                        crate::log_to_file!(cache::log_dir().join("network.log"), "{}", e);
                     }
                 }
             }
@@ -320,7 +321,7 @@ pub async fn start_network_worker(
                     }
 
                     Err(e) => {
-                        crate::log_to_file!("network.log", "{}", e);
+                        crate::log_to_file!(cache::log_dir().join("network.log"), "{}", e);
                     }
                 }
             }
@@ -481,7 +482,7 @@ pub async fn start_network_worker(
                     }
 
                     Err(e) => {
-                        crate::log_to_file!("network.log", "{}", e);
+                        crate::log_to_file!(cache::log_dir().join("network.log"), "{}", e);
                     }
                 }
             }
@@ -513,7 +514,7 @@ pub async fn start_network_worker(
                     }
 
                     Err(e) => {
-                        crate::log_to_file!("network.log", "{}", e);
+                        crate::log_to_file!(cache::log_dir().join("network.log"), "{}", e);
                     }
                 }
             }
