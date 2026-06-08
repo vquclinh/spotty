@@ -1,5 +1,6 @@
 use crate::app::state::SharedState;
 use crate::app::device_state::DeviceState;
+use crate::app::cache;
 use crate::network::client::SpotifyClient;
 use crate::network::request::{ClientRequest, PlayerRequest};
 use crate::network::models::SearchType;
@@ -27,7 +28,9 @@ pub async fn start_network_worker(
                         }
                     }
 
-                    Err(_e) => {}
+                    Err(e) => {
+                        crate::log_to_file!(cache::log_dir().join("network.log"), "{}", e);
+                    }
                 }   
             }
 
@@ -38,7 +41,10 @@ pub async fn start_network_worker(
                             state.playlists = playlists.into();
                         }
                     }
-                    Err(_e) => {}
+
+                    Err(e) => {
+                        crate::log_to_file!(cache::log_dir().join("network.log"), "{}", e);
+                    }
                 }
             }
 
@@ -49,7 +55,10 @@ pub async fn start_network_worker(
                             state.recent_tracks = tracks.into();
                         }
                     }
-                    Err(_e) => {}
+
+                    Err(e) => {
+                        crate::log_to_file!(cache::log_dir().join("network.log"), "{}", e);
+                    }
                 }
             }
 
@@ -60,7 +69,10 @@ pub async fn start_network_worker(
                             state.top_tracks = tracks.into();
                         }
                     }
-                    Err(_e) => {}
+
+                    Err(e) => {
+                        crate::log_to_file!(cache::log_dir().join("network.log"), "{}", e);
+                    }
                 }
             }
 
@@ -71,7 +83,10 @@ pub async fn start_network_worker(
                             state.top_artists = artists.into();
                         }
                     }
-                    Err(_e) => {}
+
+                    Err(e) => {
+                        crate::log_to_file!(cache::log_dir().join("network.log"), "{}", e);
+                    }
                 }
             }
 
@@ -82,7 +97,10 @@ pub async fn start_network_worker(
                             state.playlist_items = items.into();
                         }
                     }
-                    Err(_e) => {}
+
+                    Err(e) => {
+                        crate::log_to_file!(cache::log_dir().join("network.log"), "{}", e);
+                    }
                 }
             }
 
@@ -93,7 +111,10 @@ pub async fn start_network_worker(
                             state.playback = playback; 
                         }
                     }
-                    Err(_e) => {}
+
+                    Err(e) => {
+                        crate::log_to_file!(cache::log_dir().join("network.log"), "{}", e);
+                    }
                 }
             }
 
@@ -105,7 +126,10 @@ pub async fn start_network_worker(
                             state.playback = playback; 
                         }
                     }
-                    Err(_e) => {}
+
+                    Err(e) => {
+                        crate::log_to_file!(cache::log_dir().join("network.log"), "{}", e);
+                    }
                 }
             }
 
@@ -116,7 +140,10 @@ pub async fn start_network_worker(
                             state.search_results = results;
                         }
                     }
-                    Err(_e) => {}
+
+                    Err(e) => {
+                        crate::log_to_file!(cache::log_dir().join("network.log"), "{}", e);
+                    }
                 }
             }
             
@@ -167,7 +194,9 @@ pub async fn start_network_worker(
                         }
                         
 
-                        _ => {}
+                        Err(e) => {
+                            crate::log_to_file!(cache::log_dir().join("network.log"), "{}", e);
+                        }
                     }
 
                     curr_offset += batch_max_len as u32;
@@ -196,7 +225,10 @@ pub async fn start_network_worker(
                             state.queue_data = Some((res.currently_playing, res.queue));
                         }
                     }
-                    Err(_e) => {}
+
+                    Err(e) => {
+                        crate::log_to_file!(cache::log_dir().join("network.log"), "{}", e);
+                    }
                 }
             }
 
@@ -211,7 +243,10 @@ pub async fn start_network_worker(
                             state.playlists = page.into();
                         }
                     }
-                    Err(_e) => {}
+
+                    Err(e) => {
+                        crate::log_to_file!(cache::log_dir().join("network.log"), "{}", e);
+                    }
                 }
             }
 
@@ -228,7 +263,10 @@ pub async fn start_network_worker(
                             state.album_detail = Some(album);
                         }
                     }
-                    Err(_e) => {}
+
+                    Err(e) => {
+                        crate::log_to_file!(cache::log_dir().join("network.log"), "{}", e);
+                    }
                 }
             }
 
@@ -239,7 +277,10 @@ pub async fn start_network_worker(
                             state.liked_songs = liked_songs.into();
                         }
                     }
-                    Err(_e) => {}
+
+                    Err(e) => {
+                        crate::log_to_file!(cache::log_dir().join("network.log"), "{}", e);
+                    }
                 }
             }
 
@@ -250,7 +291,10 @@ pub async fn start_network_worker(
                             state.saved_albums = saved_albums.into();
                         }
                     }
-                    Err(_e) => {}
+
+                    Err(e) => {
+                        crate::log_to_file!(cache::log_dir().join("network.log"), "{}", e);
+                    }
                 }
             }
 
@@ -261,7 +305,10 @@ pub async fn start_network_worker(
                             state.saved_artists = saved_artists.into();
                         }
                     }
-                    Err(_e) => {}
+
+                    Err(e) => {
+                        crate::log_to_file!(cache::log_dir().join("network.log"), "{}", e);
+                    }
                 }
             }
 
@@ -272,7 +319,10 @@ pub async fn start_network_worker(
                             state.saved_podcasts = saved_podcasts.into();
                         }
                     }
-                    Err(_e) => {}
+
+                    Err(e) => {
+                        crate::log_to_file!(cache::log_dir().join("network.log"), "{}", e);
+                    }
                 }
             }
 
@@ -430,7 +480,10 @@ pub async fn start_network_worker(
                             state.lyrics_data = lyrics_opt;
                         }
                     }
-                    Err(_e) => {}
+
+                    Err(e) => {
+                        crate::log_to_file!(cache::log_dir().join("network.log"), "{}", e);
+                    }
                 }
             }
 
@@ -459,7 +512,10 @@ pub async fn start_network_worker(
                             state.devices = Some(device_state);
                         }
                     }
-                    Err(_e) => {}
+
+                    Err(e) => {
+                        crate::log_to_file!(cache::log_dir().join("network.log"), "{}", e);
+                    }
                 }
             }
         }

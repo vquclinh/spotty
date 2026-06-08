@@ -11,12 +11,14 @@ static CACHE_DIR: LazyLock<PathBuf> = LazyLock::new(|| {
         .join("spotty")
 });
 static AUDIO_DIR: LazyLock<PathBuf> = LazyLock::new(|| CACHE_DIR.join("audio"));
+static LOG_DIR: LazyLock<PathBuf> = LazyLock::new(|| CACHE_DIR.join("log"));
 static APP_CACHE_PATH: LazyLock<PathBuf> = LazyLock::new(|| CACHE_DIR.join("app_cache.json"));
 static PLAYBACK_CACHE_PATH: LazyLock<PathBuf> = LazyLock::new(|| CACHE_DIR.join("playback.json"));
 static TOKEN_CACHE_PATH: LazyLock<PathBuf> = LazyLock::new(|| CACHE_DIR.join(".spotify_token_cache.json"));
 
 pub fn cache_dir() -> &'static Path           { &CACHE_DIR }
 pub fn librespot_audio_dir() -> &'static Path { &AUDIO_DIR }
+pub fn log_dir() -> &'static Path             { &LOG_DIR }
 pub fn app_cache_path() -> &'static Path      { &APP_CACHE_PATH }
 pub fn playback_cache_path() -> &'static Path { &PLAYBACK_CACHE_PATH }
 pub fn token_cache_path() -> &'static Path    { &TOKEN_CACHE_PATH }
@@ -24,6 +26,7 @@ pub fn token_cache_path() -> &'static Path    { &TOKEN_CACHE_PATH }
 pub fn ensure_cache_dirs() -> Result<()> {
     fs::create_dir_all(cache_dir())?;
     fs::create_dir_all(librespot_audio_dir())?;
+    fs::create_dir_all(log_dir())?;
     Ok(())
 }
 

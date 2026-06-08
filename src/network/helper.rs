@@ -1,6 +1,6 @@
 use rspotify::{prelude::*, AuthCodePkceSpotify};
 use serde::{Serialize, de::DeserializeOwned};
-use anyhow::{Result, Context};
+use anyhow::Result;
 use std::collections::HashMap;
 
 // The current implementation simply ignores if the reponse deserialization
@@ -34,12 +34,17 @@ where
 {
     let response = client.api_get(endpoint, params)
         .await
-        .context(format!("GET request failed at: {}", endpoint))?;
+        .map_err(|e| anyhow::anyhow!("GET request failed at {}: {}", endpoint, e))?;
 
-    if let Ok(data) = serde_json::from_str(&response) {
-        Ok(HttpResponse { response, data: Some(data) })
-    } else {
-        Ok(HttpResponse { response, data: None })
+    match serde_json::from_str::<T>(&response) {
+        Ok(data) => Ok(HttpResponse { response, data: Some(data) }),
+        Err(e) => {
+            if response.trim().is_empty() {
+                Ok(HttpResponse { response, data: None })
+            } else {
+                Err(anyhow::anyhow!("Parse error: {}\nRaw response: {}", e, response))
+            }
+        }
     }
 
 }
@@ -53,12 +58,17 @@ where
 
     let response = client.api_post(endpoint, &payload)
         .await
-        .context(format!("POST request failed at: {}", endpoint))?;
+        .map_err(|e| anyhow::anyhow!("POST request failed at {}: {}", endpoint, e))?;
 
-    if let Ok(data) = serde_json::from_str(&response) {
-        Ok(HttpResponse { response, data: Some(data) })
-    } else {
-        Ok(HttpResponse { response, data: None })
+    match serde_json::from_str::<T>(&response) {
+        Ok(data) => Ok(HttpResponse { response, data: Some(data) }),
+        Err(e) => {
+            if response.trim().is_empty() {
+                Ok(HttpResponse { response, data: None })
+            } else {
+                Err(anyhow::anyhow!("Parse error: {}\nRaw response: {}", e, response))
+            }
+        }
     }
 }
 
@@ -72,12 +82,17 @@ where
 
     let response = client.api_put(endpoint, &payload)
         .await
-        .context(format!("PUT request failed at: {}", endpoint))?;
+        .map_err(|e| anyhow::anyhow!("PUT request failed at {}: {}", endpoint, e))?;
 
-    if let Ok(data) = serde_json::from_str(&response) {
-        Ok(HttpResponse { response, data: Some(data) })
-    } else {
-        Ok(HttpResponse { response, data: None })
+    match serde_json::from_str::<T>(&response) {
+        Ok(data) => Ok(HttpResponse { response, data: Some(data) }),
+        Err(e) => {
+            if response.trim().is_empty() {
+                Ok(HttpResponse { response, data: None })
+            } else {
+                Err(anyhow::anyhow!("Parse error: {}\nRaw response: {}", e, response))
+            }
+        }
     }
 }
 
@@ -90,11 +105,16 @@ where
 
     let response = client.api_delete(endpoint, &payload)
         .await
-        .context(format!("DELETE request failed at: {}", endpoint))?;
+        .map_err(|e| anyhow::anyhow!("DELETE request failed at {}: {}", endpoint, e))?;
 
-    if let Ok(data) = serde_json::from_str(&response) {
-        Ok(HttpResponse { response, data: Some(data) })
-    } else {
-        Ok(HttpResponse { response, data: None })
+    match serde_json::from_str::<T>(&response) {
+        Ok(data) => Ok(HttpResponse { response, data: Some(data) }),
+        Err(e) => {
+            if response.trim().is_empty() {
+                Ok(HttpResponse { response, data: None })
+            } else {
+                Err(anyhow::anyhow!("Parse error: {}\nRaw response: {}", e, response))
+            }
+        }
     }
 }
