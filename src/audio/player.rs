@@ -59,6 +59,7 @@ pub async fn start_audio_worker(
     shared_state: SharedState,
     initial_volume_percent: u8,
 ) -> anyhow::Result<()> {
+    crate::spotty_info!("audio", "Starting audio worker...");
     // mixer
     let mixer = Arc::new(
         SoftMixer::open(MixerConfig::default()).context("Failed to open SoftMixer")?,
@@ -139,9 +140,11 @@ pub async fn start_audio_worker(
         volume_steps: 64,
     };
 
+    crate::spotty_info!("audio", "Audio worker initialized. Starting Spirc player...");
     let (spirc, spirc_task) = Spirc::new(connect_config, client.session.clone(), client.creds.clone(), player, mixer.clone())
         .await
         .map_err(|e| anyhow::anyhow!("Failed to initialize Spirc: {e:#}"))?;
+    crate::spotty_info!("audio", "Spirc player started");
 
     // Spawn the task here so the device is registered as online
     tokio::spawn(spirc_task);
@@ -161,6 +164,8 @@ pub async fn start_audio_worker(
     if playback.is_none() {
         let _ = spirc.activate();
         load_spirc_from_cache(&spirc, &cache::playback_cache_path());
+    } else {
+        crate::spotty_info!("audio", "Found remote playback");
     }
 
     tokio::spawn(async move {
@@ -223,11 +228,11 @@ pub async fn start_audio_worker(
                     match serde_json::to_string(&pb) {
                         Ok(cache_str) => {
                             if let Err(e) = std::fs::write(cache::playback_cache_path(), cache_str) {
-                                let _ = std::fs::write("cache_debug.log", format!("Failed to write cache: {e}"));
+                                crate::spotty_error!("audio", "Failed to write cache: {}", e);
                             }
                         }
                         Err(e) => {
-                            let _ = std::fs::write("cache_debug.log", format!("Failed to serialize cache: {e}"));
+                            crate::spotty_error!("audio", "Failed to serialize cache: {}", e);
                         }
                     }
 
@@ -277,12 +282,13 @@ fn load_spirc_from_cache(spirc: &Spirc, cache_path: &Path) {
                         let _ = spirc.load(req);
 
                     } else {
-                        let _ = std::fs::write("cache_debug.log", "Cache read ok, but both context_uri and playing_track_uri were empty");
+                        crate::spotty_warn!("audio", "Cache read ok, but both context_uri and playing_track_uri were empty");
                     }
                 }
-                Err(e) => { let _ = std::fs::write("cache_debug.log", format!("Failed to parse JSON: {e}")); }
+                Err(e) => { crate::spotty_error!("audio", "Failed to parse JSON: {}", e); }
             }
+            crate::spotty_info!("audio", "Playback successfully restored from cache");
         }
-        Err(e) => { let _ = std::fs::write("cache_debug.log", format!("Failed to read cache file: {e}")); }
+        Err(e) => { crate::spotty_error!("audio", "Failed to read cache file: {}", e); }
     }
 }

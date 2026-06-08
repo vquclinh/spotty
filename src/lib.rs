@@ -34,25 +34,50 @@ use crate::audio::player::*;
 use crate::app::state::IoSharedState;
 
 #[macro_export]
-macro_rules! log_to_file {
-    ($file:expr, $($arg:tt)*) => {{
+macro_rules! spotty_log {
+    ($level:expr, $component:expr, $($arg:tt)*) => {{
         use ::std::io::Write;
+        let log_file = $crate::app::cache::log_dir().join("spotty.log");
         
-        let mut file = ::std::fs::OpenOptions::new()
+        if let Ok(mut file) = ::std::fs::OpenOptions::new()
             .create(true)
             .append(true)
-            .open($file)
-            .expect("Failed to open the log file");
-            
-        ::std::writeln!(file, $($arg)*).expect("Failed to write to the log file");
+            .open(log_file)
+        {
+            let timestamp = ::chrono::Local::now().format("%Y-%m-%d %H:%M:%S");
+            let message = format!($($arg)*);
+            let _ = ::std::writeln!(file, "[{}] [{}] [{}] {}", timestamp, $level, $component, message);
+        }
     }};
 }
 
+#[macro_export]
+macro_rules! spotty_info {
+    ($component:expr, $($arg:tt)*) => { $crate::spotty_log!("INFO", $component, $($arg)*) };
+}
+
+#[macro_export]
+macro_rules! spotty_warn {
+    ($component:expr, $($arg:tt)*) => { $crate::spotty_log!("WARN", $component, $($arg)*) };
+}
+
+#[macro_export]
+macro_rules! spotty_error {
+    ($component:expr, $($arg:tt)*) => { $crate::spotty_log!("ERROR", $component, $($arg)*) };
+}
+
+#[macro_export]
+macro_rules! spotty_debug {
+    ($component:expr, $($arg:tt)*) => { $crate::spotty_log!("DEBUG", $component, $($arg)*) };
+}
+
 pub async fn run() -> Result<()> {
+    crate::spotty_info!("app", "Starting Spotty TUI");
     // when app crash, call disable_raw_mode()
     panic::set_hook(Box::new(|info| {
         let _ = disable_raw_mode();
         let _ = execute!(io::stdout(), LeaveAlternateScreen);
+        crate::spotty_error!("app", "App crashed: {}", info);
         eprintln!("App crashed: {}", info);
     }));
 
@@ -62,10 +87,13 @@ pub async fn run() -> Result<()> {
 
     // Ensure all the cache dirs exist before any read/write operation
     if let Err(e) = cache::ensure_cache_dirs() {
+        crate::spotty_warn!("cache", "Could not create cache directory: {}", e);
         eprintln!("Warning: could not create cache directory: {e}");
     }
 
+    crate::spotty_info!("app", "Initializing Spotify network client...");
     let spotify_client = Arc::new(SpotifyClient::new().await?);
+    crate::spotty_info!("app", "Spotify network client initialized");
 
     // shared_state
     let shared_state = Arc::new(Mutex::new(IoSharedState::default()));
@@ -96,7 +124,7 @@ pub async fn run() -> Result<()> {
             audio_shared_state,
             initial_volume,
         ).await {
-            let _ = std::fs::write("audio_crash.log", format!("Audio Worker crash:\n{:#?}", e));
+            crate::spotty_error!("audio", "Audio Worker crash: {:#?}", e);
         }
     });
 
@@ -145,6 +173,8 @@ pub async fn run() -> Result<()> {
     }
 
     let _ = app.app_cache.save();
+
+    crate::spotty_info!("app", "Shutting down Spotty TUI");
 
     disable_raw_mode()?;
     execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
