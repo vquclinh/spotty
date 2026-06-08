@@ -38,13 +38,17 @@ pub struct AppCache {
 
 impl AppCache {
     pub fn save(&self) -> Result<()> {
+        crate::spotty_info!("cache", "Saving app cache...");
         let data = serde_json::to_string(self)?;
         fs::write(app_cache_path(), data)?;
+        crate::spotty_info!("cache", "App cache saved successfully");
         Ok(())
     }
 
     pub fn load() -> Result<Self> {
+        crate::spotty_info!("cache", "Loading app cache from disk...");
         let data = fs::read_to_string(app_cache_path())?;
+        crate::spotty_info!("cache", "App cache loaded successfully");
         Ok(serde_json::from_str(&data)?)
     }
 

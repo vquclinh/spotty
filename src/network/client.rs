@@ -25,8 +25,11 @@ pub struct SpotifyClient {
 
 impl SpotifyClient {
     pub async fn new() -> Result<Self> {
+        crate::spotty_info!("network", "Creating auth client...");
         let mut client = auth::create_auth_client().await?;
+        crate::spotty_info!("network", "Authenticating...");
         auth::authenticate(&mut client).await?;
+        crate::spotty_info!("network", "Authentication successful. Getting token...");
 
         // Extract the access token from rspotify
         let token_lock = client.get_token();
@@ -39,7 +42,9 @@ impl SpotifyClient {
             .clone();
 
         // Initialize the librespot session with the shared token
+        crate::spotty_info!("network", "Initializing librespot audio session...");
         let (session, creds) = get_audio_session(access_token)?;
+        crate::spotty_info!("network", "Audio session initialized successfully");
 
         Ok(Self {
             client,
