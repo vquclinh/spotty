@@ -17,7 +17,7 @@ pub async fn create_auth_client() -> Result<AuthCodePkceSpotify> {
         ..Default::default()
     };
 
-    // 
+    // NCSPOT CLIENT ID
     const CLIENT_ID: &str = "d420a117a32841c2b3474932e49fb54b";
     const REDIRECT_URI: &str = "http://127.0.0.1:8989/login";
 
